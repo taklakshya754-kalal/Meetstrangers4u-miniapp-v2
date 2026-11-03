@@ -1,0 +1,236 @@
+
+:root {
+  --navy: #10152B;
+  --navy-light: #1B2340;
+  --purple: #593CC5;
+  --blue: #087FA8;
+  --gold: #C5A66A;
+  --white: #FFFFFF;
+  --muted: #AAB5CC;
+  --border: rgba(255,255,255,0.10);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background: var(--navy);
+  color: var(--white);
+  font-family: Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+button, input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    16px
+    max(100px, env(safe-area-inset-bottom));
+}
+
+.loading-screen {
+  min-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.loading-logo {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  box-shadow: 0 0 35px rgba(89,60,197,0.35);
+  font-size: 38px;
+  font-weight: 800;
+}
+
+.loading-screen h2 {
+  font-size: 23px;
+  letter-spacing: -0.5px;
+}
+
+.loading-screen p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+
+.brand-name {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.profile-button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gold);
+  background: var(--navy-light);
+  border: 1px solid rgba(197,166,106,0.4);
+}
+
+.page-title {
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.page-subtitle {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.panel {
+  background: linear-gradient(145deg, #1B2948, #191D38);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.call-card {
+  width: 100%;
+  padding: 17px;
+  text-align: left;
+  color: white;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: #202F53;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.call-card:active {
+  transform: scale(0.98);
+}
+
+.call-card.partner {
+  background: #29213F;
+  border-color: rgba(118,86,207,0.6);
+}
+
+.call-card h3 {
+  margin-top: 12px;
+  font-size: 18px;
+}
+
+.call-card p {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.primary-button {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 15px;
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(110deg, var(--blue), #1266B4);
+}
+
+.secondary-button {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 15px;
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(110deg, var(--purple), #7049D5);
+}
+
+.bottom-nav {
+  position: fixed;
+  z-index: 20;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+  background: rgba(16,21,43,0.96);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 3px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.nav-item.active {
+  color: #B9A1FF;
+}
+
+input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 15px;
+  color: white;
+  background: #202B46;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--purple);
+}
+
+@media (min-width: 600px) {
+  #app {
+    max-width: 520px;
+    margin: auto;
+  }
+
+  .bottom-nav {
+    left: 50%;
+    right: auto;
+    width: min(520px, 100%);
+    transform: translateX(-50%);
+  }
+}
