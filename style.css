@@ -1,12 +1,12 @@
 
 :root {
   --navy: #10152B;
-  --navy-light: #1B2340;
-  --purple: #593CC5;
-  --blue: #087FA8;
-  --gold: #C5A66A;
-  --white: #FFFFFF;
-  --muted: #AAB5CC;
+  --navy-light: #1B2543;
+  --purple: #7656D6;
+  --blue: #91C6FF;
+  --lavender: #C4A5FF;
+  --white: #F4F4FA;
+  --muted: #AEB9D0;
   --border: rgba(255,255,255,0.10);
 }
 
@@ -65,8 +65,8 @@ button {
   display: grid;
   place-items: center;
   border-radius: 24px;
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  box-shadow: 0 0 35px rgba(89,60,197,0.35);
+  background: linear-gradient(135deg, var(--purple), #416CA8);
+  box-shadow: 0 0 35px rgba(89,60,197,0.25);
   font-size: 38px;
   font-weight: 800;
 }
@@ -81,34 +81,48 @@ button {
   font-size: 14px;
 }
 
+/* Header */
+
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 26px;
+  margin-bottom: 20px;
 }
 
 .brand-name {
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.6px;
 }
 
 .profile-button {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: var(--gold);
+  color: var(--lavender);
   background: var(--navy-light);
-  border: 1px solid rgba(197,166,106,0.4);
+  border: 1px solid var(--border);
 }
 
+.coin-pill {
+  padding: 8px 13px;
+  border-radius: 30px;
+  background: #202944;
+  border: 1px solid rgba(145,198,255,0.18);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* General screens */
+
 .page-title {
-  font-size: 27px;
+  font-size: 25px;
   font-weight: 800;
-  letter-spacing: -0.8px;
+  letter-spacing: -0.7px;
 }
 
 .page-subtitle {
@@ -125,37 +139,71 @@ button {
   padding: 18px;
 }
 
+/* Main Call screen */
+
+.call-intro {
+  background: #1B2543;
+  border: 1px solid var(--border);
+  border-radius: 19px;
+  padding: 17px;
+}
+
+.call-intro-label {
+  color: #B9A5F4;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+}
+
 .call-card {
+  display: block;
   width: 100%;
   padding: 17px;
   text-align: left;
-  color: white;
+  color: var(--white);
   border-radius: 18px;
-  border: 1px solid var(--border);
-  background: #202F53;
+  border: 1px solid #435B83;
+  background: #202F50;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .call-card:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
 }
 
 .call-card.partner {
-  background: #29213F;
-  border-color: rgba(118,86,207,0.6);
+  background: #292343;
+  border-color: #654B91;
 }
 
 .call-card h3 {
-  margin-top: 12px;
-  font-size: 18px;
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 700;
 }
 
 .call-card p {
-  margin-top: 7px;
+  margin-top: 6px;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
 }
+
+.call-card-label {
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.call-card.partner .call-card-label {
+  color: var(--lavender);
+}
+
+.call-spacer {
+  height: 18px;
+}
+
+/* Buttons */
 
 .primary-button {
   width: 100%;
@@ -163,7 +211,7 @@ button {
   border-radius: 15px;
   color: white;
   font-weight: 700;
-  background: linear-gradient(110deg, var(--blue), #1266B4);
+  background: linear-gradient(110deg, #416CA8, #3658A0);
 }
 
 .secondary-button {
@@ -175,6 +223,8 @@ button {
   background: linear-gradient(110deg, var(--purple), #7049D5);
 }
 
+/* Bottom navigation */
+
 .bottom-nav {
   position: fixed;
   z-index: 20;
@@ -182,9 +232,9 @@ button {
   left: 0;
   right: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  padding: 10px 12px max(12px, env(safe-area-inset-bottom));
-  background: rgba(16,21,43,0.96);
+  grid-template-columns: repeat(4, 1fr);
+  padding: 9px 10px max(12px, env(safe-area-inset-bottom));
+  background: rgba(16,21,43,0.97);
   border-top: 1px solid var(--border);
   backdrop-filter: blur(18px);
 }
@@ -195,16 +245,23 @@ button {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 8px 3px;
+  padding: 7px 2px;
   color: var(--muted);
   background: transparent;
   font-size: 11px;
   font-weight: 600;
 }
 
-.nav-item.active {
-  color: #B9A1FF;
+.nav-item span {
+  font-size: 19px;
+  line-height: 1;
 }
+
+.nav-item.active {
+  color: var(--lavender);
+}
+
+/* Inputs */
 
 input {
   width: 100%;
