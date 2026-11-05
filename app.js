@@ -27,13 +27,13 @@ function icon(name) {
   return icons[name] || "•";
 }
 
+
+function randomScreen() {
 function header() {
   return `
     <header class="app-header">
       <div class="brand-name">MeetStrangers4u</div>
-      <button class="profile-button" onclick="navigate('profile')">
-        ${icon("profile")}
-      </button>
+      <div class="coin-pill">💰 200</div>
     </header>
   `;
 }
@@ -43,15 +43,22 @@ function bottomNav() {
     <nav class="bottom-nav">
       <button class="nav-item ${state.screen === "funzone" ? "active" : ""}"
         onclick="navigate('funzone')">
-        <span>${icon("game")}</span>Fun Zone
+        <span>🎮</span>Fun Zone
       </button>
-      <button class="nav-item ${state.screen === "home" || state.screen === "random" || state.screen === "matchmaking" || state.screen === "partner" || state.screen === "room" ? "active" : ""}"
+
+      <button class="nav-item ${["home", "voice", "video", "random", "matchmaking", "partner", "room"].includes(state.screen) ? "active" : ""}"
         onclick="navigate('home')">
-        <span>${icon("call")}</span>Call
+        <span>📞</span>Call
       </button>
+
+      <button class="nav-item ${state.screen === "explore" ? "active" : ""}"
+        onclick="navigate('explore')">
+        <span>◈</span>Explore
+      </button>
+
       <button class="nav-item ${state.screen === "profile" ? "active" : ""}"
         onclick="navigate('profile')">
-        <span>${icon("profile")}</span>Profile
+        <span>👤</span>Profile
       </button>
     </nav>
   `;
@@ -60,36 +67,39 @@ function bottomNav() {
 function homeScreen() {
   return `
     ${header()}
-    <section class="panel">
-      <p style="color:#C5A66A;font-size:11px;font-weight:700;letter-spacing:1px">
-        YOUR CONNECTION SPACE
+
+    <section class="call-intro">
+      <p class="call-intro-label">YOUR CONNECTION SPACE</p>
+      <h1 class="page-title" style="margin-top:10px">
+        Connect & Discover
+      </h1>
+      <p class="page-subtitle">
+        Every connection starts with a hello.
       </p>
-      <h1 class="page-title" style="margin-top:12px">Connect & Discover</h1>
-      <p class="page-subtitle">Every connection starts with a hello.</p>
-
-      <div style="height:22px"></div>
-
-      <button class="call-card" onclick="navigate('random')">
-        <div>${icon("random")} <span style="color:#72D8F5">RANDOM CALL</span></div>
-        <h3>Random Call</h3>
-        <p>Meet someone new from anywhere in the world.</p>
-      </button>
-
-      <div style="height:18px"></div>
-
-      <button class="call-card partner" onclick="navigate('partner')">
-        <div>${icon("partner")} <span style="color:#B9A1FF">PARTNER CALL</span></div>
-        <h3>Partner Call</h3>
-        <p>Connect directly with your chosen partner.</p>
-      </button>
-
-      <div style="height:26px"></div>
     </section>
+
+    <div class="call-spacer"></div>
+
+    <button class="call-card" onclick="navigate('voice')">
+      <div class="call-card-label">📞 Voice Calling</div>
+      <h3>Voice Calling</h3>
+      <p>Connect through voice with people worldwide.</p>
+    </button>
+
+    <div class="call-spacer"></div>
+
+    <button class="call-card partner" onclick="navigate('video')">
+      <div class="call-card-label">🎥 Video Calling</div>
+      <h3>Video Calling</h3>
+      <p>Meet people face to face around the world.</p>
+    </button>
+
+    <div style="height:26px"></div>
+
     ${bottomNav()}
   `;
 }
-
-function randomScreen() {
+  
   return `
     ${header()}
     <section class="panel">
@@ -151,6 +161,107 @@ function partnerScreen() {
       <div style="height:18px"></div>
       <button class="primary-button" onclick="sendInvitation()">Send Invitation</button>
       <p class="page-subtitle" style="margin-top:15px">An invitation will be sent through the Telegram bot.</p>
+    </section>
+    ${bottomNav()}
+  `;
+}
+
+
+
+function voiceScreen() {
+  return `
+    ${header()}
+    <section class="panel">
+      <h1 class="page-title">Voice Call</h1>
+      <p class="page-subtitle">Choose how you want to connect.</p>
+
+      <div style="height:22px"></div>
+
+      <div class="call-card">
+        <div class="call-card-label">🌍 RANDOM MATCHMAKING</div>
+        <h3>Random Call</h3>
+        <p>Meet someone new from anywhere in the world.</p>
+        <div style="height:14px"></div>
+        <button class="primary-button"
+          onclick="alert('Voice matchmaking will be connected next.')">
+          Start Random Call
+        </button>
+      </div>
+
+      <div style="height:18px"></div>
+
+      <div class="call-card partner">
+        <div class="call-card-label">🤝 DIRECT CONNECTION</div>
+        <h3>Partner Call</h3>
+        <p>Connect directly with someone using their unique ID.</p>
+        <div style="height:14px"></div>
+        <button class="secondary-button"
+          onclick="alert('Voice partner connection will be connected next.')">
+          Connect with Partner
+        </button>
+      </div>
+
+      <p class="page-subtitle" style="text-align:center;margin-top:20px">
+        Private one-to-one voice connection.
+      </p>
+    </section>
+    ${bottomNav()}
+  `;
+}
+
+function videoScreen() {
+  return `
+    ${header()}
+    <section class="panel">
+      <h1 class="page-title">Video Call</h1>
+      <p class="page-subtitle">See and connect with someone face-to-face.</p>
+
+      <div style="height:22px"></div>
+
+      <div class="call-card">
+        <div class="call-card-label">🌍 RANDOM VIDEO MATCH</div>
+        <h3>Random Video Call</h3>
+        <p>Meet new people through live video.</p>
+        <div style="height:14px"></div>
+        <button class="primary-button"
+          onclick="alert('Video matchmaking will be connected next.')">
+          Start Random Video Call
+        </button>
+      </div>
+
+      <div style="height:18px"></div>
+
+      <div class="call-card partner">
+        <div class="call-card-label">🤝 DIRECT VIDEO CONNECTION</div>
+        <h3>Partner Video Call</h3>
+        <p>Connect directly using a unique ID.</p>
+        <div style="height:14px"></div>
+        <button class="secondary-button"
+          onclick="alert('Video partner connection will be connected next.')">
+          Connect with Partner
+        </button>
+      </div>
+
+      <p class="page-subtitle" style="text-align:center;margin-top:20px">
+        Private one-to-one video connection.
+      </p>
+    </section>
+    ${bottomNav()}
+  `;
+}
+
+function exploreScreen() {
+  return `
+    ${header()}
+    <section class="panel" style="text-align:center;padding:28px 18px">
+      <h1 class="page-title">Explore</h1>
+      <div style="height:28px"></div>
+      <h3>Something Exciting is Coming!</h3>
+      <p class="page-subtitle">
+        We're preparing something special for you.
+      </p>
+      <div style="height:18px"></div>
+      <p class="call-card-label">COMING SOON</p>
     </section>
     ${bottomNav()}
   `;
@@ -231,9 +342,13 @@ function sendInvitation() {
   alert("Invitation backend is not connected yet. No invitation was sent.");
 }
 
+
 function render() {
   const screens = {
     home: homeScreen,
+    voice: voiceScreen,
+    video: videoScreen,
+    explore: exploreScreen,
     random: randomScreen,
     matchmaking: matchmakingScreen,
     partner: partnerScreen,
@@ -244,4 +359,3 @@ function render() {
   app.innerHTML = (screens[state.screen] || homeScreen)();
 }
 
-render();
