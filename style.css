@@ -437,3 +437,34 @@ html,body{background:#050B24;color:var(--white)}
 .premium-call-copy strong{font-size:16px}.premium-call-copy small{font-size:11px}.premium-call-arrow{flex-basis:32px;width:32px;height:32px}
 }
 @media(min-width:600px){.bottom-nav{left:50%;right:auto;width:min(488px,calc(100% - 32px));transform:translateX(-50%)}}
+
+
+/* Home screen: fit the complete first screen without vertical scrolling */
+.brand-mark{display:none!important}
+body.home-screen-active{height:100%;overflow:hidden}
+#app.home-view{
+  height:100vh;height:100dvh;min-height:0;max-width:520px;
+  display:flex;flex-direction:column;overflow:hidden;
+  padding:max(10px,env(safe-area-inset-top)) 16px max(88px,calc(env(safe-area-inset-bottom) + 78px));
+}
+#app.home-view .app-header{flex:0 0 auto;min-height:48px;margin-bottom:clamp(8px,1.4svh,13px)}
+#app.home-view .header-left{gap:0}
+#app.home-view .brand-lockup{gap:0}
+#app.home-view .premium-intro{flex:1.2 1 0;min-height:0;max-height:230px;padding:clamp(13px,2.1svh,21px) 16px}
+#app.home-view .premium-intro .page-title{font-size:clamp(25px,6.8vw,34px);margin-top:clamp(9px,1.5svh,15px)!important}
+#app.home-view .premium-intro .page-subtitle{margin-top:clamp(6px,1.1svh,11px);font-size:clamp(11px,1.7svh,13px)}
+#app.home-view .intro-tagline{margin-top:clamp(8px,1.5svh,15px);font-size:clamp(9px,1.45svh,10px)}
+#app.home-view .intro-globe{transform:translateY(-43%) scale(.84)}
+#app.home-view .premium-gap{height:clamp(9px,1.7svh,17px);flex:0 0 auto}
+#app.home-view .premium-call-card{flex:1 1 0;min-height:104px;max-height:142px;padding:clamp(11px,1.8svh,17px) 12px}
+#app.home-view .premium-call-icon{flex-basis:clamp(49px,8svh,64px);width:clamp(49px,8svh,64px);height:clamp(49px,8svh,64px)}
+#app.home-view .home-bottom-space{height:5px;flex:0 0 5px}
+#app.home-view .bottom-nav{flex:0 0 auto}
+@media(max-height:700px){
+ #app.home-view{padding-top:max(7px,env(safe-area-inset-top));padding-bottom:max(82px,calc(env(safe-area-inset-bottom) + 72px))}
+ #app.home-view .app-header{min-height:42px;margin-bottom:7px}
+ #app.home-view .premium-intro{flex:1 1 0}
+ #app.home-view .premium-call-card{min-height:96px}
+ #app.home-view .premium-gap{height:8px}
+ #app.home-view .intro-tagline{margin-top:7px}
+}
