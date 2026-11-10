@@ -23,6 +23,7 @@ let peerConnection = null;
 let localMediaStream = null;
 let remoteMediaStream = null;
 let pendingIceCandidates = [];
+let pendingOffer = null;
 let mediaReadySent = false;
 let accountLoaded = false;
 
@@ -739,7 +740,11 @@ async function startRandomCall(callType) {
       if (callSocket !== ws) return;
       let message;
       try { message = JSON.parse(event.data); } catch (_) { return; }
-      handleCallServerMessage(message, turnData.iceServers || []);
+      handleCallServerMessage(message, turnData.iceServers || []).catch(err => {
+        console.error("Calling signal error:", err);
+        sendCallMessage({ type: "end-call" });
+        finishCall("A secure call connection could not be established. Please try again.");
+      });
     };
     ws.onerror = () => {
       if (callSocket === ws) finishCall("Unable to connect to the calling service. Please try again.");
@@ -769,7 +774,8 @@ async function handleCallServerMessage(message, iceServers) {
       await preparePeerConnection(message.peerId, iceServers);
       break;
     case "offer":
-      await receiveOffer(message.data);
+      if (peerConnection) await receiveOffer(message.data);
+      else pendingOffer = message.data;
       break;
     case "answer":
       if (peerConnection) {
@@ -778,8 +784,8 @@ async function handleCallServerMessage(message, iceServers) {
       }
       break;
     case "ice-candidate":
-      if (message.data && peerConnection) {
-        if (peerConnection.remoteDescription) await peerConnection.addIceCandidate(message.data);
+      if (message.data) {
+        if (peerConnection?.remoteDescription) await peerConnection.addIceCandidate(message.data);
         else pendingIceCandidates.push(message.data);
       }
       break;
@@ -790,6 +796,7 @@ async function handleCallServerMessage(message, iceServers) {
     case "wallet-update":
       state.coins = Number(message.coins);
       render();
+      attachRemoteMedia();
       break;
     case "minute-billed":
       break;
@@ -825,6 +832,11 @@ async function preparePeerConnection(peerId, iceServers) {
     const pc = new RTCPeerConnection({ iceServers, iceTransportPolicy: "all" });
     peerConnection = pc;
     localMediaStream.getTracks().forEach(track => pc.addTrack(track, localMediaStream));
+    if (pendingOffer) {
+      const offer = pendingOffer;
+      pendingOffer = null;
+      await receiveOffer(offer);
+    }
 
     pc.ontrack = event => {
       const incoming = event.streams?.[0];
@@ -941,6 +953,7 @@ function cleanupCallResources() {
   }
   remoteMediaStream = null;
   pendingIceCandidates = [];
+  pendingOffer = null;
   mediaReadySent = false;
 }
 
