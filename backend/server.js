@@ -2,6 +2,7 @@
 
 const http = require("http");
 const crypto = require("crypto");
+const fs = require("fs");
 const { URL } = require("url");
 const { Pool } = require("pg");
 const WebSocket = require("ws");
@@ -48,6 +49,40 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/health") {
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
     res.end(JSON.stringify({ ok: true, service: "meetstrangers-call", time: new Date().toISOString() }));
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/turn-credentials") {
+    try {
+      const initData = req.headers["x-telegram-init-data"] || "";
+      const user = validateTelegramInitData(initData);
+      const secretFile = process.env.TURN_SECRET_FILE || "/root/meetstrangers-turn-secret";
+      const turnSecret = fs.readFileSync(secretFile, "utf8").trim();
+      if (!turnSecret) throw new Error("TURN shared secret is empty");
+
+      const expiresAt = Math.floor(Date.now() / 1000) + 600;
+      const username = expiresAt + ":" + String(user.id);
+      const credential = crypto.createHmac("sha1", turnSecret).update(username).digest("base64");
+
+      sendJson(res, 200, {
+        iceServers: [{
+          urls: [
+            "turn:turn.lxreward.xyz:3478?transport=udp",
+            "turn:turn.lxreward.xyz:3478?transport=tcp"
+          ],
+          username,
+          credential
+        }],
+        expiresAt
+      });
+    } catch (err) {
+      const status = err.statusCode || 503;
+      sendJson(res, status, {
+        error: status === 401 ? "UNAUTHORIZED" : "TURN_CREDENTIALS_UNAVAILABLE",
+        message: status === 401 ? "Please reopen the Mini App from Telegram." : "Calling network credentials are temporarily unavailable."
+      });
+      if (status !== 401) console.error("GET /api/turn-credentials:", err.message);
+    }
     return;
   }
 
