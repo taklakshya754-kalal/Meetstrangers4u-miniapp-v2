@@ -524,3 +524,11 @@ body.home-screen-active{height:100%;overflow:hidden}
  #app.compact-view .profile-menu-row{padding:7px 9px}
  #app.compact-view .panel{padding:12px}
 }
+
+
+/* Random call coin price and insufficient-balance popup */
+.call-cost-note{display:flex;align-items:center;justify-content:center;margin:0 0 16px;padding:11px 14px;border-radius:13px;color:#FFE3A1;font-size:14px;font-weight:800;letter-spacing:.2px;background:linear-gradient(105deg,rgba(41,75,155,.42),rgba(91,43,157,.34));border:1px solid rgba(183,151,255,.48);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+.coin-modal-backdrop{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(2,6,24,.78);backdrop-filter:blur(8px)}
+.coin-modal{width:min(100%,340px);padding:25px 21px 19px;text-align:center;border:1px solid rgba(151,121,255,.58);border-radius:23px;background:linear-gradient(145deg,#14295A,#17133F 88%);box-shadow:0 18px 55px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.1)}
+.coin-modal-icon{width:58px;height:58px;display:grid;place-items:center;margin:0 auto 13px;border-radius:19px;background:linear-gradient(145deg,#315DCA,#743BD2);box-shadow:0 0 22px rgba(92,105,255,.3);font-size:27px}
+.coin-modal h3{margin:0 0 9px;color:#fff;font-size:20px;font-weight:800}.coin-modal p{margin:0 0 19px;color:#C6D4F4;font-size:13px;line-height:1.55}.coin-modal .primary-button{width:100%;margin:0}.coin-modal-close{margin-top:13px;padding:8px 15px;color:#BFC9E8;background:transparent;font-size:12px;font-weight:650}
