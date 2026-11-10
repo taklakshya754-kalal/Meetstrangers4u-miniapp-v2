@@ -681,8 +681,10 @@ function sendInvitation() {
 
 function render() {
   const isHome = state.screen === "home";
+  const isCompactPage = ["funzone", "explore", "profile"].includes(state.screen);
   app.classList.toggle("home-view", isHome);
-  document.body.classList.toggle("home-screen-active", isHome);
+  app.classList.toggle("compact-view", isCompactPage);
+  document.body.classList.toggle("home-screen-active", isHome || isCompactPage);
   const screens = {
     home: homeScreen,
     voice: voiceScreen,
