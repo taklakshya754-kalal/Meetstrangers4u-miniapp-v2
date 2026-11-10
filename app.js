@@ -291,16 +291,18 @@ function voiceScreen() {
     ${header()}
     <section class="panel call-options-panel compact-call-options">
       <div class="call-screen-heading">
-        <div class="call-screen-icon voice-icon">${visualIcon("phone")}</div>
         <h1 class="page-title">Voice</h1>
         <p class="page-subtitle">Connect through voice, anywhere.</p>
       </div>
-      <div class="compact-call-pricing voice-pricing">
-        <div class="compact-pricing-main">
-          <strong>10 Coins <span>Call Fee</span></strong>
-          <strong>+5 Coins / Min</strong>
+      <div class="call-pricing-row">
+        <div class="call-screen-icon voice-icon">${visualIcon("phone")}</div>
+        <div class="compact-call-pricing voice-pricing">
+          <div class="compact-pricing-main">
+            <strong>10 Coins <span>Call Fee</span></strong>
+            <strong>+5 Coins / Min</strong>
+          </div>
+          <small>After 1 min</small>
         </div>
-        <small>After 1 min</small>
       </div>
       <button class="call-option-card voice-option" onclick="startRandomCall('Voice')">
         <span class="call-option-icon">${visualIcon("globe")}</span>
@@ -324,16 +326,18 @@ function videoScreen() {
     ${header()}
     <section class="panel call-options-panel compact-call-options">
       <div class="call-screen-heading">
-        <div class="call-screen-icon video-icon">${visualIcon("video")}</div>
         <h1 class="page-title">Video</h1>
         <p class="page-subtitle">Meet face-to-face around the world.</p>
       </div>
-      <div class="compact-call-pricing video-pricing">
-        <div class="compact-pricing-main">
-          <strong>20 Coins <span>Call Fee</span></strong>
-          <strong>+10 Coins / Min</strong>
+      <div class="call-pricing-row">
+        <div class="call-screen-icon video-icon">${visualIcon("video")}</div>
+        <div class="compact-call-pricing video-pricing">
+          <div class="compact-pricing-main">
+            <strong>20 Coins <span>Call Fee</span></strong>
+            <strong>+10 Coins / Min</strong>
+          </div>
+          <small>After 1 min</small>
         </div>
-        <small>After 1 min</small>
       </div>
       <button class="call-option-card video-option" onclick="startRandomCall('Video')">
         <span class="call-option-icon">${visualIcon("globe")}</span>
