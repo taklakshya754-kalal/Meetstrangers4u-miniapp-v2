@@ -26,6 +26,7 @@ let pendingIceCandidates = [];
 let pendingOffer = null;
 let mediaReadySent = false;
 let accountLoaded = false;
+let callAttemptId = 0;
 
 function icon(name) {
   const icons = {
@@ -698,12 +699,14 @@ function sendCallMessage(payload) {
 }
 
 async function startRandomCall(callType) {
+  const attemptId = ++callAttemptId;
   const type = callType === "Video" ? "Video" : "Voice";
   const connectionFee = type === "Video" ? 20 : 10;
   if (["searching", "connecting", "connected"].includes(state.call.status)) return;
 
   try {
     if (!accountLoaded) await loadAccount();
+    if (attemptId !== callAttemptId) return;
   } catch (err) {
     alert(err.message);
     return;
@@ -729,6 +732,7 @@ async function startRandomCall(callType) {
       cache: "no-store"
     });
     const turnData = await turnResponse.json().catch(() => ({}));
+    if (attemptId !== callAttemptId) return;
     if (!turnResponse.ok) throw new Error(turnData.message || "Unable to prepare secure calling.");
 
     const ws = new WebSocket("wss://call.lxreward.xyz/ws?initData=" + encodeURIComponent(tg.initData));
@@ -961,6 +965,7 @@ function cleanupCallResources() {
 }
 
 function finishCall(message) {
+  callAttemptId++;
   cleanupCallResources();
   if (callSocket) {
     const oldSocket = callSocket;
