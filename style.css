@@ -698,10 +698,11 @@ body.call-options-screen-active{height:100%;overflow:hidden}
 #app.call-options-view{
   height:100vh;height:100dvh;min-height:0;max-width:520px;
   display:flex;flex-direction:column;overflow:hidden;
-  padding:max(18px,env(safe-area-inset-top)) 16px max(112px,calc(env(safe-area-inset-bottom) + 96px));
+  padding:max(10px,env(safe-area-inset-top)) 16px max(112px,calc(env(safe-area-inset-bottom) + 96px));
 }
 #app.call-options-view .app-header{
   flex:0 0 auto;
+  min-height:48px;
   margin-bottom:clamp(12px,2svh,22px);
 }
 #app.call-options-view .call-options-panel{
@@ -715,7 +716,7 @@ body.call-options-screen-active{height:100%;overflow:hidden}
     padding-top:max(10px,env(safe-area-inset-top));
     padding-bottom:max(100px,calc(env(safe-area-inset-bottom) + 86px));
   }
-  #app.call-options-view .app-header{margin-bottom:10px}
+  #app.call-options-view .app-header{min-height:42px;margin-bottom:10px}
   #app.call-options-view .call-options-panel{gap:12px}
 }
 
