@@ -84,6 +84,7 @@ button {
 /* Header */
 
 .app-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -335,6 +336,6 @@ input:focus {
 
 /* Compact global back control */
 .header-left { display:flex; align-items:center; gap:10px; min-width:0; }
-.header-back { display:inline-flex; align-items:center; gap:4px; padding:5px 7px 5px 0; color:#C4A5FF; background:transparent; font-size:13px; font-weight:650; white-space:nowrap; transform:translateY(-5px); }
+.header-back { position:absolute; left:50%; top:-5px; transform:translateX(-50%); display:inline-flex; align-items:center; gap:4px; padding:5px 7px; color:#C4A5FF; background:transparent; font-size:13px; font-weight:650; white-space:nowrap; }
 .header-back span { font-size:11px; font-weight:600; }
 .header-back:active { opacity:.65; }
