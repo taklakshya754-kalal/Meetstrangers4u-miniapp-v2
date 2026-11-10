@@ -269,7 +269,13 @@ async function beginSearch(ws, kind) {
   if (ws.sessionId || ws.searching) return;
   ws.searching = "checking";
   const fee = feeFor(kind);
-  const coins = await getCoins(ws.userId);
+  let coins;
+  try {
+    coins = await getCoins(ws.userId);
+  } catch (err) {
+    if (ws.searching === "checking") ws.searching = null;
+    throw err;
+  }
   if (ws.readyState !== WebSocket.OPEN || clients.get(ws.userId) !== ws || ws.searching !== "checking") return;
   if (coins === null) { ws.searching = null; sendError(ws, "USER_NOT_FOUND", "Open the Telegram bot first, then try again."); return; }
   if (coins < fee) {
