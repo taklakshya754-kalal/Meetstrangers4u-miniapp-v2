@@ -690,3 +690,31 @@ body.home-screen-active{height:100%;overflow:hidden}
   .compact-call-options .call-option-copy strong{font-size:14px}
   .compact-call-options .call-option-copy em{font-size:10px}
 }
+
+
+/* Full-screen spacing for Voice and Video option pages.
+   Keeps all existing content, typography, card dimensions and branding intact. */
+body.call-options-screen-active{height:100%;overflow:hidden}
+#app.call-options-view{
+  height:100vh;height:100dvh;min-height:0;max-width:520px;
+  display:flex;flex-direction:column;overflow:hidden;
+  padding:max(18px,env(safe-area-inset-top)) 16px max(112px,calc(env(safe-area-inset-bottom) + 96px));
+}
+#app.call-options-view .app-header{
+  flex:0 0 auto;
+  margin-bottom:clamp(12px,2svh,22px);
+}
+#app.call-options-view .call-options-panel{
+  flex:1 1 auto;min-height:0;max-height:none;
+  justify-content:space-between;
+  gap:clamp(14px,2.2svh,28px);
+}
+#app.call-options-view .call-options-bottom-space{display:none}
+@media(max-height:700px){
+  #app.call-options-view{
+    padding-top:max(10px,env(safe-area-inset-top));
+    padding-bottom:max(100px,calc(env(safe-area-inset-bottom) + 86px));
+  }
+  #app.call-options-view .app-header{margin-bottom:10px}
+  #app.call-options-view .call-options-panel{gap:12px}
+}
