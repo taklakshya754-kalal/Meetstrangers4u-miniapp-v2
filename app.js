@@ -10,6 +10,7 @@ const app = document.getElementById("app");
 
 const state = {
   screen: "home",
+  history: [],
   user: tg?.initDataUnsafe?.user || null
 };
 
@@ -31,7 +32,10 @@ function icon(name) {
 function header() {
   return `
     <header class="app-header">
-      <div class="brand-name">MeetStrangers4u</div>
+      <div class="header-left">
+        ${state.screen !== "home" ? '<button class="header-back" onclick="goBack()" aria-label="Go back">← <span>Back</span></button>' : ''}
+        <div class="brand-name">MeetStrangers4u</div>
+      </div>
       <div class="coin-pill">💰 200</div>
     </header>
   `;
@@ -556,7 +560,6 @@ function earnCoinsScreen() {
   return `
     ${header()}
     <section class="panel profile-subpage">
-      <button class="profile-back" onclick="navigate('profile')">← Back to Profile</button>
       <div class="earn-illustration">✦</div>
       <p class="profile-eyebrow">REWARDS</p>
       <h1 class="page-title">Earn Coins</h1>
@@ -618,7 +621,15 @@ function escapeHTML(value) {
 // NAVIGATION
 
 function navigate(screen) {
+  if (screen === state.screen) return;
+  state.history.push(state.screen);
   state.screen = screen;
+  render();
+}
+
+function goBack() {
+  const previous = state.history.pop();
+  state.screen = previous || "home";
   render();
 }
 
