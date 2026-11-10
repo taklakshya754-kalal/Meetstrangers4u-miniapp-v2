@@ -468,3 +468,59 @@ body.home-screen-active{height:100%;overflow:hidden}
  #app.home-view .premium-gap{height:8px}
  #app.home-view .intro-tagline{margin-top:7px}
 }
+
+
+/* Compact, no-scroll layouts for Fun Zone, Explore and Profile */
+#app.compact-view{
+  height:100vh;height:100dvh;min-height:0;max-width:520px;
+  display:flex;flex-direction:column;overflow:hidden;
+  padding:max(10px,env(safe-area-inset-top)) 16px max(88px,calc(env(safe-area-inset-bottom) + 78px));
+}
+#app.compact-view .app-header{
+  flex:0 0 auto;min-height:48px;margin-bottom:clamp(8px,1.4svh,13px);
+}
+#app.compact-view .panel,
+#app.compact-view .profile-page{
+  flex:1 1 auto;min-height:0;max-height:100%;overflow:hidden;
+}
+#app.compact-view .panel{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(14px,2.4svh,21px);
+}
+#app.compact-view .profile-page{
+  display:flex;flex-direction:column;justify-content:space-evenly;
+  gap:clamp(4px,1svh,9px);
+}
+#app.compact-view .profile-hero{padding:clamp(4px,1svh,9px) 8px}
+#app.compact-view .profile-avatar{
+  width:clamp(54px,9svh,72px);height:clamp(54px,9svh,72px);
+  margin-bottom:clamp(5px,1svh,9px);border-radius:20px;
+}
+#app.compact-view .profile-name{font-size:clamp(17px,2.8svh,21px)}
+#app.compact-view .profile-handle{margin-top:3px;font-size:11px}
+#app.compact-view .profile-member-tag{margin-top:6px;padding:4px 9px}
+#app.compact-view .profile-balance{padding:clamp(10px,1.7svh,14px)}
+#app.compact-view .profile-balance-value{margin-top:4px;font-size:20px}
+#app.compact-view .profile-section-label{margin:2px 3px 0;font-size:9px}
+#app.compact-view .profile-menu-row{gap:9px;padding:clamp(8px,1.4svh,11px)}
+#app.compact-view .profile-menu-icon{
+  flex-basis:clamp(30px,5.5svh,36px);width:clamp(30px,5.5svh,36px);
+  height:clamp(30px,5.5svh,36px);font-size:17px;
+}
+#app.compact-view .profile-menu-copy{gap:2px}
+#app.compact-view .profile-menu-copy strong{font-size:12px}
+#app.compact-view .profile-menu-copy small{font-size:10px}
+#app.compact-view .profile-footer{padding:3px 0 0;font-size:9px}
+#app.compact-view .bottom-nav{flex:0 0 auto}
+#app.compact-view .panel .page-title{font-size:clamp(22px,4svh,29px)}
+#app.compact-view .panel h3{font-size:clamp(15px,2.6svh,18px)}
+#app.compact-view .panel .page-subtitle{font-size:clamp(11px,1.8svh,13px)}
+@media(max-height:700px){
+ #app.compact-view{padding-top:max(7px,env(safe-area-inset-top));padding-bottom:max(82px,calc(env(safe-area-inset-bottom) + 72px))}
+ #app.compact-view .app-header{min-height:42px;margin-bottom:6px}
+ #app.compact-view .profile-page{gap:3px}
+ #app.compact-view .profile-avatar{width:52px;height:52px}
+ #app.compact-view .profile-hero{padding:2px 6px}
+ #app.compact-view .profile-menu-row{padding:7px 9px}
+ #app.compact-view .panel{padding:12px}
+}
