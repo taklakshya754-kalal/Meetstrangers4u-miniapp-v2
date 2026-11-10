@@ -720,7 +720,7 @@ function showInsufficientCoinsPopup() {
   const modal = document.createElement("div");
   modal.id = "coin-shortage-modal";
   modal.className = "coin-modal-backdrop";
-  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You don\\'t have enough coins. Earn coins by watching ads.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\\'earn\\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
+  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You don\'t have enough coins. Earn coins by watching ads.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\'earn\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
   document.body.appendChild(modal);
 }
 
