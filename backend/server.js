@@ -197,19 +197,23 @@ function endSession(session, reason, notify = true) {
   }
 }
 async function activateSession(session) {
-  if (session.ended || session.active || session.ready.size !== 2) return;
+  if (session.ended || session.active || session.activating || session.ready.size !== 2) return;
+  session.activating = true;
   try {
     const balances = await debitBoth(session, session.fee);
     if (session.ended) return;
     session.active = true;
+    session.activating = false;
     session.startedAt = Date.now();
     for (const userId of session.userIds) {
       send(clients.get(userId), { type: "call-connected", sessionId: session.id, callType: session.kind, coins: balances[userId], fee: session.fee, perMinute: session.rate });
     }
     session.billingTimer = setInterval(async () => {
-      if (session.ended) return;
+      if (session.ended || session.billingInProgress) return;
+      session.billingInProgress = true;
       try {
         const nextBalances = await debitBoth(session, session.rate);
+        if (session.ended) return;
         session.billedMinutes += 1;
         for (const userId of session.userIds) {
           send(clients.get(userId), { type: "wallet-update", coins: nextBalances[userId] });
@@ -217,18 +221,24 @@ async function activateSession(session) {
         }
       } catch (err) {
         endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
+      } finally {
+        session.billingInProgress = false;
       }
     }, 60000);
   } catch (err) {
+    session.activating = false;
     endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
   }
 }
 async function beginSearch(ws, kind) {
   if (ws.sessionId || ws.searching) return;
+  ws.searching = "checking";
   const fee = feeFor(kind);
   const coins = await getCoins(ws.userId);
-  if (coins === null) { sendError(ws, "USER_NOT_FOUND", "Open the Telegram bot first, then try again."); return; }
+  if (ws.readyState !== WebSocket.OPEN || clients.get(ws.userId) !== ws || ws.searching !== "checking") return;
+  if (coins === null) { ws.searching = null; sendError(ws, "USER_NOT_FOUND", "Open the Telegram bot first, then try again."); return; }
   if (coins < fee) {
+    ws.searching = null;
     send(ws, { type: "insufficient-coins", coins, required: fee, message: "Insufficient coins. Watch ads and earn coins." });
     return;
   }
@@ -259,7 +269,8 @@ async function beginSearch(ws, kind) {
   const id = crypto.randomUUID();
   const session = {
     id, kind, userIds: [peer.userId, ws.userId], fee, rate: rateFor(kind),
-    ready: new Set(), active: false, ended: false, billedMinutes: 0,
+    ready: new Set(), active: false, activating: false, billingInProgress: false,
+    ended: false, billedMinutes: 0,
     connectTimer: null, billingTimer: null, startedAt: null
   };
   sessions.set(id, session);
