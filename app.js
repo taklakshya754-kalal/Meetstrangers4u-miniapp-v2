@@ -49,7 +49,7 @@ function header() {
       <div class="header-left">
         ${state.screen !== "home" ? '<button class="header-back" onclick="goBack()" aria-label="Go back"><span class="back-arrow">←</span><span>Back</span></button>' : ''}
         <div class="brand-lockup">
-          <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
+          
           <div class="brand-copy">
             <div class="brand-name">MeetStrangers<span>4u</span></div>
             <div class="brand-tagline">CHAT&nbsp; · &nbsp;CONNECT&nbsp; · &nbsp;EXPLORE</div>
@@ -120,7 +120,7 @@ function homeScreen() {
       <span class="premium-call-copy"><strong>Video Calling</strong><small>Meet people face to face around the world.</small></span>
       <span class="premium-call-arrow">→</span><span class="call-wave call-wave-purple"></span>
     </button>
-    <div style="height:30px"></div>
+    <div class="home-bottom-space"></div>
     ${bottomNav()}
   `;
 }
@@ -680,6 +680,9 @@ function sendInvitation() {
 // MAIN RENDER
 
 function render() {
+  const isHome = state.screen === "home";
+  app.classList.toggle("home-view", isHome);
+  document.body.classList.toggle("home-screen-active", isHome);
   const screens = {
     home: homeScreen,
     voice: voiceScreen,
