@@ -29,6 +29,20 @@ function icon(name) {
   return icons[name] || "•";
 }
 
+
+function visualIcon(name) {
+  const paths = {
+    game: '<path d="M6 11h4m-2-2v4m7-2h.01M18 9h.01M7 6h10a4 4 0 0 1 3.9 3.1l1 5A3 3 0 0 1 17 17l-2-2H9l-2 2a3 3 0 0 1-4.9-2.9l1-5A4 4 0 0 1 7 6Z"/>',
+    call: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 2.8a2 2 0 0 1-.6 1.8L7.1 10a16 16 0 0 0 6 6l1.7-1.9a2 2 0 0 1 1.8-.6l2.8.5a2 2 0 0 1 1.6 1.9Z"/>',
+    explore: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z"/>',
+    profile: '<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>',
+    phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 2.8a2 2 0 0 1-.6 1.8L7.1 10a16 16 0 0 0 6 6l1.7-1.9a2 2 0 0 1 1.8-.6l2.8.5a2 2 0 0 1 1.6 1.9Z"/>',
+    video: '<rect x="3" y="6" width="13" height="12" rx="3"/><path d="m16 10 5-3v10l-5-3"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'
+  };
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (paths[name] || '') + '</svg>';
+}
+
 function header() {
   return `
     <header class="app-header">
@@ -47,22 +61,22 @@ function bottomNav() {
 
       <button class="nav-item ${state.screen === "funzone" ? "active" : ""}"
         onclick="navigate('funzone')">
-        <span>🎮</span>Fun Zone
+        <span class="nav-symbol">${visualIcon("game")}</span>Fun Zone
       </button>
 
       <button class="nav-item ${["home", "voice", "video", "random", "matchmaking", "partner", "room"].includes(state.screen) ? "active" : ""}"
         onclick="navigate('home')">
-        <span>📞</span>Call
+        <span class="nav-symbol">${visualIcon("call")}</span>Call
       </button>
 
       <button class="nav-item ${state.screen === "explore" ? "active" : ""}"
         onclick="navigate('explore')">
-        <span>◈</span>Explore
+        <span class="nav-symbol">${visualIcon("explore")}</span>Explore
       </button>
 
       <button class="nav-item ${state.screen === "profile" ? "active" : ""}"
         onclick="navigate('profile')">
-        <span>👤</span>Profile
+        <span class="nav-symbol">${visualIcon("profile")}</span>Profile
       </button>
 
     </nav>
@@ -75,37 +89,32 @@ function bottomNav() {
 function homeScreen() {
   return `
     ${header()}
-
-    <section class="call-intro">
-      <p class="call-intro-label">YOUR CONNECTION SPACE</p>
-
-      <h1 class="page-title" style="margin-top:10px">
-        Connect & Discover
-      </h1>
-
-      <p class="page-subtitle">
-        Every connection starts with a hello.
-      </p>
+    <section class="call-intro premium-intro">
+      <div class="intro-copy">
+        <p class="call-intro-label">YOUR CONNECTION SPACE</p>
+        <h1 class="page-title" style="margin-top:10px">Connect & Discover</h1>
+        <p class="page-subtitle">Every connection starts with a hello.</p>
+        <div class="intro-tagline"><span class="intro-sparkle">✦</span><span>Meet people. Share stories. Explore cultures.</span></div>
+      </div>
+      <div class="intro-globe" aria-hidden="true">
+        <div class="globe-orbit globe-orbit-one"></div><div class="globe-orbit globe-orbit-two"></div>
+        <div class="globe-core">${visualIcon("globe")}</div>
+        <span class="globe-star star-one">✦</span><span class="globe-star star-two">·</span>
+      </div>
     </section>
-
-    <div class="call-spacer"></div>
-
-    <button class="call-card" onclick="navigate('voice')">
-      <div class="call-card-label">📞</div>
-      <h3>Voice Calling</h3>
-      <p>Connect through voice with people worldwide.</p>
+    <div class="call-spacer premium-gap"></div>
+    <button class="call-card premium-call-card" onclick="navigate('voice')">
+      <span class="premium-call-icon">${visualIcon("phone")}</span><span class="premium-call-divider"></span>
+      <span class="premium-call-copy"><strong>Voice Calling</strong><small>Connect through voice with people worldwide.</small></span>
+      <span class="premium-call-arrow">→</span><span class="call-wave call-wave-blue"></span>
     </button>
-
-    <div class="call-spacer"></div>
-
-    <button class="call-card partner" onclick="navigate('video')">
-      <div class="call-card-label">🎥</div>
-      <h3>Video Calling</h3>
-      <p>Meet people face to face around the world.</p>
+    <div class="call-spacer premium-gap"></div>
+    <button class="call-card partner premium-call-card premium-video-card" onclick="navigate('video')">
+      <span class="premium-call-icon">${visualIcon("video")}</span><span class="premium-call-divider"></span>
+      <span class="premium-call-copy"><strong>Video Calling</strong><small>Meet people face to face around the world.</small></span>
+      <span class="premium-call-arrow">→</span><span class="call-wave call-wave-purple"></span>
     </button>
-
-    <div style="height:26px"></div>
-
+    <div style="height:30px"></div>
     ${bottomNav()}
   `;
 }
