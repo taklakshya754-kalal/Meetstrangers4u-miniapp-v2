@@ -289,26 +289,30 @@ function partnerScreen() {
 function voiceScreen() {
   return `
     ${header()}
-    <section class="panel call-options-panel">
+    <section class="panel call-options-panel compact-call-options">
       <div class="call-screen-heading">
         <div class="call-screen-icon voice-icon">${visualIcon("phone")}</div>
-        <p class="call-card-label">VOICE CONNECTION</p>
-        <h1 class="page-title">Voice Call</h1>
-        <p class="page-subtitle">Meet someone new through a private one-to-one voice conversation.</p>
+        <h1 class="page-title">Voice</h1>
+        <p class="page-subtitle">Connect through voice, anywhere.</p>
       </div>
-      <div class="call-pricing-card voice-pricing">
-        <div><span class="pricing-label">CONNECTION FEE</span><strong>💰 10 Coins</strong></div>
-        <div class="pricing-divider"></div>
-        <div><span class="pricing-label">AFTER THE FIRST MINUTE</span><strong>+5 Coins / min</strong></div>
+      <div class="compact-call-pricing voice-pricing">
+        <div class="compact-pricing-main">
+          <strong>10 Coins <span>Call Fee</span></strong>
+          <strong>+5 Coins / Min</strong>
+        </div>
+        <small>After 1 min</small>
       </div>
-      <p class="pricing-caption">The connection fee is charged only after a successful match. Extra minutes are billed for each completed minute.</p>
       <button class="call-option-card voice-option" onclick="startRandomCall('Voice')">
         <span class="call-option-icon">${visualIcon("globe")}</span>
-        <span class="call-option-copy"><small>MEET SOMEONE NEW</small><strong>Random Voice Call</strong><em>Get matched with one person worldwide.</em></span>
-        <span class="call-option-arrow">→</span>
+        <span class="call-option-copy"><strong>Random Call</strong><em>Meet someone new worldwide.</em></span>
+        <span class="call-option-arrow">›</span>
       </button>
-      <p class="call-safety-note">🔒 Private one-to-one connection · No public rooms</p>
-      <div class="call-back-row"><button class="secondary-button" onclick="navigate('home')">← Back to Call Options</button></div>
+      <button class="call-option-card voice-option partner-option" onclick="openPartnerCall('Voice')">
+        <span class="call-option-icon">${visualIcon("profile")}</span>
+        <span class="call-option-copy"><strong>Partner Call</strong><em>Connect using your partner's ID.</em></span>
+        <span class="call-option-arrow">›</span>
+      </button>
+      <div class="call-options-bottom-space"></div>
     </section>
     ${bottomNav()}
   `;
@@ -318,26 +322,30 @@ function voiceScreen() {
 function videoScreen() {
   return `
     ${header()}
-    <section class="panel call-options-panel">
+    <section class="panel call-options-panel compact-call-options">
       <div class="call-screen-heading">
         <div class="call-screen-icon video-icon">${visualIcon("video")}</div>
-        <p class="call-card-label">VIDEO CONNECTION</p>
-        <h1 class="page-title">Video Call</h1>
-        <p class="page-subtitle">See and connect face-to-face in a private one-to-one video conversation.</p>
+        <h1 class="page-title">Video</h1>
+        <p class="page-subtitle">Meet face-to-face around the world.</p>
       </div>
-      <div class="call-pricing-card video-pricing">
-        <div><span class="pricing-label">CONNECTION FEE</span><strong>💰 20 Coins</strong></div>
-        <div class="pricing-divider"></div>
-        <div><span class="pricing-label">AFTER THE FIRST MINUTE</span><strong>+10 Coins / min</strong></div>
+      <div class="compact-call-pricing video-pricing">
+        <div class="compact-pricing-main">
+          <strong>20 Coins <span>Call Fee</span></strong>
+          <strong>+10 Coins / Min</strong>
+        </div>
+        <small>After 1 min</small>
       </div>
-      <p class="pricing-caption">The connection fee is charged only after a successful match. Extra minutes are billed for each completed minute.</p>
       <button class="call-option-card video-option" onclick="startRandomCall('Video')">
         <span class="call-option-icon">${visualIcon("globe")}</span>
-        <span class="call-option-copy"><small>MEET SOMEONE NEW</small><strong>Random Video Call</strong><em>Get matched face-to-face with one person.</em></span>
-        <span class="call-option-arrow">→</span>
+        <span class="call-option-copy"><strong>Random Call</strong><em>Meet someone new worldwide.</em></span>
+        <span class="call-option-arrow">›</span>
       </button>
-      <p class="call-safety-note">🔒 Private one-to-one connection · Camera access required</p>
-      <div class="call-back-row"><button class="secondary-button" onclick="navigate('home')">← Back to Call Options</button></div>
+      <button class="call-option-card video-option partner-option" onclick="openPartnerCall('Video')">
+        <span class="call-option-icon">${visualIcon("profile")}</span>
+        <span class="call-option-copy"><strong>Partner Call</strong><em>Connect using your partner's ID.</em></span>
+        <span class="call-option-arrow">›</span>
+      </button>
+      <div class="call-options-bottom-space"></div>
     </section>
     ${bottomNav()}
   `;
@@ -636,6 +644,11 @@ function goBack() {
   render();
 }
 
+
+function openPartnerCall(type) {
+  state.call.type = type === "Video" ? "Video" : "Voice";
+  navigate("partner");
+}
 
 // SEARCH ACTIONS
 
