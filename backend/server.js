@@ -194,8 +194,11 @@ async function getCoins(userId) {
 }
 async function debitBoth(session, amount) {
   const db = await pool.connect();
+  let transactionStarted = false;
   try {
     await db.query("BEGIN");
+    transactionStarted = true;
+    const balances = {};
     for (const userId of session.userIds) {
       const r = await db.query(
         "UPDATE public.users SET coins = coins - $1 WHERE user_id = $2 AND coins >= $1 RETURNING coins",
@@ -204,25 +207,62 @@ async function debitBoth(session, amount) {
       if (!r.rowCount) {
         const e = new Error("INSUFFICIENT_BALANCE"); e.code = "INSUFFICIENT_BALANCE"; throw e;
       }
-    }
-    await db.query("COMMIT");
-    const balances = {};
-    for (const userId of session.userIds) {
-      const r = await db.query("SELECT coins FROM public.users WHERE user_id=$1", [userId]);
       balances[userId] = Number(r.rows[0].coins);
     }
+    await db.query("COMMIT");
+    transactionStarted = false;
     return balances;
   } catch (err) {
-    await db.query("ROLLBACK");
+    if (transactionStarted) {
+      try { await db.query("ROLLBACK"); } catch (rollbackError) {
+        console.error("Wallet rollback failed:", rollbackError.message);
+      }
+    }
     throw err;
   } finally {
     db.release();
   }
 }
-function endSession(session, reason, notify = true) {
+async function debitOne(userId, amount) {
+  const r = await pool.query(
+    "UPDATE public.users SET coins = coins - $1 WHERE user_id = $2 AND coins >= $1 RETURNING coins",
+    [amount, userId]
+  );
+  if (!r.rowCount) {
+    const e = new Error("INSUFFICIENT_BALANCE"); e.code = "INSUFFICIENT_BALANCE"; throw e;
+  }
+  return Number(r.rows[0].coins);
+}
+async function settleConnectionFee(session) {
+  if (session.ended || session.feeSettlementStarted || session.feeSettled) return;
+  session.feeGraceExpired = true;
+  session.feeSettlementStarted = true;
+  try {
+    const balances = await debitBoth(session, session.fee);
+    session.feeSettled = true;
+    for (const userId of session.userIds) {
+      send(clients.get(userId), { type: "wallet-update", coins: balances[userId] });
+    }
+  } catch (err) {
+    endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
+  }
+}
+function endSession(session, reason, notify = true, disconnectedUserId = null) {
   if (!session || session.ended) return;
+
+  const elapsed = session.startedAt ? Date.now() - session.startedAt : 0;
+  if (session.active && !session.feeSettled && !session.feeSettlementStarted && elapsed >= 2000) {
+    // The grace period has elapsed: both users owe the normal connection fee.
+    settleConnectionFee(session);
+  }
+  const chargeDisconnectingUserOnly =
+    session.active && !session.feeSettled && !session.feeSettlementStarted &&
+    elapsed < 2000 && disconnectedUserId && session.userIds.includes(disconnectedUserId);
+
   session.ended = true;
   clearTimeout(session.connectTimer);
+  clearTimeout(session.feeTimer);
+  clearTimeout(session.billingTimer);
   clearInterval(session.billingTimer);
   sessions.delete(session.id);
   for (const userId of session.userIds) {
@@ -230,40 +270,51 @@ function endSession(session, reason, notify = true) {
     if (notify && ws) send(ws, { type: "call-ended", sessionId: session.id, reason });
     if (ws) ws.sessionId = null;
   }
+
+  if (chargeDisconnectingUserOnly) {
+    debitOne(disconnectedUserId, session.fee).then(coins => {
+      send(clients.get(disconnectedUserId), { type: "wallet-update", coins });
+    }).catch(err => {
+      console.error("Early disconnect fee failed:", err.message);
+    });
+  }
+}
+async function billMinute(session) {
+  if (session.ended || session.billingInProgress) return;
+  session.billingInProgress = true;
+  try {
+    const balances = await debitBoth(session, session.rate);
+    session.billedMinutes += 1;
+    for (const userId of session.userIds) {
+      send(clients.get(userId), { type: "wallet-update", coins: balances[userId] });
+      send(clients.get(userId), { type: "minute-billed", minutes: session.billedMinutes, amount: session.rate });
+    }
+  } catch (err) {
+    endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
+  } finally {
+    session.billingInProgress = false;
+  }
 }
 async function activateSession(session) {
   if (session.ended || session.active || session.activating || session.ready.size !== 2) return;
   session.activating = true;
-  try {
-    const balances = await debitBoth(session, session.fee);
-    if (session.ended) return;
-    session.active = true;
-    session.activating = false;
-    session.startedAt = Date.now();
-    for (const userId of session.userIds) {
-      send(clients.get(userId), { type: "call-connected", sessionId: session.id, callType: session.kind, coins: balances[userId], fee: session.fee, perMinute: session.rate });
-    }
-    session.billingTimer = setInterval(async () => {
-      if (session.ended || session.billingInProgress) return;
-      session.billingInProgress = true;
-      try {
-        const nextBalances = await debitBoth(session, session.rate);
-        if (session.ended) return;
-        session.billedMinutes += 1;
-        for (const userId of session.userIds) {
-          send(clients.get(userId), { type: "wallet-update", coins: nextBalances[userId] });
-          send(clients.get(userId), { type: "minute-billed", minutes: session.billedMinutes, amount: session.rate });
-        }
-      } catch (err) {
-        endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
-      } finally {
-        session.billingInProgress = false;
-      }
-    }, 60000);
-  } catch (err) {
-    session.activating = false;
-    endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
+  session.active = true;
+  session.activating = false;
+  session.startedAt = Date.now();
+  for (const userId of session.userIds) {
+    send(clients.get(userId), {
+      type: "call-connected", sessionId: session.id,
+      callType: session.kind, fee: session.fee, perMinute: session.rate
+    });
   }
+  session.feeTimer = setTimeout(() => {
+    settleConnectionFee(session);
+  }, 2000);
+  // Keep the first minute charge anchored to the actual connection time.
+  session.billingTimer = setTimeout(() => {
+    billMinute(session);
+    if (!session.ended) session.billingTimer = setInterval(() => billMinute(session), 60000);
+  }, 60000);
 }
 async function beginSearch(ws, kind) {
   if (ws.sessionId || ws.searching) return;
@@ -312,7 +363,8 @@ async function beginSearch(ws, kind) {
     id, kind, userIds: [peer.userId, ws.userId], fee, rate: rateFor(kind),
     ready: new Set(), active: false, activating: false, billingInProgress: false,
     ended: false, billedMinutes: 0,
-    connectTimer: null, billingTimer: null, startedAt: null
+    connectTimer: null, feeTimer: null, billingTimer: null, startedAt: null,
+    feeGraceExpired: false, feeSettlementStarted: false, feeSettled: false
   };
   sessions.set(id, session);
   peer.sessionId = id; ws.sessionId = id;
@@ -323,7 +375,7 @@ wss.on("connection", ws => {
   const previous = clients.get(ws.userId);
   if (previous && previous !== ws) {
     queueRemove(previous);
-    if (previous.sessionId) endSession(sessions.get(previous.sessionId), "reconnected");
+    if (previous.sessionId) endSession(sessions.get(previous.sessionId), "reconnected", true, previous.userId);
     previous.close(4001, "Replaced by a newer connection");
   }
   clients.set(ws.userId, ws);
@@ -360,7 +412,7 @@ wss.on("connection", ws => {
       }
       if (msg.type === "end-call") {
         const session = sessions.get(ws.sessionId);
-        if (session && session.userIds.includes(ws.userId)) endSession(session, "ended-by-user");
+        if (session && session.userIds.includes(ws.userId)) endSession(session, "ended-by-user", true, ws.userId);
         return;
       }
       sendError(ws, "UNKNOWN_MESSAGE", "Unsupported action.");
@@ -373,7 +425,7 @@ wss.on("connection", ws => {
   ws.on("close", () => {
     queueRemove(ws);
     if (ws.searching) ws.searching = null;
-    if (ws.sessionId) endSession(sessions.get(ws.sessionId), "connection-lost");
+    if (ws.sessionId) endSession(sessions.get(ws.sessionId), "connection-lost", true, ws.userId);
     if (clients.get(ws.userId) === ws) clients.delete(ws.userId);
   });
   ws.on("error", err => console.error("WebSocket error:", err.message));
