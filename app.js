@@ -831,13 +831,8 @@ async function preparePeerConnection(peerId, iceServers) {
 
     const pc = new RTCPeerConnection({ iceServers, iceTransportPolicy: "all" });
     peerConnection = pc;
-    localMediaStream.getTracks().forEach(track => pc.addTrack(track, localMediaStream));
-    if (pendingOffer) {
-      const offer = pendingOffer;
-      pendingOffer = null;
-      await receiveOffer(offer);
-    }
 
+    // Attach every handler before applying a queued remote offer or creating SDP.
     pc.ontrack = event => {
       const incoming = event.streams?.[0];
       const tracks = incoming ? incoming.getTracks() : [event.track];
@@ -858,6 +853,14 @@ async function preparePeerConnection(peerId, iceServers) {
         requestEndCall();
       }
     };
+
+    localMediaStream.getTracks().forEach(track => pc.addTrack(track, localMediaStream));
+
+    if (pendingOffer) {
+      const offer = pendingOffer;
+      pendingOffer = null;
+      await receiveOffer(offer);
+    }
 
     const ownId = String(state.account?.user_id || tg?.initDataUnsafe?.user?.id || "");
     if (ownId.localeCompare(String(peerId), undefined, { numeric: true }) < 0) {
