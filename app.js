@@ -663,7 +663,11 @@ function render() {
     matchmaking: matchmakingScreen,
     partner: partnerScreen,
     funzone: funZoneScreen,
-    profile: profileScreen
+    profile: profileScreen,
+    earn: earnCoinsScreen,
+    wallet: walletScreen,
+    privacy: () => profileInfoScreen("privacy"),
+    about: () => profileInfoScreen("about")
   };
 
   app.innerHTML = (screens[state.screen] || homeScreen)();
