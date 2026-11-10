@@ -330,8 +330,8 @@ function videoScreen() {
       </div>
       <div class="compact-call-pricing video-pricing">
         <div class="compact-pricing-main">
-          <strong>10 Coins <span>Call Fee</span></strong>
-          <strong>+5 Coins / Min</strong>
+          <strong>20 Coins <span>Call Fee</span></strong>
+          <strong>+10 Coins / Min</strong>
         </div>
         <small>After 1 min</small>
       </div>
