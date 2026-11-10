@@ -659,6 +659,14 @@ function startRandomCall(callType) {
 
   state.history.push(state.screen);
   state.call = { type, status: "unavailable", sessionId: null, startedAt: null };
+
+  // A calling backend can handle this event and call onCallSearching().
+  const request = new CustomEvent("meetstrangers4u:start-random-call", {
+    detail: { type, mode: "random" },
+    cancelable: true
+  });
+  const backendReady = !window.dispatchEvent(request);
+  state.call.status = backendReady ? "searching" : "unavailable";
   state.screen = "call";
   render();
 }
@@ -704,15 +712,25 @@ function stopCallClock() {
 }
 
 function cancelRandomCall() {
-  // The real integration must also cancel the server-side matchmaking request.
+  const request = new CustomEvent("meetstrangers4u:cancel-search-request", {
+    detail: { sessionId: state.call.sessionId },
+    cancelable: true
+  });
+  window.dispatchEvent(request);
   state.call.status = "ended";
   state.screen = state.call.type === "Video" ? "video" : "voice";
   render();
 }
 
 function requestEndCall() {
-  // The real integration must end the peer connection and notify the billing server.
-  alert("Call controls will be activated when the calling service is connected.");
+  const request = new CustomEvent("meetstrangers4u:end-call-request", {
+    detail: { sessionId: state.call.sessionId },
+    cancelable: true
+  });
+  const backendReady = !window.dispatchEvent(request);
+  if (!backendReady) {
+    alert("The calling service is not connected yet. Your call has not been ended by the server.");
+  }
 }
 
 function showInsufficientCoinsPopup() {
