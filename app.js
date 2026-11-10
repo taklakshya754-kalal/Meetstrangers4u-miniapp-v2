@@ -33,7 +33,7 @@ function header() {
   return `
     <header class="app-header">
       <div class="header-left">
-        ${state.screen !== "home" ? '<button class="header-back" onclick="goBack()" aria-label="Go back">← <span>Back</span></button>' : ''}
+        ${state.screen !== "home" ? '<button class="header-back" onclick="goBack()" aria-label="Go back"><span class="back-arrow">←</span><span>Back</span></button>' : ''}
         <div class="brand-name">MeetStrangers4u</div>
       </div>
       <div class="coin-pill">💰 200</div>
