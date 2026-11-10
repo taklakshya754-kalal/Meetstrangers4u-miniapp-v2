@@ -11,7 +11,8 @@ const app = document.getElementById("app");
 const state = {
   screen: "home",
   history: [],
-  user: tg?.initDataUnsafe?.user || null
+  user: tg?.initDataUnsafe?.user || null,
+  coins: 200
 };
 
 function icon(name) {
@@ -56,7 +57,7 @@ function header() {
           </div>
         </div>
       </div>
-      <div class="coin-pill"><span>💰 200</span><span class="coin-add">+</span></div>
+      <div class="coin-pill"><span>💰 ${state.coins}</span><span class="coin-add">+</span></div>
     </header>
   `;
 }
@@ -297,7 +298,7 @@ function voiceScreen() {
         Choose how you want to connect.
       </p>
 
-      <div style="height:22px"></div>
+      <div class="call-cost-note">💰 10 Coins per Call</div>
 
       <div class="call-card">
 
@@ -314,7 +315,7 @@ function voiceScreen() {
         <div style="height:14px"></div>
 
         <button class="primary-button"
-          onclick="alert('Voice matchmaking will be connected next.')">
+          onclick="startRandomCall('Voice')">
 
           Start Random Call
 
@@ -372,7 +373,7 @@ function videoScreen() {
         See and connect with someone face-to-face.
       </p>
 
-      <div style="height:22px"></div>
+      <div class="call-cost-note">💰 10 Coins per Call</div>
 
       <div class="call-card">
 
@@ -389,7 +390,7 @@ function videoScreen() {
         <div style="height:14px"></div>
 
         <button class="primary-button"
-          onclick="alert('Video matchmaking will be connected next.')">
+          onclick="startRandomCall('Video')">
 
           Start Random Video Call
 
@@ -531,7 +532,7 @@ function profileScreen() {
       <div class="profile-balance">
         <div>
           <p class="profile-eyebrow">YOUR COIN BALANCE</p>
-          <div class="profile-balance-value">💰 200</div>
+          <div class="profile-balance-value">💰 ${state.coins}</div>
         </div>
         <button class="wallet-button" onclick="navigate('wallet')">Wallet <span>→</span></button>
       </div>
@@ -597,7 +598,7 @@ function walletScreen() {
       <button class="profile-back" onclick="navigate('profile')">← Back to Profile</button>
       <p class="profile-eyebrow">YOUR BALANCE</p>
       <h1 class="page-title">Coin Wallet</h1>
-      <div class="wallet-total">💰 200 <small>Coins</small></div>
+      <div class="wallet-total">💰 ${state.coins} <small>Coins</small></div>
       <p class="page-subtitle">Your coin activity will appear here.</p>
     </section>
     ${bottomNav()}
@@ -657,6 +658,30 @@ function startSearch() {
 
 function cancelSearch() {
   navigate("home");
+}
+
+// RANDOM CALL COIN CHECK
+function startRandomCall(callType) {
+  if (state.coins < 10) {
+    showInsufficientCoinsPopup();
+    return;
+  }
+  // Charge only after the server confirms a successful call connection.
+  // The call backend is not connected yet, so this prototype does not deduct coins.
+  alert(callType + " random calling is not connected yet. Your coins have not been deducted.");
+}
+
+function showInsufficientCoinsPopup() {
+  document.getElementById("coin-shortage-modal")?.remove();
+  const modal = document.createElement("div");
+  modal.id = "coin-shortage-modal";
+  modal.className = "coin-modal-backdrop";
+  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You don\'t have enough coins. Earn coins by watching ads.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\'earn\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
+  document.body.appendChild(modal);
+}
+
+function closeCoinPopup() {
+  document.getElementById("coin-shortage-modal")?.remove();
 }
 
 
