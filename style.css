@@ -331,3 +331,10 @@ input:focus {
 .wallet-total { margin-top:20px; padding:25px 10px; text-align:center; border-radius:16px; background:linear-gradient(120deg,#202F50,#292343); font-size:30px; font-weight:800; }
 .wallet-total small { color:var(--muted); font-size:12px; font-weight:600; }
 .profile-info-symbol { margin:10px 0 18px; color:#C4A5FF; font-size:36px; text-align:center; }
+
+
+/* Compact global back control */
+.header-left { display:flex; align-items:center; gap:10px; min-width:0; }
+.header-back { display:inline-flex; align-items:center; gap:4px; padding:5px 7px 5px 0; color:#C4A5FF; background:transparent; font-size:13px; font-weight:650; white-space:nowrap; }
+.header-back span { font-size:11px; font-weight:600; }
+.header-back:active { opacity:.65; }
