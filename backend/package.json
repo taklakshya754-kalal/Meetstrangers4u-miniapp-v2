@@ -1,0 +1,18 @@
+{
+  "name": "meetstrangers4u-calling-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authenticated matchmaking, WebRTC signaling and wallet billing service for MeetStrangers4u",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  }
+}
