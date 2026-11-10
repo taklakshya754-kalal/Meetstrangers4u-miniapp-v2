@@ -826,7 +826,7 @@ async function preparePeerConnection(peerId, iceServers) {
     const isVideo = state.call.type === "Video";
     localMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
     remoteMediaStream = new MediaStream();
-    pendingIceCandidates = [];
+    // Keep candidates received while microphone/camera permission was pending.
     mediaReadySent = false;
 
     const pc = new RTCPeerConnection({ iceServers, iceTransportPolicy: "all" });
