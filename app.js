@@ -48,9 +48,15 @@ function header() {
     <header class="app-header">
       <div class="header-left">
         ${state.screen !== "home" ? '<button class="header-back" onclick="goBack()" aria-label="Go back"><span class="back-arrow">←</span><span>Back</span></button>' : ''}
-        <div class="brand-name">MeetStrangers4u</div>
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
+          <div class="brand-copy">
+            <div class="brand-name">MeetStrangers<span>4u</span></div>
+            <div class="brand-tagline">CHAT&nbsp; · &nbsp;CONNECT&nbsp; · &nbsp;EXPLORE</div>
+          </div>
+        </div>
       </div>
-      <div class="coin-pill">💰 200</div>
+      <div class="coin-pill"><span>💰 200</span><span class="coin-add">+</span></div>
     </header>
   `;
 }
