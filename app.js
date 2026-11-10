@@ -12,9 +12,19 @@ const state = {
   screen: "home",
   history: [],
   user: tg?.initDataUnsafe?.user || null,
-  coins: 200,
-  call: { type: null, status: "idle", sessionId: null, startedAt: null }
+  account: null,
+  coins: 0,
+  call: { type: null, status: "idle", sessionId: null, startedAt: null, message: "" }
 };
+
+const CALL_API = "https://call.lxreward.xyz";
+let callSocket = null;
+let peerConnection = null;
+let localMediaStream = null;
+let remoteMediaStream = null;
+let pendingIceCandidates = [];
+let mediaReadySent = false;
+let accountLoaded = false;
 
 function icon(name) {
   const icons = {
@@ -360,14 +370,15 @@ function callFlowScreen() {
   const rate = isVideo ? 10 : 5;
   const iconMarkup = isVideo ? visualIcon("video") : visualIcon("phone");
 
-  if (status === "searching") {
+  if (status === "searching" || status === "connecting") {
+    const connecting = status === "connecting";
     return `
       ${header()}
       <section class="panel call-flow-panel">
         <div class="call-flow-orbit">${iconMarkup}</div>
         <p class="call-flow-eyebrow">${type.toUpperCase()} MATCHMAKING</p>
-        <h1 class="page-title">Finding Your Partner</h1>
-        <p class="page-subtitle">Searching for one available person around the world.</p>
+        <h1 class="page-title">${connecting ? "Connecting Your Call" : "Finding Your Partner"}</h1>
+        <p class="page-subtitle">${connecting ? "A partner has been found. Preparing your secure connection." : "Searching for one available person around the world."}</p>
         <div class="matching-status"><span class="matching-pulse"></span> Waiting for a match</div>
         <div class="match-slots">
           <div class="match-slot"><div class="match-avatar you-avatar">You</div><strong>You</strong><small>Ready to connect</small></div>
@@ -387,7 +398,8 @@ function callFlowScreen() {
       <section class="active-call-screen ${isVideo ? "active-video-call" : "active-voice-call"}">
         <div class="active-call-top"><span class="live-indicator"></span> LIVE ${type.toUpperCase()} CALL <span class="call-encrypted">🔒 PRIVATE</span></div>
         <div class="call-partner-stage">
-          ${isVideo ? '<div class="video-stage-placeholder"><div class="stage-avatar">M</div><span>Partner video stream will appear here</span></div>' : '<div class="voice-avatar-ring"><div class="voice-avatar">M</div><span class="voice-wave"></span></div>'}
+          ${isVideo ? '<div class="video-stage-placeholder"><video id="remote-video" autoplay playsinline></video></div>' : '<div class="voice-avatar-ring"><div class="voice-avatar">M</div><span class="voice-wave"></span></div>'}
+          <audio id="remote-audio" autoplay playsinline></audio>
           <h2>Connected</h2>
           <p>Your partner is here. Say hello!</p>
           <div class="call-duration" id="call-duration">00:00</div>
@@ -406,9 +418,10 @@ function callFlowScreen() {
       <section class="panel call-flow-panel call-ended-panel">
         <div class="call-ended-icon">✓</div>
         <p class="call-flow-eyebrow">CONNECTION CLOSED</p>
-        <h1 class="page-title">Call Ended</h1>
+        <h1 class="page-title">${state.call.message || "Call Ended"}</h1>
         <p class="page-subtitle">Your call session has ended.</p>
-        <button class="primary-button" onclick="navigate('${isVideo ? "video" : "voice"}')">Back to ${type} Calls</button>
+        <button class="primary-button" onclick="startRandomCall('${type}')">Search Again</button>
+        <button class="secondary-button" onclick="navigate('${isVideo ? "video" : "voice"}')">Back to ${type} Calls</button>
       </section>
       ${bottomNav()}
     `;
@@ -504,9 +517,8 @@ function funZoneScreen() {
 
 function profileScreen() {
   const user = state.user;
-  const displayName = user
-    ? [user.first_name, user.last_name].filter(Boolean).join(" ")
-    : "Guest";
+  const displayName = state.account?.custom_name?.trim()
+    || (user ? [user.first_name, user.last_name].filter(Boolean).join(" ") : "Guest");
   const username = user?.username ? "@" + user.username : "MeetStrangers4u Member";
   const initials = displayName.split(" ").filter(Boolean).slice(0,2).map(part => part[0]).join("").toUpperCase() || "M";
   const avatar = user?.photo_url
@@ -660,50 +672,240 @@ function cancelSearch() {
   navigate("home");
 }
 
-// RANDOM CALL FLOW
-function startRandomCall(callType) {
+// RANDOM CALL FLOW — authenticated API + WebRTC signaling.
+async function loadAccount() {
+  if (!tg?.initData) throw new Error("Please open MeetStrangers4u from Telegram.");
+  const response = await fetch(CALL_API + "/api/me", {
+    headers: { "X-Telegram-Init-Data": tg.initData },
+    cache: "no-store"
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || "Unable to load your account.");
+  state.account = data.user;
+  state.coins = Number(data.user.coins || 0);
+  accountLoaded = true;
+  render();
+  return data.user;
+}
+
+function sendCallMessage(payload) {
+  if (callSocket?.readyState === WebSocket.OPEN) {
+    callSocket.send(JSON.stringify(payload));
+    return true;
+  }
+  return false;
+}
+
+async function startRandomCall(callType) {
   const type = callType === "Video" ? "Video" : "Voice";
   const connectionFee = type === "Video" ? 20 : 10;
+  if (["searching", "connecting", "connected"].includes(state.call.status)) return;
 
+  try {
+    if (!accountLoaded) await loadAccount();
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
   if (state.coins < connectionFee) {
     showInsufficientCoinsPopup();
     return;
   }
+  if (!tg?.initData) {
+    alert("Please open MeetStrangers4u from Telegram to start calling.");
+    return;
+  }
 
+  cleanupCallResources();
+  state.call = { type, status: "searching", sessionId: null, startedAt: null, message: "" };
   state.history.push(state.screen);
-  state.call = { type, status: "unavailable", sessionId: null, startedAt: null };
-
-  // A calling backend can handle this event and call onCallSearching().
-  const request = new CustomEvent("meetstrangers4u:start-random-call", {
-    detail: { type, mode: "random" },
-    cancelable: true
-  });
-  const backendReady = !window.dispatchEvent(request);
-  state.call.status = backendReady ? "searching" : "unavailable";
   state.screen = "call";
   render();
+
+  try {
+    const turnResponse = await fetch(CALL_API + "/api/turn-credentials", {
+      headers: { "X-Telegram-Init-Data": tg.initData },
+      cache: "no-store"
+    });
+    const turnData = await turnResponse.json().catch(() => ({}));
+    if (!turnResponse.ok) throw new Error(turnData.message || "Unable to prepare secure calling.");
+
+    const ws = new WebSocket("wss://call.lxreward.xyz/ws?initData=" + encodeURIComponent(tg.initData));
+    callSocket = ws;
+    ws.onopen = () => {
+      if (callSocket === ws) ws.send(JSON.stringify({ type: "find", callType: type.toLowerCase() }));
+    };
+    ws.onmessage = event => {
+      if (callSocket !== ws) return;
+      let message;
+      try { message = JSON.parse(event.data); } catch (_) { return; }
+      handleCallServerMessage(message, turnData.iceServers || []);
+    };
+    ws.onerror = () => {
+      if (callSocket === ws) finishCall("Unable to connect to the calling service. Please try again.");
+    };
+    ws.onclose = () => {
+      if (callSocket === ws && state.call.status !== "ended") {
+        finishCall("Calling connection was interrupted. Please try again.");
+      }
+    };
+  } catch (err) {
+    finishCall(err.message || "Unable to start calling. Please try again.");
+  }
 }
 
-// These callbacks are the integration points for the future calling backend.
-// The backend must confirm the match and handle all coin billing securely.
+async function handleCallServerMessage(message, iceServers) {
+  switch (message.type) {
+    case "ready":
+      break;
+    case "searching":
+      state.call.status = "searching";
+      render();
+      break;
+    case "matched":
+      state.call.sessionId = message.sessionId;
+      state.call.status = "connecting";
+      render();
+      await preparePeerConnection(message.peerId, iceServers);
+      break;
+    case "offer":
+      await receiveOffer(message.data);
+      break;
+    case "answer":
+      if (peerConnection) {
+        await peerConnection.setRemoteDescription(message.data);
+        await flushPendingIceCandidates();
+      }
+      break;
+    case "ice-candidate":
+      if (message.data && peerConnection) {
+        if (peerConnection.remoteDescription) await peerConnection.addIceCandidate(message.data);
+        else pendingIceCandidates.push(message.data);
+      }
+      break;
+    case "call-connected":
+      state.coins = Number(message.coins ?? state.coins);
+      onCallConnected({ type: message.callType === "video" ? "Video" : "Voice", sessionId: message.sessionId });
+      break;
+    case "wallet-update":
+      state.coins = Number(message.coins);
+      render();
+      break;
+    case "minute-billed":
+      break;
+    case "insufficient-coins":
+      state.coins = Number(message.coins ?? state.coins);
+      finishCall("Not enough coins to start this call.");
+      showInsufficientCoinsPopup();
+      break;
+    case "search-timeout":
+      finishCall(message.message || "No users are available right now. Please try again after some time.");
+      break;
+    case "call-ended":
+      finishCall(message.reason === "insufficient-coins"
+        ? "Not enough coins to continue this call."
+        : message.reason === "connection-timeout"
+          ? "Could not establish a connection. Please try again."
+          : "Call Ended");
+      break;
+    case "error":
+      finishCall(message.message || "The calling service encountered an error.");
+      break;
+  }
+}
+
+async function preparePeerConnection(peerId, iceServers) {
+  try {
+    const isVideo = state.call.type === "Video";
+    localMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+    remoteMediaStream = new MediaStream();
+    pendingIceCandidates = [];
+    mediaReadySent = false;
+
+    const pc = new RTCPeerConnection({ iceServers, iceTransportPolicy: "all" });
+    peerConnection = pc;
+    localMediaStream.getTracks().forEach(track => pc.addTrack(track, localMediaStream));
+
+    pc.ontrack = event => {
+      const incoming = event.streams?.[0];
+      const tracks = incoming ? incoming.getTracks() : [event.track];
+      tracks.forEach(track => {
+        if (!remoteMediaStream.getTracks().some(existing => existing.id === track.id)) {
+          remoteMediaStream.addTrack(track);
+        }
+      });
+      attachRemoteMedia();
+      maybeSendMediaReady();
+    };
+    pc.onicecandidate = event => {
+      if (event.candidate) sendCallMessage({ type: "ice-candidate", data: event.candidate });
+    };
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "connected") maybeSendMediaReady();
+      if (["failed", "closed"].includes(pc.connectionState) && state.call.status === "connected") {
+        requestEndCall();
+      }
+    };
+
+    const ownId = String(state.account?.user_id || tg?.initDataUnsafe?.user?.id || "");
+    if (ownId.localeCompare(String(peerId), undefined, { numeric: true }) < 0) {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      sendCallMessage({ type: "offer", data: pc.localDescription });
+    }
+  } catch (err) {
+    console.error("Call media setup failed:", err);
+    sendCallMessage({ type: "end-call" });
+    finishCall("Microphone or camera access is unavailable. Please allow permission and try again.");
+  }
+}
+
+async function receiveOffer(offer) {
+  if (!peerConnection) return;
+  await peerConnection.setRemoteDescription(offer);
+  await flushPendingIceCandidates();
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  sendCallMessage({ type: "answer", data: peerConnection.localDescription });
+}
+
+async function flushPendingIceCandidates() {
+  if (!peerConnection?.remoteDescription) return;
+  const candidates = pendingIceCandidates.splice(0);
+  for (const candidate of candidates) await peerConnection.addIceCandidate(candidate);
+}
+
+function maybeSendMediaReady() {
+  if (mediaReadySent || !peerConnection || peerConnection.connectionState !== "connected") return;
+  if (!remoteMediaStream?.getTracks().length) return;
+  mediaReadySent = true;
+  sendCallMessage({ type: "media-ready" });
+}
+
+function attachRemoteMedia() {
+  const audio = document.getElementById("remote-audio");
+  const video = document.getElementById("remote-video");
+  if (audio && remoteMediaStream) audio.srcObject = remoteMediaStream;
+  if (video && remoteMediaStream) video.srcObject = remoteMediaStream;
+}
+
 function onCallSearching(type, sessionId) {
-  state.call = { type: type === "Video" ? "Video" : "Voice", status: "searching", sessionId: sessionId || null, startedAt: null };
+  state.call = { type: type === "Video" ? "Video" : "Voice", status: "searching", sessionId: sessionId || null, startedAt: null, message: "" };
   state.screen = "call";
   render();
 }
 
 function onCallConnected(session) {
   const type = session?.type === "Video" ? "Video" : "Voice";
-  state.call = { type, status: "connected", sessionId: session?.sessionId || null, startedAt: Date.now() };
+  state.call = { ...state.call, type, status: "connected", sessionId: session?.sessionId || state.call.sessionId, startedAt: Date.now() };
   state.screen = "call";
   render();
+  attachRemoteMedia();
   startCallClock();
 }
 
-function onCallEnded() {
-  state.call.status = "ended";
-  stopCallClock();
-  render();
+function onCallEnded(message) {
+  finishCall(message || "Call Ended");
 }
 
 let callClockInterval = null;
@@ -724,26 +926,46 @@ function stopCallClock() {
   callClockInterval = null;
 }
 
-function cancelRandomCall() {
-  const request = new CustomEvent("meetstrangers4u:cancel-search-request", {
-    detail: { sessionId: state.call.sessionId },
-    cancelable: true
-  });
-  window.dispatchEvent(request);
+function cleanupCallResources() {
+  stopCallClock();
+  if (peerConnection) {
+    peerConnection.ontrack = null;
+    peerConnection.onicecandidate = null;
+    peerConnection.onconnectionstatechange = null;
+    peerConnection.close();
+    peerConnection = null;
+  }
+  if (localMediaStream) {
+    localMediaStream.getTracks().forEach(track => track.stop());
+    localMediaStream = null;
+  }
+  remoteMediaStream = null;
+  pendingIceCandidates = [];
+  mediaReadySent = false;
+}
+
+function finishCall(message) {
+  cleanupCallResources();
+  if (callSocket) {
+    const oldSocket = callSocket;
+    callSocket = null;
+    if (oldSocket.readyState === WebSocket.OPEN || oldSocket.readyState === WebSocket.CONNECTING) oldSocket.close();
+  }
   state.call.status = "ended";
-  state.screen = state.call.type === "Video" ? "video" : "voice";
+  state.call.message = message || "Call Ended";
+  state.call.sessionId = null;
+  state.screen = "call";
   render();
 }
 
+function cancelRandomCall() {
+  if (state.call.sessionId) sendCallMessage({ type: "end-call" });
+  else sendCallMessage({ type: "cancel-search" });
+  finishCall("Search cancelled.");
+}
+
 function requestEndCall() {
-  const request = new CustomEvent("meetstrangers4u:end-call-request", {
-    detail: { sessionId: state.call.sessionId },
-    cancelable: true
-  });
-  const backendReady = !window.dispatchEvent(request);
-  if (!backendReady) {
-    alert("The calling service is not connected yet. Your call has not been ended by the server.");
-  }
+  if (!sendCallMessage({ type: "end-call" })) finishCall("Call connection closed.");
 }
 
 function showInsufficientCoinsPopup() {
@@ -811,3 +1033,4 @@ function render() {
 // INITIALIZE APP
 
 render();
+loadAccount().catch(err => console.warn("MeetStrangers4u account sync:", err.message));
