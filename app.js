@@ -12,7 +12,8 @@ const state = {
   screen: "home",
   history: [],
   user: tg?.initDataUnsafe?.user || null,
-  coins: 200
+  coins: 200,
+  call: { type: null, status: "idle", sessionId: null, startedAt: null }
 };
 
 function icon(name) {
@@ -285,154 +286,140 @@ function partnerScreen() {
 
 
 // VOICE CALL SCREEN
-
 function voiceScreen() {
   return `
     ${header()}
-
-    <section class="panel">
-
-      <h1 class="page-title">Voice Call</h1>
-
-      <p class="page-subtitle">
-        Choose how you want to connect.
-      </p>
-
-      <div class="call-cost-note">💰 10 Coins per Call</div>
-
-      <div class="call-card">
-
-        <div class="call-card-label">
-          🌍 RANDOM MATCHMAKING
-        </div>
-
-        <h3>Random Call</h3>
-
-        <p>
-          Meet someone new from anywhere in the world.
-        </p>
-
-        <div style="height:14px"></div>
-
-        <button class="primary-button"
-          onclick="startRandomCall('Voice')">
-
-          Start Random Call
-
-        </button>
-
+    <section class="panel call-options-panel">
+      <div class="call-screen-heading">
+        <div class="call-screen-icon voice-icon">${visualIcon("phone")}</div>
+        <p class="call-card-label">VOICE CONNECTION</p>
+        <h1 class="page-title">Voice Call</h1>
+        <p class="page-subtitle">Meet someone new through a private one-to-one voice conversation.</p>
       </div>
-
-      <div style="height:18px"></div>
-
-      <div class="call-card partner">
-
-        <div class="call-card-label">
-          🤝 DIRECT CONNECTION
-        </div>
-
-        <h3>Partner Call</h3>
-
-        <p>
-          Connect directly with someone using their unique ID.
-        </p>
-
-        <div style="height:14px"></div>
-
-        <button class="secondary-button"
-          onclick="alert('Voice partner connection will be connected next.')">
-
-          Connect with Partner
-
-        </button>
-
+      <div class="call-pricing-card voice-pricing">
+        <div><span class="pricing-label">CONNECTION FEE</span><strong>💰 10 Coins</strong></div>
+        <div class="pricing-divider"></div>
+        <div><span class="pricing-label">AFTER THE FIRST MINUTE</span><strong>+5 Coins / min</strong></div>
       </div>
-
-      <p class="page-subtitle" style="text-align:center;margin-top:20px">
-        Private one-to-one voice connection.
-      </p>
-
+      <p class="pricing-caption">The connection fee is charged only after a successful match. Extra minutes are billed for each completed minute.</p>
+      <button class="call-option-card voice-option" onclick="startRandomCall('Voice')">
+        <span class="call-option-icon">${visualIcon("globe")}</span>
+        <span class="call-option-copy"><small>MEET SOMEONE NEW</small><strong>Random Voice Call</strong><em>Get matched with one person worldwide.</em></span>
+        <span class="call-option-arrow">→</span>
+      </button>
+      <p class="call-safety-note">🔒 Private one-to-one connection · No public rooms</p>
+      <div class="call-back-row"><button class="secondary-button" onclick="navigate('home')">← Back to Call Options</button></div>
     </section>
-
     ${bottomNav()}
   `;
 }
 
-
 // VIDEO CALL SCREEN
-
 function videoScreen() {
   return `
     ${header()}
-
-    <section class="panel">
-
-      <h1 class="page-title">Video Call</h1>
-
-      <p class="page-subtitle">
-        See and connect with someone face-to-face.
-      </p>
-
-      <div class="call-cost-note">💰 10 Coins per Call</div>
-
-      <div class="call-card">
-
-        <div class="call-card-label">
-          🌍 RANDOM VIDEO MATCH
-        </div>
-
-        <h3>Random Video Call</h3>
-
-        <p>
-          Meet new people through live video.
-        </p>
-
-        <div style="height:14px"></div>
-
-        <button class="primary-button"
-          onclick="startRandomCall('Video')">
-
-          Start Random Video Call
-
-        </button>
-
+    <section class="panel call-options-panel">
+      <div class="call-screen-heading">
+        <div class="call-screen-icon video-icon">${visualIcon("video")}</div>
+        <p class="call-card-label">VIDEO CONNECTION</p>
+        <h1 class="page-title">Video Call</h1>
+        <p class="page-subtitle">See and connect face-to-face in a private one-to-one video conversation.</p>
       </div>
-
-      <div style="height:18px"></div>
-
-      <div class="call-card partner">
-
-        <div class="call-card-label">
-          🤝 DIRECT VIDEO CONNECTION
-        </div>
-
-        <h3>Partner Video Call</h3>
-
-        <p>
-          Connect directly using a unique ID.
-        </p>
-
-        <div style="height:14px"></div>
-
-        <button class="secondary-button"
-          onclick="alert('Video partner connection will be connected next.')">
-
-          Connect with Partner
-
-        </button>
-
+      <div class="call-pricing-card video-pricing">
+        <div><span class="pricing-label">CONNECTION FEE</span><strong>💰 20 Coins</strong></div>
+        <div class="pricing-divider"></div>
+        <div><span class="pricing-label">AFTER THE FIRST MINUTE</span><strong>+10 Coins / min</strong></div>
       </div>
-
-      <p class="page-subtitle" style="text-align:center;margin-top:20px">
-        Private one-to-one video connection.
-      </p>
-
+      <p class="pricing-caption">The connection fee is charged only after a successful match. Extra minutes are billed for each completed minute.</p>
+      <button class="call-option-card video-option" onclick="startRandomCall('Video')">
+        <span class="call-option-icon">${visualIcon("globe")}</span>
+        <span class="call-option-copy"><small>MEET SOMEONE NEW</small><strong>Random Video Call</strong><em>Get matched face-to-face with one person.</em></span>
+        <span class="call-option-arrow">→</span>
+      </button>
+      <p class="call-safety-note">🔒 Private one-to-one connection · Camera access required</p>
+      <div class="call-back-row"><button class="secondary-button" onclick="navigate('home')">← Back to Call Options</button></div>
     </section>
-
     ${bottomNav()}
   `;
 }
 
+// RANDOM CALL FLOW — UI states are ready for a real calling backend.
+function callFlowScreen() {
+  const type = state.call.type || "Voice";
+  const isVideo = type === "Video";
+  const status = state.call.status;
+  const fee = isVideo ? 20 : 10;
+  const rate = isVideo ? 10 : 5;
+  const iconMarkup = isVideo ? visualIcon("video") : visualIcon("phone");
+
+  if (status === "searching") {
+    return `
+      ${header()}
+      <section class="panel call-flow-panel">
+        <div class="call-flow-orbit">${iconMarkup}</div>
+        <p class="call-flow-eyebrow">${type.toUpperCase()} MATCHMAKING</p>
+        <h1 class="page-title">Finding Your Partner</h1>
+        <p class="page-subtitle">Searching for one available person around the world.</p>
+        <div class="matching-status"><span class="matching-pulse"></span> Waiting for a match</div>
+        <div class="match-slots">
+          <div class="match-slot"><div class="match-avatar you-avatar">You</div><strong>You</strong><small>Ready to connect</small></div>
+          <div class="match-connector">•••</div>
+          <div class="match-slot"><div class="match-avatar search-avatar">?</div><strong>Partner</strong><small>Finding someone...</small></div>
+        </div>
+        <p class="call-flow-price">💰 ${fee} Coins connection fee · +${rate} Coins / min after the first minute</p>
+        <button class="secondary-button" onclick="cancelRandomCall()">Cancel Search</button>
+      </section>
+      ${bottomNav()}
+    `;
+  }
+
+  if (status === "connected") {
+    return `
+      ${header()}
+      <section class="active-call-screen ${isVideo ? "active-video-call" : "active-voice-call"}">
+        <div class="active-call-top"><span class="live-indicator"></span> LIVE ${type.toUpperCase()} CALL <span class="call-encrypted">🔒 PRIVATE</span></div>
+        <div class="call-partner-stage">
+          ${isVideo ? '<div class="video-stage-placeholder"><div class="stage-avatar">M</div><span>Partner video stream will appear here</span></div>' : '<div class="voice-avatar-ring"><div class="voice-avatar">M</div><span class="voice-wave"></span></div>'}
+          <h2>Connected</h2>
+          <p>Your partner is here. Say hello!</p>
+          <div class="call-duration" id="call-duration">00:00</div>
+        </div>
+        <div class="call-billing-strip"><span>Connection: ${fee} coins</span><strong>+${rate} coins / completed minute</strong></div>
+        <button class="end-call-button" onclick="requestEndCall()">✕ &nbsp; End Call</button>
+        <p class="call-small-note">Your balance is billed securely by the calling server. This screen alone does not charge coins.</p>
+      </section>
+      ${bottomNav()}
+    `;
+  }
+
+  if (status === "ended") {
+    return `
+      ${header()}
+      <section class="panel call-flow-panel call-ended-panel">
+        <div class="call-ended-icon">✓</div>
+        <p class="call-flow-eyebrow">CONNECTION CLOSED</p>
+        <h1 class="page-title">Call Ended</h1>
+        <p class="page-subtitle">Your call session has ended.</p>
+        <button class="primary-button" onclick="navigate('${isVideo ? "video" : "voice"}')">Back to ${type} Calls</button>
+      </section>
+      ${bottomNav()}
+    `;
+  }
+
+  return `
+    ${header()}
+    <section class="panel call-flow-panel call-unavailable-panel">
+      <div class="call-flow-orbit">${iconMarkup}</div>
+      <p class="call-flow-eyebrow">${type.toUpperCase()} CALLING</p>
+      <h1 class="page-title">Almost Ready</h1>
+      <p class="page-subtitle">The live calling service has not been connected to this app yet.</p>
+      <div class="backend-status-card"><span class="backend-status-dot"></span><div><strong>Calling service not connected</strong><small>No match has been started and no coins have been deducted.</small></div></div>
+      <div class="call-flow-price">💰 ${fee} Coins connection fee · +${rate} Coins / min after the first minute</div>
+      <button class="primary-button" onclick="navigate('${isVideo ? "video" : "voice"}')">Back to ${type} Call</button>
+    </section>
+    ${bottomNav()}
+  `;
+}
 
 // EXPLORE SCREEN
 
@@ -660,15 +647,72 @@ function cancelSearch() {
   navigate("home");
 }
 
-// RANDOM CALL COIN CHECK
+// RANDOM CALL FLOW
 function startRandomCall(callType) {
-  if (state.coins < 10) {
+  const type = callType === "Video" ? "Video" : "Voice";
+  const connectionFee = type === "Video" ? 20 : 10;
+
+  if (state.coins < connectionFee) {
     showInsufficientCoinsPopup();
     return;
   }
-  // Charge only after the server confirms a successful call connection.
-  // The call backend is not connected yet, so this prototype does not deduct coins.
-  alert(callType + " random calling is not connected yet. Your coins have not been deducted.");
+
+  state.history.push(state.screen);
+  state.call = { type, status: "unavailable", sessionId: null, startedAt: null };
+  state.screen = "call";
+  render();
+}
+
+// These callbacks are the integration points for the future calling backend.
+// The backend must confirm the match and handle all coin billing securely.
+function onCallSearching(type, sessionId) {
+  state.call = { type: type === "Video" ? "Video" : "Voice", status: "searching", sessionId: sessionId || null, startedAt: null };
+  state.screen = "call";
+  render();
+}
+
+function onCallConnected(session) {
+  const type = session?.type === "Video" ? "Video" : "Voice";
+  state.call = { type, status: "connected", sessionId: session?.sessionId || null, startedAt: Date.now() };
+  state.screen = "call";
+  render();
+  startCallClock();
+}
+
+function onCallEnded() {
+  state.call.status = "ended";
+  stopCallClock();
+  render();
+}
+
+let callClockInterval = null;
+function startCallClock() {
+  stopCallClock();
+  callClockInterval = setInterval(() => {
+    const node = document.getElementById("call-duration");
+    if (!node || !state.call.startedAt) return;
+    const seconds = Math.max(0, Math.floor((Date.now() - state.call.startedAt) / 1000));
+    const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
+    node.textContent = mins + ":" + secs;
+  }, 1000);
+}
+
+function stopCallClock() {
+  if (callClockInterval) clearInterval(callClockInterval);
+  callClockInterval = null;
+}
+
+function cancelRandomCall() {
+  // The real integration must also cancel the server-side matchmaking request.
+  state.call.status = "ended";
+  state.screen = state.call.type === "Video" ? "video" : "voice";
+  render();
+}
+
+function requestEndCall() {
+  // The real integration must end the peer connection and notify the billing server.
+  alert("Call controls will be activated when the calling service is connected.");
 }
 
 function showInsufficientCoinsPopup() {
@@ -676,14 +720,13 @@ function showInsufficientCoinsPopup() {
   const modal = document.createElement("div");
   modal.id = "coin-shortage-modal";
   modal.className = "coin-modal-backdrop";
-  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You don\'t have enough coins. Earn coins by watching ads.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\'earn\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
+  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You don\\'t have enough coins. Earn coins by watching ads.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\\'earn\\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
   document.body.appendChild(modal);
 }
 
 function closeCoinPopup() {
   document.getElementById("coin-shortage-modal")?.remove();
 }
-
 
 // PARTNER INVITATION
 
@@ -714,6 +757,7 @@ function render() {
     home: homeScreen,
     voice: voiceScreen,
     video: videoScreen,
+    call: callFlowScreen,
     explore: exploreScreen,
     random: randomScreen,
     matchmaking: matchmakingScreen,
