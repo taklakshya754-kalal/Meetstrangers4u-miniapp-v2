@@ -819,3 +819,20 @@ body.call-options-screen-active{height:100%;overflow:hidden}
     min-height:100px;padding:12px 10px;
   }
 }
+
+
+/* Keep the brand and coin header at one viewport position on every screen */
+#app:not(.home-view):not(.compact-view):not(.call-options-view){
+  padding-top:max(10px,env(safe-area-inset-top));
+}
+#app .app-header{
+  min-height:48px;
+}
+@media(max-height:700px){
+  #app:not(.home-view):not(.compact-view):not(.call-options-view){
+    padding-top:max(7px,env(safe-area-inset-top));
+  }
+  #app .app-header{
+    min-height:42px;
+  }
+}
