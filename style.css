@@ -718,3 +718,39 @@ body.call-options-screen-active{height:100%;overflow:hidden}
   #app.call-options-view .app-header{margin-bottom:10px}
   #app.call-options-view .call-options-panel{gap:12px}
 }
+
+
+/* Refined Voice and Video option layout: icon beside fee, larger choices, clear nav spacing */
+#app.call-options-view .call-options-panel{
+  margin-bottom:clamp(18px,3svh,30px);
+  gap:clamp(14px,2.2svh,24px);
+}
+#app.call-options-view .call-screen-heading{
+  padding:0 4px;
+}
+#app.call-options-view .call-pricing-row{
+  display:flex;align-items:center;gap:11px;width:100%;
+}
+#app.call-options-view .call-pricing-row .call-screen-icon{
+  flex:0 0 56px;width:56px;height:56px;margin:0;border-radius:18px;
+}
+#app.call-options-view .call-pricing-row .call-screen-icon svg{
+  width:26px;height:26px;
+}
+#app.call-options-view .call-pricing-row .compact-call-pricing{
+  flex:1;min-width:0;
+}
+#app.call-options-view .compact-call-options .call-option-card{
+  flex:1 1 0;min-height:112px;padding:17px 15px;
+}
+#app.call-options-view .call-options-bottom-space{display:block;flex:0 0 8px;min-height:8px}
+@media(max-width:380px){
+  #app.call-options-view .call-pricing-row{gap:8px}
+  #app.call-options-view .call-pricing-row .call-screen-icon{flex-basis:49px;width:49px;height:49px}
+  #app.call-options-view .compact-call-options .call-option-card{min-height:102px;padding:14px 11px}
+}
+@media(max-height:700px){
+  #app.call-options-view .call-options-panel{gap:12px;margin-bottom:18px}
+  #app.call-options-view .compact-call-options .call-option-card{min-height:96px;padding:12px}
+  #app.call-options-view .call-options-bottom-space{flex-basis:6px;min-height:6px}
+}
