@@ -754,3 +754,67 @@ body.call-options-screen-active{height:100%;overflow:hidden}
   #app.call-options-view .compact-call-options .call-option-card{min-height:96px;padding:12px}
   #app.call-options-view .call-options-bottom-space{flex-basis:6px;min-height:6px}
 }
+
+
+/* Screenshot-matched call screen header and balanced option-card spacing */
+#app.call-options-view .compact-call-options .call-screen-heading{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:clamp(8px,1.5svh,14px) 5px 2px;
+}
+#app.call-options-view .compact-call-options .call-screen-heading .call-screen-icon{
+  width:76px;height:76px;margin:0 auto 15px;border-radius:24px;
+}
+#app.call-options-view .compact-call-options .call-screen-heading .call-screen-icon svg{
+  width:36px;height:36px;
+}
+#app.call-options-view .compact-call-options .call-screen-heading .page-title{
+  margin-top:0;font-size:clamp(30px,4.5svh,36px);line-height:1.12;
+}
+#app.call-options-view .compact-call-options .call-screen-heading .page-subtitle{
+  margin:12px auto 0;font-size:clamp(13px,1.9svh,15px);line-height:1.45;
+}
+#app.call-options-view .compact-call-options > .compact-call-pricing{
+  width:100%;padding:17px 16px;border-radius:19px;
+  background:linear-gradient(110deg,rgba(27,61,125,.9),rgba(39,39,108,.88));
+  border:1px solid rgba(123,151,255,.4);
+}
+#app.call-options-view .compact-call-options > .compact-call-pricing.video-pricing{
+  background:linear-gradient(110deg,rgba(70,35,125,.9),rgba(43,31,99,.9));
+  border-color:rgba(194,119,255,.42);
+}
+#app.call-options-view .compact-call-options .compact-pricing-main strong{
+  font-size:clamp(14px,2svh,17px);
+}
+#app.call-options-view .compact-call-options .compact-pricing-main strong span{
+  font-size:clamp(11px,1.5svh,13px);
+}
+#app.call-options-view .compact-call-options .compact-call-pricing>small{
+  font-size:12px;margin-top:2px;
+}
+#app.call-options-view .compact-call-options .call-option-copy .call-option-extra{
+  margin-top:2px;font-size:10px;font-weight:700;letter-spacing:.1px;
+  color:#8FD0FF;line-height:1.35;
+}
+#app.call-options-view .compact-call-options .partner-option .call-option-extra{
+  color:#D2B5FF;
+}
+#app.call-options-view .compact-call-options{
+  gap:clamp(12px,2svh,21px);
+}
+#app.call-options-view .compact-call-options .call-option-card{
+  flex:1 1 0;min-height:112px;padding:15px 14px;
+}
+#app.call-options-view .call-options-bottom-space{
+  display:block;flex:0 0 clamp(8px,1.5svh,15px);min-height:8px;
+}
+@media(max-width:380px){
+  #app.call-options-view .compact-call-options .call-screen-heading .call-screen-icon{
+    width:66px;height:66px;border-radius:21px;margin-bottom:11px;
+  }
+  #app.call-options-view .compact-call-options .call-screen-heading .call-screen-icon svg{
+    width:32px;height:32px;
+  }
+  #app.call-options-view .compact-call-options .call-option-card{
+    min-height:100px;padding:12px 10px;
+  }
+}
