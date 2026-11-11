@@ -838,3 +838,43 @@ body.call-options-screen-active{height:100%;overflow:hidden}
     min-height:42px;
   }
 }
+
+
+/* Home colour balance: preserve vivid blue/purple and existing glow; tame only white-hot highlights */
+#app.home-view .premium-intro .page-title{
+  background:linear-gradient(100deg,#E9F0FF 15%,#D7BFFF 55%,#91B9F4);
+  -webkit-background-clip:text;background-clip:text;
+}
+#app.home-view .globe-core{
+  background:radial-gradient(circle at 30% 22%,#63C5F0 0%,#3476E8 36%,#5331C7 73%,#24145D 100%);
+  border-color:rgba(120,180,255,.8);
+}
+#app.home-view .globe-orbit{
+  border-color:rgba(177,119,244,.82);
+}
+#app.home-view .premium-call-card{
+  border-color:#269EDB;
+}
+#app.home-view .premium-call-card.partner,
+#app.home-view .premium-call-card.premium-video-card{
+  border-color:#A94BE8;
+}
+#app.home-view .premium-call-icon{
+  background:radial-gradient(circle at 35% 25%,#36BCEB,#1679F7 54%,#1839A9 100%);
+  border-color:#42BCEB;
+}
+#app.home-view .premium-video-card .premium-call-icon{
+  background:radial-gradient(circle at 35% 25%,#BD68F0,#923BFF 55%,#4D1AA8 100%);
+  border-color:#C477F2;
+}
+#app.home-view .premium-call-divider{background:rgba(75,190,242,.62)}
+#app.home-view .premium-video-card .premium-call-divider{background:rgba(190,112,242,.62)}
+#app.home-view .premium-call-arrow{
+  border-color:rgba(66,174,242,.62);
+}
+#app.home-view .premium-video-card .premium-call-arrow{
+  border-color:rgba(184,104,242,.66);
+}
+#app.home-view .nav-item.active{
+  background:linear-gradient(145deg,#4820B9,#28127C 75%,#24105D);
+}
