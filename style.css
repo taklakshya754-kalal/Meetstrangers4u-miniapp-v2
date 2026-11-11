@@ -840,41 +840,39 @@ body.call-options-screen-active{height:100%;overflow:hidden}
 }
 
 
-/* TEMPORARY HOME PALETTE — Design 1: Balanced Royal Blue + Soft Lavender
-   Colour-only override. Original stylesheet remains preserved on backup/original-colors-2026-11-11.
-   Remove this final block to return to the exact original colours. */
+
+
+/* TEMPORARY HOME PALETTE — Design 3: Midnight Blue + Electric Blue + Dusty Purple
+   Colour-only override. Original stylesheet remains preserved on backup/original-colors-2026-11-11. */
 #app.home-view {
-  background:
-    radial-gradient(ellipse at 50% 28%, rgba(76, 91, 181, .13), transparent 55%),
-    #080F2A;
-  color: #F1F2FB;
+  background: radial-gradient(ellipse at 50% 28%, rgba(75, 83, 190, .12), transparent 55%), #080D25;
+  color: #F5F4FF;
 }
-#app.home-view .brand-name { color: #F2F2FA; }
-#app.home-view .brand-name span { color: #A99BEF; }
-#app.home-view .brand-tagline { color: #AAB4D1; }
+#app.home-view .brand-name { color: #F5F4FF; }
+#app.home-view .brand-name span { color: #AA9AFF; }
+#app.home-view .brand-tagline { color: #AEB5D5; }
 #app.home-view .coin-pill {
-  background: #171C42;
-  border-color: rgba(130, 118, 184, .72);
-  color: #F1EFFF;
-  box-shadow: 0 0 13px rgba(130, 118, 184, .10);
+  background: #191E49;
+  border-color: rgba(119, 116, 184, .75);
+  color: #F0EDFF;
+  box-shadow: 0 0 13px rgba(119, 116, 184, .10);
 }
 #app.home-view .coin-add {
-  background: linear-gradient(145deg, #7564D9, #5746B7);
+  background: linear-gradient(145deg, #7062D8, #4D43B1);
   color: #FFFFFF;
-  box-shadow: 0 0 12px rgba(117, 100, 217, .22);
+  box-shadow: 0 0 12px rgba(112, 98, 216, .20);
 }
 #app.home-view .premium-intro {
   background:
-    radial-gradient(circle at 84% 48%, rgba(133, 119, 220, .20), transparent 35%),
-    linear-gradient(135deg, #1D2C65 0%, #17265C 58%, #20245B 100%);
-  border-color: rgba(119, 124, 203, .82);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08),
-              0 0 18px rgba(91, 100, 190, .10);
+    radial-gradient(circle at 84% 48%, rgba(130, 119, 225, .18), transparent 35%),
+    linear-gradient(135deg, #1B2867 0%, #19245F 58%, #20235C 100%);
+  border-color: rgba(119, 123, 219, .82);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 18px rgba(91, 100, 190, .10);
 }
 #app.home-view .call-intro-label {
-  background: rgba(46, 39, 105, .72);
-  border-color: rgba(157, 137, 224, .72);
-  color: #D1C5F5;
+  background: rgba(48, 39, 112, .70);
+  border-color: rgba(158, 139, 226, .70);
+  color: #C9BEF7;
 }
 #app.home-view .premium-intro .page-title {
   background: linear-gradient(100deg, #FFFFFF 10%, #EEE9FF 55%, #C4B7F0);
@@ -882,18 +880,18 @@ body.call-options-screen-active{height:100%;overflow:hidden}
   background-clip: text;
   color: transparent;
 }
-#app.home-view .premium-intro .page-subtitle { color: #D8DDF3; }
-#app.home-view .intro-tagline { color: #C8D2EE; }
+#app.home-view .premium-intro .page-subtitle { color: #D8DDF5; }
+#app.home-view .intro-tagline { color: #C5D1F0; }
 #app.home-view .intro-sparkle,
 #app.home-view .globe-star {
   color: #B8A9F1;
-  text-shadow: 0 0 8px rgba(184, 169, 241, .34);
+  text-shadow: 0 0 8px rgba(184, 169, 241, .32);
 }
 #app.home-view .globe-core {
   color: #DCEBFF;
   background: radial-gradient(circle at 30% 22%, #A9CFFF 0%, #648BE0 40%, #45459B 76%, #28265F 100%);
   border-color: rgba(183, 202, 255, .72);
-  box-shadow: 0 0 19px rgba(91, 125, 220, .30),
+  box-shadow: 0 0 20px rgba(91, 125, 220, .30),
               inset -9px -10px 18px rgba(22, 25, 78, .42),
               inset 5px 5px 12px rgba(255,255,255,.19);
 }
@@ -905,19 +903,17 @@ body.call-options-screen-active{height:100%;overflow:hidden}
 #app.home-view .premium-call-card {
   background:
     radial-gradient(ellipse at 18% 42%, rgba(83, 157, 220, .20), transparent 48%),
-    linear-gradient(115deg, #164A7A 0%, #104477 58%, #173A70 100%);
-  border-color: rgba(99, 182, 224, .80);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.11),
-              0 0 15px rgba(70, 154, 211, .10);
+    linear-gradient(115deg, #124477 0%, #103D75 58%, #173A70 100%);
+  border-color: rgba(86, 169, 225, .82);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.11), 0 0 15px rgba(70, 154, 211, .10);
 }
 #app.home-view .premium-call-card.partner,
 #app.home-view .premium-call-card.premium-video-card {
   background:
     radial-gradient(ellipse at 18% 42%, rgba(151, 119, 202, .18), transparent 50%),
-    linear-gradient(115deg, #4A2C78 0%, #41256D 58%, #35235F 100%);
-  border-color: rgba(167, 139, 217, .78);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.10),
-              0 0 15px rgba(137, 102, 193, .10);
+    linear-gradient(115deg, #4B2B75 0%, #45256D 58%, #35235F 100%);
+  border-color: rgba(161, 132, 210, .80);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 0 15px rgba(137, 102, 193, .10);
 }
 #app.home-view .premium-call-icon {
   color: #F0F7FF;
@@ -959,14 +955,14 @@ body.call-options-screen-active{height:100%;overflow:hidden}
   background: repeating-radial-gradient(ellipse at 70% 100%, transparent 0 7px, rgba(196, 166, 238, .29) 8px 9px, transparent 10px 14px);
 }
 #app.home-view .bottom-nav {
-  background: rgba(12, 18, 48, .97);
-  border-color: rgba(94, 108, 169, .42);
+  background: rgba(12, 17, 43, .97);
+  border-color: rgba(83, 95, 157, .45);
   box-shadow: 0 -7px 22px rgba(0, 0, 0, .10);
 }
 #app.home-view .nav-item { color: #AEB8D5; }
 #app.home-view .nav-item.active {
   color: #E0D5FF;
-  background: linear-gradient(125deg, #4831A0 0%, #35227F 75%, #2D1D6A 100%);
+  background: linear-gradient(125deg, #4931A4 0%, #35227F 75%, #2D1D6A 100%);
   box-shadow: 0 0 15px rgba(124, 92, 207, .22), inset 0 1px 0 rgba(255,255,255,.12);
 }
 #app.home-view .nav-item.active:after {
