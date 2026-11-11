@@ -838,3 +838,158 @@ body.call-options-screen-active{height:100%;overflow:hidden}
     min-height:42px;
   }
 }
+
+
+/* MeetStrangers4u HOME — Midnight Blue / Arctic Cyan / Soft Silver
+   Colour-only override. Original layout and component dimensions are preserved.
+   Exact pre-change stylesheet is preserved on backup/original-colors-2026-11-11. */
+body:has(.premium-intro) {
+  background:
+    radial-gradient(ellipse at 50% 34%, rgba(27, 91, 111, .19), transparent 52%),
+    radial-gradient(ellipse at 8% 80%, rgba(22, 67, 84, .14), transparent 42%),
+    #081923;
+  color: #EAF1F3;
+}
+body:has(.premium-intro) #app {
+  color: #EAF1F3;
+}
+body:has(.premium-intro) .brand-name {
+  color: #F0F5F6;
+}
+body:has(.premium-intro) .brand-name span {
+  background: linear-gradient(110deg, #B8E0E5, #75B9C8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+body:has(.premium-intro) .brand-tagline {
+  color: #A8C1C9;
+}
+body:has(.premium-intro) .coin-pill {
+  background: linear-gradient(#142A36, #142A36) padding-box,
+              linear-gradient(110deg, #789EAA, #A9D5DB) border-box;
+  color: #EDF4F5;
+  box-shadow: 0 0 16px rgba(90, 165, 181, .10);
+}
+body:has(.premium-intro) .coin-add {
+  background: linear-gradient(145deg, #78C4D0, #347F94);
+  color: #F7FCFC;
+}
+body:has(.premium-intro) .premium-intro {
+  background:
+    radial-gradient(circle at 83% 45%, rgba(72, 157, 174, .22), transparent 37%),
+    radial-gradient(circle at 12% 100%, rgba(37, 93, 113, .18), transparent 43%),
+    linear-gradient(135deg, #15374B 0%, #102B3B 55%, #142B39 100%);
+  border-color: rgba(116, 183, 197, .62);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09),
+              0 0 22px rgba(59, 133, 151, .09);
+}
+body:has(.premium-intro) .call-intro-label {
+  border-color: rgba(132, 192, 202, .58);
+  background: rgba(18, 54, 68, .72);
+  color: #C5E3E6;
+}
+body:has(.premium-intro) .premium-intro .page-title {
+  background: linear-gradient(100deg, #F5F8F8 15%, #D8EAEC 58%, #A8D2D9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+body:has(.premium-intro) .premium-intro .page-subtitle {
+  color: #D0E0E4;
+}
+body:has(.premium-intro) .intro-tagline {
+  color: #D0E2E5;
+}
+body:has(.premium-intro) .intro-sparkle,
+body:has(.premium-intro) .globe-star {
+  color: #9BD7DF;
+  text-shadow: 0 0 9px rgba(116, 202, 215, .35);
+}
+body:has(.premium-intro) .globe-core {
+  color: #DDF5F7;
+  background: radial-gradient(circle at 30% 22%, #B9E8EB 0%, #5DAFBE 38%, #286D82 76%, #173B50 100%);
+  border-color: rgba(191, 231, 234, .72);
+  box-shadow: 0 0 25px rgba(83, 177, 193, .34),
+              inset -12px -14px 22px rgba(10, 39, 53, .42),
+              inset 7px 7px 14px rgba(255,255,255,.23);
+}
+body:has(.premium-intro) .globe-orbit {
+  border-color: rgba(151, 210, 216, .72);
+  box-shadow: 0 0 10px rgba(102, 184, 196, .22);
+}
+body:has(.premium-intro) .globe-orbit-two {
+  border-color: rgba(123, 178, 190, .30);
+}
+body:has(.premium-intro) .premium-call-card {
+  background:
+    radial-gradient(ellipse at 18% 42%, rgba(65, 145, 165, .20), transparent 49%),
+    linear-gradient(115deg, #17445A 0%, #12364A 58%, #102D40 100%);
+  border-color: rgba(111, 183, 198, .68);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12),
+              0 0 16px rgba(57, 143, 162, .10);
+}
+body:has(.premium-intro) .premium-call-card.partner,
+body:has(.premium-intro) .premium-call-card.premium-video-card {
+  background:
+    radial-gradient(ellipse at 18% 42%, rgba(104, 157, 171, .19), transparent 50%),
+    linear-gradient(115deg, #294654 0%, #203B49 58%, #192F3E 100%);
+  border-color: rgba(137, 180, 190, .60);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.11),
+              0 0 16px rgba(82, 139, 151, .09);
+}
+body:has(.premium-intro) .premium-call-icon {
+  color: #F0FAFB;
+  background: radial-gradient(circle at 35% 25%, #A8E0E5, #4A9EB0 55%, #28647B 100%);
+  border-color: rgba(183, 230, 234, .75);
+  box-shadow: 0 0 0 5px rgba(106, 188, 199, .10),
+              0 0 20px rgba(77, 170, 186, .24),
+              inset 0 2px 7px rgba(255,255,255,.30);
+}
+body:has(.premium-intro) .premium-video-card .premium-call-icon {
+  color: #F1F7F8;
+  background: radial-gradient(circle at 35% 25%, #C3DDE1, #729EAA 55%, #3D6978 100%);
+  border-color: rgba(201, 228, 231, .72);
+  box-shadow: 0 0 0 5px rgba(145, 190, 198, .09),
+              0 0 20px rgba(105, 160, 172, .20),
+              inset 0 2px 7px rgba(255,255,255,.27);
+}
+body:has(.premium-intro) .premium-call-divider,
+body:has(.premium-intro) .premium-video-card .premium-call-divider {
+  background: rgba(157, 202, 210, .38);
+}
+body:has(.premium-intro) .premium-call-copy strong {
+  color: #F0F5F6;
+}
+body:has(.premium-intro) .premium-call-copy small,
+body:has(.premium-intro) .premium-video-card .premium-call-copy small {
+  color: #C6D9DE;
+}
+body:has(.premium-intro) .premium-call-arrow,
+body:has(.premium-intro) .premium-video-card .premium-call-arrow {
+  color: #DDF2F4;
+  background: rgba(102, 173, 187, .16);
+  border-color: rgba(151, 205, 213, .34);
+}
+body:has(.premium-intro) .call-wave-blue {
+  background: repeating-radial-gradient(ellipse at 70% 100%, transparent 0 7px, rgba(112, 192, 204, .30) 8px 9px, transparent 10px 14px);
+}
+body:has(.premium-intro) .call-wave-purple {
+  background: repeating-radial-gradient(ellipse at 70% 100%, transparent 0 7px, rgba(164, 201, 207, .27) 8px 9px, transparent 10px 14px);
+}
+body:has(.premium-intro) .bottom-nav {
+  background: rgba(9, 25, 35, .96);
+  border-top-color: rgba(123, 173, 184, .22);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, .12);
+}
+body:has(.premium-intro) .nav-item {
+  color: #9FB5BD;
+}
+body:has(.premium-intro) .nav-item.active {
+  color: #B9E1E5;
+  background: linear-gradient(145deg, rgba(57, 128, 145, .27), rgba(30, 82, 99, .18));
+  border-radius: 18px;
+}
+body:has(.premium-intro) .nav-item.active .nav-symbol {
+  filter: drop-shadow(0 0 6px rgba(131, 207, 216, .30));
+}
