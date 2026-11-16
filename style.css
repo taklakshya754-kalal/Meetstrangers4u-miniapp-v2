@@ -961,3 +961,14 @@ body.call-options-screen-active:not(.video-options-screen-active) #app.call-opti
     padding:14px 10px;
   }
 }
+
+
+/* Match Video Calling panel bottom border position to Voice Calling */
+body.video-options-screen-active #app.call-options-view{
+  padding-bottom:max(94px,calc(env(safe-area-inset-bottom) + 78px));
+}
+@media(max-width:380px){
+  body.video-options-screen-active #app.call-options-view{
+    padding-bottom:max(88px,calc(env(safe-area-inset-bottom) + 72px));
+  }
+}
