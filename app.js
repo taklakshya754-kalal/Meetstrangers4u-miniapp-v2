@@ -1024,12 +1024,9 @@ function render() {
   const isHome = state.screen === "home";
   const isCompactPage = ["funzone", "explore", "profile"].includes(state.screen);
   const isCallOptionsPage = ["voice", "video"].includes(state.screen);
-  const hasExistingFitLayout = isHome || isCompactPage || isCallOptionsPage;
-  app.classList.toggle("app-screen-frame", !hasExistingFitLayout);
   app.classList.toggle("home-view", isHome);
   app.classList.toggle("compact-view", isCompactPage);
   app.classList.toggle("call-options-view", isCallOptionsPage);
-  document.body.classList.toggle("app-screen-active", !hasExistingFitLayout);
   document.body.classList.toggle("home-screen-active", isHome || isCompactPage);
   document.body.classList.toggle("call-options-screen-active", isCallOptionsPage);
   document.body.classList.toggle("video-options-screen-active", state.screen === "video");
