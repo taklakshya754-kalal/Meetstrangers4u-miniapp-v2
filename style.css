@@ -931,3 +931,33 @@ body.video-options-screen-active #app.call-options-view .video-option.partner-op
   color:#EBDFFF;
   background:rgba(166,111,255,.2);
 }
+
+
+/* Voice options panel: slightly taller frame with balanced inner spacing */
+body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view{
+  padding-bottom:max(82px,calc(env(safe-area-inset-bottom) + 66px));
+}
+body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view .call-options-panel{
+  padding:16px 14px 18px;
+  gap:clamp(15px,2.1svh,23px);
+}
+body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view .compact-call-options .compact-call-pricing{
+  padding:18px 16px;
+}
+body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view .compact-call-options .call-option-card{
+  padding:16px 14px;
+}
+@media(max-width:380px){
+  body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view{
+    padding-bottom:max(76px,calc(env(safe-area-inset-bottom) + 60px));
+  }
+  body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view .call-options-panel{
+    padding:14px 11px 16px;
+  }
+  body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view .compact-call-options .compact-call-pricing{
+    padding:16px 12px;
+  }
+  body.call-options-screen-active:not(.video-options-screen-active) #app.call-options-view .compact-call-options .call-option-card{
+    padding:14px 10px;
+  }
+}
