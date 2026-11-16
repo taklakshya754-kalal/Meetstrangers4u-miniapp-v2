@@ -972,3 +972,46 @@ body.video-options-screen-active #app.call-options-view{
     padding-bottom:max(88px,calc(env(safe-area-inset-bottom) + 72px));
   }
 }
+
+
+/* Full-screen layout only for Voice and Video 'Waiting for a match' screens */
+html:has(body.call-matching-screen-active),
+body.call-matching-screen-active{
+  height:100%;min-height:0;overflow:hidden;
+}
+body.call-matching-screen-active #app{
+  height:100vh;height:100dvh;min-height:0;
+  display:flex;flex-direction:column;overflow:hidden;
+  padding:max(8px,env(safe-area-inset-top)) 16px max(88px,calc(env(safe-area-inset-bottom) + 76px));
+}
+body.call-matching-screen-active #app>.app-header{
+  flex:0 0 auto;min-height:clamp(42px,6svh,56px);
+  margin-bottom:clamp(6px,1.2svh,12px);
+}
+body.call-matching-screen-active #app>.call-flow-panel{
+  flex:1 1 auto;min-height:0;max-height:100%;
+  justify-content:space-evenly;gap:clamp(5px,1.1svh,11px);
+  padding:clamp(10px,1.8svh,18px) 16px;
+}
+body.call-matching-screen-active .call-flow-panel .call-flow-orbit{
+  width:clamp(66px,10svh,92px);height:clamp(66px,10svh,92px);
+  margin:2px auto;flex:0 0 auto;
+}
+body.call-matching-screen-active .call-flow-panel .page-title{margin-top:0}
+body.call-matching-screen-active .call-flow-panel .matching-status{margin:2px 0;padding:8px 13px}
+body.call-matching-screen-active .call-flow-panel .match-slots{
+  margin:2px 0;padding:clamp(9px,1.5svh,15px) 9px;flex:0 0 auto;
+}
+body.call-matching-screen-active .call-flow-panel .match-avatar{
+  width:clamp(44px,7svh,58px);height:clamp(44px,7svh,58px);
+}
+body.call-matching-screen-active .call-flow-panel .call-flow-price{padding:5px 7px}
+body.call-matching-screen-active .call-flow-panel>.secondary-button{margin-top:0;min-height:clamp(42px,6.5svh,48px);flex:0 0 auto}
+@media(max-height:650px){
+  body.call-matching-screen-active #app{padding-top:max(5px,env(safe-area-inset-top));padding-bottom:max(82px,calc(env(safe-area-inset-bottom) + 70px))}
+  body.call-matching-screen-active #app>.call-flow-panel{padding:7px 13px;gap:4px}
+  body.call-matching-screen-active .call-flow-panel .call-flow-orbit{width:58px;height:58px}
+  body.call-matching-screen-active .call-flow-panel .call-flow-orbit svg{width:30px;height:30px}
+  body.call-matching-screen-active .call-flow-panel .match-slots{padding:7px}
+  body.call-matching-screen-active .call-flow-panel .match-avatar{width:40px;height:40px}
+}
