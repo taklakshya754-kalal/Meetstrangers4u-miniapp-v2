@@ -1029,6 +1029,7 @@ function render() {
   app.classList.toggle("call-options-view", isCallOptionsPage);
   document.body.classList.toggle("home-screen-active", isHome || isCompactPage);
   document.body.classList.toggle("call-options-screen-active", isCallOptionsPage);
+  document.body.classList.toggle("video-options-screen-active", state.screen === "video");
   const screens = {
     home: homeScreen,
     voice: voiceScreen,
