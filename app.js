@@ -65,8 +65,7 @@ function header() {
         <div class="brand-lockup">
           
           <div class="brand-copy">
-            ${state.screen === "home" ? '' : '<div class="brand-name">MeetStrangers<span>4u</span></div>'}
-            <div class="brand-tagline" ${state.screen === "home" ? 'style="margin-top:0;margin-left:17px;font-weight:750;font-size:11px"' : ''}>CHAT&nbsp; · &nbsp;CONNECT&nbsp; · &nbsp;EXPLORE</div>
+              <div class="brand-tagline" style="margin-top:0;margin-left:17px;font-weight:750;font-size:9px">CHAT&nbsp; · &nbsp;CONNECT&nbsp; · &nbsp;EXPLORE</div>
           </div>
         </div>
       </div>
