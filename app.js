@@ -309,7 +309,7 @@ function voiceScreen() {
       <div class="compact-call-pricing voice-pricing">
         <div class="compact-pricing-main">
           <strong>10 Coins <span>Call Fee</span></strong>
-          <strong>+5 Coins / Min</strong>
+          <strong>+20 Coins / Min</strong>
         </div>
         <small>After 1 min</small>
       </div>
@@ -342,7 +342,7 @@ function videoScreen() {
       <div class="compact-call-pricing video-pricing">
         <div class="compact-pricing-main">
           <strong>20 Coins <span>Call Fee</span></strong>
-          <strong>+10 Coins / Min</strong>
+          <strong>+50 Coins / Min</strong>
         </div>
         <small>After 1 min</small>
       </div>
@@ -368,7 +368,7 @@ function callFlowScreen() {
   const isVideo = type === "Video";
   const status = state.call.status;
   const fee = isVideo ? 20 : 10;
-  const rate = isVideo ? 10 : 5;
+  const rate = isVideo ? 50 : 20;
   const iconMarkup = isVideo ? visualIcon("video") : visualIcon("phone");
 
   if (status === "searching" || status === "connecting") {
@@ -710,7 +710,7 @@ async function startRandomCall(callType) {
     alert(err.message);
     return;
   }
-  if (state.coins < connectionFee) {
+  if (state.coins < 100) {
     showInsufficientCoinsPopup();
     return;
   }
@@ -993,7 +993,7 @@ function showInsufficientCoinsPopup() {
   const modal = document.createElement("div");
   modal.id = "coin-shortage-modal";
   modal.className = "coin-modal-backdrop";
-  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You don\'t have enough coins. Earn coins by watching ads.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\'earn\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
+  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You need at least 100 coins to use call features. Please add coins to continue.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\'earn\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
   document.body.appendChild(modal);
 }
 
