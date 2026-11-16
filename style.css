@@ -881,3 +881,45 @@ body.call-options-screen-active{height:100%;overflow:hidden}
 #app.home-view .nav-item.active{box-shadow:0 0 12px rgba(124,67,255,.24),inset 0 1px 0 rgba(255,255,255,.12)}
 #app.home-view .nav-item.active:after{box-shadow:0 0 5px rgba(177,112,255,.48)}
 #app.home-view .nav-item.active .nav-symbol{filter:none}
+
+/* Video options page: match the home hero's indigo-blue-purple palette */
+body.video-options-screen-active{
+  background:linear-gradient(145deg,#08142F 0%,#0B1740 58%,#15103B 100%);
+}
+body.video-options-screen-active #app.call-options-view .call-options-panel{
+  background:radial-gradient(ellipse at 82% 12%,rgba(83,105,220,.17),transparent 42%),linear-gradient(150deg,#10275D 0%,#0B1A45 56%,#1C104F 100%);
+  border-color:rgba(92,120,220,.66);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.18);
+}
+body.video-options-screen-active #app.call-options-view .video-icon{
+  color:#E8ECFF;
+  background:radial-gradient(circle at 30% 20%,#8799D8 0%,#5368B4 48%,#34316F 100%);
+  border-color:rgba(177,183,235,.72);
+  box-shadow:0 0 13px rgba(91,101,183,.20);
+}
+body.video-options-screen-active #app.call-options-view .compact-call-pricing.video-pricing,
+body.video-options-screen-active #app.call-options-view .compact-call-options > .compact-call-pricing.video-pricing{
+  background:linear-gradient(110deg,rgba(25,48,105,.94),rgba(31,30,91,.94));
+  border-color:rgba(119,133,207,.48);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+}
+body.video-options-screen-active #app.call-options-view .video-pricing .compact-pricing-main strong span,
+body.video-options-screen-active #app.call-options-view .video-pricing>small{color:#D4DDF7}
+body.video-options-screen-active #app.call-options-view .video-option{
+  background:radial-gradient(ellipse at 0% 50%,rgba(76,101,194,.20),transparent 65%),linear-gradient(110deg,#142B63 0%,#111F52 58%,#21194F 100%);
+  border-color:rgba(105,119,194,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 7px 20px rgba(35,44,110,.12);
+}
+body.video-options-screen-active #app.call-options-view .video-option .call-option-icon{
+  color:#E9E9FF;
+  background:radial-gradient(circle at 35% 25%,#8799D8 0%,#5368B4 48%,#34316F 100%);
+  border-color:rgba(177,183,235,.72);
+  box-shadow:0 0 0 4px rgba(126,135,207,.09),0 0 12px rgba(91,101,183,.18),inset 0 2px 6px rgba(255,255,255,.20);
+}
+body.video-options-screen-active #app.call-options-view .video-option .call-option-copy small,
+body.video-options-screen-active #app.call-options-view .video-option .call-option-copy em,
+body.video-options-screen-active #app.call-options-view .video-option .call-option-extra{color:#D4DDF7}
+body.video-options-screen-active #app.call-options-view .video-option .call-option-arrow{
+  color:#E7E6FF;background:rgba(92,100,174,.18);border:1px solid rgba(157,164,225,.48);
+}
+
