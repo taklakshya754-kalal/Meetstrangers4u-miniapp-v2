@@ -881,38 +881,3 @@ body.call-options-screen-active{height:100%;overflow:hidden}
 #app.home-view .nav-item.active{box-shadow:0 0 12px rgba(124,67,255,.24),inset 0 1px 0 rgba(255,255,255,.12)}
 #app.home-view .nav-item.active:after{box-shadow:0 0 5px rgba(177,112,255,.48)}
 #app.home-view .nav-item.active .nav-symbol{filter:none}
-
-/* match voice and video cards to the home hero palette */
-#app.home-view .premium-call-card,
-#app.home-view .premium-call-card.partner,
-#app.home-view .premium-call-card.premium-video-card{
-  background:radial-gradient(ellipse at 18% 42%,rgba(76,101,194,.20),transparent 50%),linear-gradient(125deg,#142B63 0%,#111F52 56%,#21194F 100%);
-  border-color:rgba(105,119,194,.72);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 0 12px rgba(75,83,170,.09);
-}
-#app.home-view .premium-call-icon,
-#app.home-view .premium-video-card .premium-call-icon{
-  color:#E9E9FF;
-  background:radial-gradient(circle at 35% 25%,#8799D8 0%,#5368B4 48%,#34316F 100%);
-  border-color:rgba(177,183,235,.72);
-  box-shadow:0 0 0 4px rgba(126,135,207,.09),0 0 12px rgba(91,101,183,.18),inset 0 2px 6px rgba(255,255,255,.20);
-}
-#app.home-view .premium-call-divider,
-#app.home-view .premium-video-card .premium-call-divider{
-  background:rgba(164,171,226,.40);
-}
-#app.home-view .premium-call-copy strong{color:#F5F4FF}
-#app.home-view .premium-call-copy small{color:#D4DDF7}
-#app.home-view .premium-call-arrow,
-#app.home-view .premium-video-card .premium-call-arrow{
-  color:#E7E6FF;
-  background:rgba(92,100,174,.18);
-  border-color:rgba(157,164,225,.48);
-  box-shadow:none;
-}
-#app.home-view .call-wave-blue,
-#app.home-view .call-wave-purple{
-  opacity:.42;
-  background:repeating-radial-gradient(ellipse at 70% 100%,transparent 0 7px,rgba(143,151,218,.30) 8px 9px,transparent 10px 14px);
-}
-
