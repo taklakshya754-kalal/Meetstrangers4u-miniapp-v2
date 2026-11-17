@@ -301,6 +301,8 @@ input:focus {
 .profile-avatar-image { width:100%; height:100%; object-fit:cover; }
 .profile-name { font-size:21px; font-weight:800; letter-spacing:-.45px; }
 .profile-handle { margin-top:5px; color:var(--muted); font-size:13px; }
+.profile-country { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:5px; color:#D7E7FF; font-size:12px; font-weight:650; }
+.profile-country-flag { font-size:14px; line-height:1; }
 .profile-member-tag { display:inline-flex; align-items:center; gap:6px; margin-top:11px; padding:5px 10px; border:1px solid rgba(196,165,255,.2); border-radius:30px; color:#C4A5FF; background:rgba(118,86,214,.10); font-size:9px; font-weight:800; letter-spacing:1px; }
 .profile-member-tag span { width:6px; height:6px; border-radius:50%; background:#8DDBB0; }
 .profile-balance { display:flex; align-items:center; justify-content:space-between; padding:16px; border-radius:18px; border:1px solid rgba(145,198,255,.17); background:linear-gradient(115deg,#202F50,#252342); }
