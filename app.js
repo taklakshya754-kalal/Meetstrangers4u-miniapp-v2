@@ -517,11 +517,24 @@ function funZoneScreen() {
 
 // PROFILE SCREEN
 
+function countryFlagFromCode(code) {
+  const normalized = String(code || "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) return "";
+  return String.fromCodePoint(...[...normalized].map(char => 127397 + char.charCodeAt(0)));
+}
+
 function profileScreen() {
   const user = state.user;
-  const displayName = state.account?.custom_name?.trim()
+  const account = state.account || {};
+  const displayName = account.custom_name?.trim()
     || (user ? [user.first_name, user.last_name].filter(Boolean).join(" ") : "Guest");
   const username = user?.username ? "@" + user.username : "MeetStrangers4u Member";
+  const countryName = String(account.country_name || account.countryName || account.country || account.location_country || "").trim();
+  const countryFlag = String(account.country_flag || account.countryFlag || account.flag_emoji || "")
+    || countryFlagFromCode(account.country_code || account.countryCode || account.iso2 || "");
+  const countryLine = countryName
+    ? `<p class="profile-country">${countryFlag ? `<span class="profile-country-flag">${escapeHTML(countryFlag)}</span>` : ""}<span>${escapeHTML(countryName)}</span></p>`
+    : "";
   const initials = displayName.split(" ").filter(Boolean).slice(0,2).map(part => part[0]).join("").toUpperCase() || "M";
   const avatar = user?.photo_url
     ? `<img class="profile-avatar-image" src="${escapeHTML(user.photo_url)}" alt="Profile">`
@@ -535,6 +548,7 @@ function profileScreen() {
         <div class="profile-avatar">${avatar}</div>
         <h1 class="profile-name">${escapeHTML(displayName)}</h1>
         <p class="profile-handle">${escapeHTML(username)}</p>
+        ${countryLine}
         <div class="profile-member-tag"><span></span> MEMBER</div>
       </div>
 
