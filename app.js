@@ -383,8 +383,8 @@ function callFlowScreen() {
       ${header()}
       <section class="panel call-flow-panel">
         <div class="call-flow-orbit">${iconMarkup}</div>
-        <p class="call-flow-eyebrow">${type.toUpperCase()} MATCHMAKING</p>
-        <h1 class="page-title">${connecting ? "Connecting Your Call" : "Finding Your Partner"}</h1>
+        <p class="call-flow-eyebrow">${isPartner ? "PRIVATE " : ""}${type.toUpperCase()} CALL</p>
+        <h1 class="page-title">${connecting ? "Connecting Your Call" : isPartner ? "Waiting for Your Partner" : "Finding Your Partner"}</h1>
         <p class="page-subtitle">${connecting ? "A partner has been found. Preparing your secure connection." : isPartner ? "Your invitation code is verified. Keep this screen open while your partner joins." : "Searching for one available person around the world."}</p>
         <div class="matching-status"><span class="matching-pulse"></span> ${isPartner ? "Waiting for your invited partner" : "Waiting for a match"}</div>
         <div class="match-slots">
