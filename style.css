@@ -1076,3 +1076,25 @@ body.call-matching-screen-active .call-flow-panel>.secondary-button{margin-top:0
 }
 #app.compact-view .profile-page .about-icon{color:#9FD8FF}
 #app.compact-view .profile-page .profile-section-label{color:#8EAFD5}
+
+
+/* Private partner-call invitation flow */
+.partner-call-panel{gap:12px}
+.partner-call-panel>.page-subtitle{margin-bottom:5px}
+.partner-call-section{display:flex;flex-direction:column;gap:9px;padding:15px;border:1px solid rgba(139,157,255,.22);border-radius:17px;background:linear-gradient(145deg,rgba(34,44,91,.72),rgba(24,26,66,.68))}
+.partner-call-section label{color:#D9E5FF;font-size:12px;font-weight:750}
+.partner-call-section input{width:100%;min-height:48px;padding:0 14px;border:1px solid rgba(151,174,255,.3);border-radius:12px;outline:none;color:#F4F4FA;background:rgba(8,15,40,.72);font-size:14px;letter-spacing:.3px}
+.partner-call-section input:focus{border-color:#9D8AFF;box-shadow:0 0 0 3px rgba(130,105,255,.13)}
+.partner-call-section .primary-button{min-height:47px;margin-top:3px}
+.partner-join-button{background:linear-gradient(110deg,#2879D8,#6747C8)}
+.partner-divider{display:flex;align-items:center;gap:12px;margin:3px 0;color:#8999BE;font-size:9px;font-weight:850;letter-spacing:1.2px}
+.partner-divider:before,.partner-divider:after{content:"";height:1px;flex:1;background:rgba(150,166,255,.18)}
+.partner-invite-success{display:flex;flex-direction:column;align-items:center;gap:7px;padding:16px;border:1px solid rgba(80,226,177,.28);border-radius:16px;background:linear-gradient(145deg,rgba(24,105,91,.2),rgba(24,48,77,.35));text-align:center}
+.partner-invite-success strong{color:#9AF0CF;font-size:13px}
+.partner-invite-success span,.partner-invite-success small{color:#B6C7E4;font-size:10px;line-height:1.5}
+.partner-invite-success b{color:#F7E7B4;font-size:27px;letter-spacing:5px}
+.partner-text-button{min-height:32px;padding:5px 10px;color:#B8C8E8;background:transparent;font-size:11px;font-weight:750}
+.partner-feedback{min-height:16px;color:#8FE5C3;text-align:center;font-size:11px;line-height:1.4}
+.partner-feedback.is-error{color:#FF9EAC}
+.partner-safety-note{color:#8495B7;text-align:center;font-size:9px;line-height:1.5}
+@media(max-width:380px){.partner-call-panel{padding:16px 12px}.partner-call-section{padding:12px}}
