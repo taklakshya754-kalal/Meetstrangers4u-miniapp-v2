@@ -723,6 +723,7 @@ async function startRandomCall(callType) {
     if (!accountLoaded) await loadAccount();
     if (attemptId !== callAttemptId || state.screen !== originScreen) return;
   } catch (err) {
+    if (attemptId !== callAttemptId || state.screen !== originScreen) return;
     alert(err.message);
     return;
   }
@@ -780,6 +781,7 @@ async function startRandomCall(callType) {
       }
     };
   } catch (err) {
+    if (attemptId !== callAttemptId || state.screen !== "call") return;
     finishCall(err.message || "Unable to start calling. Please try again.");
   }
 }
