@@ -1120,7 +1120,7 @@ function setPartnerFeedback(message, isError = false) {
 async function sendInvitation() {
   const input = document.getElementById("partner-id");
   const targetId = input?.value.trim() || "";
-  if (!/^\\d{5,20}$/.test(targetId)) {
+  if (!/^\d{5,20}$/.test(targetId)) {
     setPartnerFeedback("Enter a valid numeric Telegram User ID.", true);
     return;
   }
@@ -1167,7 +1167,7 @@ async function cancelPartnerInvite(code = state.partnerInvite?.code) {
 
 function declinePartnerInvite() {
   const code = document.getElementById("partner-code")?.value.trim() || "";
-  if (!/^\\d{8}$/.test(code)) {
+  if (!/^\d{8}$/.test(code)) {
     setPartnerFeedback("Enter the 8-digit invitation code first.", true);
     return;
   }
@@ -1176,7 +1176,7 @@ function declinePartnerInvite() {
 
 async function joinPartnerCall() {
   const code = document.getElementById("partner-code")?.value.trim() || "";
-  if (!/^\\d{8}$/.test(code)) {
+  if (!/^\d{8}$/.test(code)) {
     setPartnerFeedback("Enter the 8-digit invitation code.", true);
     return;
   }
