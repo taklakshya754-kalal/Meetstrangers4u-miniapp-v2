@@ -262,44 +262,44 @@ function matchmakingScreen() {
 
 function partnerScreen() {
   const type = state.call.type === "Video" ? "Video" : "Voice";
-  const invite = state.partnerInvite;
+  const inviting = state.call.status === "inviting";
+  const statusMessage = state.call.message
+    ? `<div class="backend-status-card" style="margin-top:16px"><span class="backend-status-dot"></span><div><strong>${escapeHTML(state.call.message)}</strong></div></div>`
+    : "";
+
   return `
     ${header()}
     <section class="panel partner-call-panel">
       <p class="call-flow-eyebrow">PRIVATE ${type.toUpperCase()} CALL</p>
       <h1 class="page-title">Partner Call</h1>
-      <p class="page-subtitle">Invite someone using their MeetStrangers4u User ID, or join with a private invitation code.</p>
+      <p class="page-subtitle">Invite someone using their unique MeetStrangers4u User ID.</p>
 
       <div class="partner-call-section">
         <label for="partner-id">Partner User ID</label>
-        <input id="partner-id" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="Enter partner's User ID">
-        <button class="primary-button" onclick="sendInvitation()">Send ${type} Invitation</button>
+        <input
+          id="partner-id"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="20"
+          placeholder="Enter partner's User ID"
+          ${inviting ? "disabled" : ""}
+        >
+        ${inviting
+          ? `<button class="secondary-button" onclick="cancelPartnerInvitation()">Cancel Invitation</button>`
+          : `<button class="primary-button" onclick="sendInvitation()">Send ${type} Invitation</button>`
+        }
       </div>
 
-      ${invite ? `
-        <div class="partner-invite-success">
-          <strong>Invitation created</strong>
-          <span>Share this code with your partner:</span>
-          <b>${escapeHTML(invite.code)}</b>
-          <small>Expires in 10 minutes. Both users must enter this same code.</small>
-          <button class="partner-text-button" onclick="cancelPartnerInvite()">Cancel Invitation</button>
-        </div>
-      ` : ""}
+      ${statusMessage}
 
-      <div class="partner-divider"><span>OR JOIN A CALL</span></div>
-      <div class="partner-call-section">
-        <label for="partner-code">Private Invitation Code</label>
-        <input id="partner-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter 8-digit code">
-        <button class="primary-button partner-join-button" onclick="joinPartnerCall()">Join Private ${type} Call</button>
-        <button class="partner-text-button" onclick="declinePartnerInvite()">Decline Invitation</button>
-      </div>
-      <p id="partner-feedback" class="partner-feedback" role="status" aria-live="polite"></p>
-      <p class="partner-safety-note">Private codes work only for the two invited Telegram accounts and expire after 10 minutes.</p>
+      <p class="partner-safety-note">
+        An invitation will be delivered through the Telegram bot. Your partner can accept it directly from the invitation button.
+      </p>
     </section>
     ${bottomNav()}
   `;
 }
-
 
 // VOICE CALL SCREEN
 function voiceScreen() {
@@ -806,66 +806,113 @@ async function startRandomCall(callType) {
 }
 
 async function handleCallServerMessage(message, iceServers, attemptId = callAttemptId) {
-  if (attemptId !== callAttemptId || !callSocket || state.screen !== "call") return;
+  const isPartnerInviteScreen =
+    state.screen === "partner" && state.call.status === "inviting";
+
+  if (attemptId !== callAttemptId || !callSocket ||
+      (state.screen !== "call" && !isPartnerInviteScreen)) return;
+
   switch (message.type) {
     case "ready":
       break;
+
+    case "partner-invite-expired":
+      if (state.call.status === "inviting") {
+        showPartnerInviteError("Invitation expired. Please try again.");
+      } else if (state.call.mode === "partner" && state.screen === "call") {
+        finishCall("This Partner Call invitation has expired.");
+      }
+      break;
+
+    case "partner-invite-cancelled":
+      if (state.call.status === "inviting") {
+        const reason = message.reason;
+        showPartnerInviteError(
+          reason === "participant-disconnected"
+            ? "Invitation cancelled because a participant disconnected."
+            : reason === "user-unavailable"
+              ? "Your partner is no longer available."
+              : "Invitation was cancelled."
+        );
+      } else if (state.call.mode === "partner" && state.screen === "call") {
+        finishCall(message.message || "This private invitation is no longer active.");
+      }
+      break;
+
     case "searching":
       if (state.call.status !== "searching") break;
       render();
       break;
+
     case "partner-waiting":
       if (state.call.status === "searching" && state.call.mode === "partner") render();
       break;
-    case "partner-invite-cancelled":
-    case "partner-invite-expired":
-      finishCall(message.message || "This private invitation is no longer active.");
-      break;
-    case "matched":
-      if (state.call.status !== "searching") break;
+
+    case "matched": {
+      const canMatch =
+        state.call.status === "searching" ||
+        state.call.status === "inviting" ||
+        (state.call.status === "connecting" && state.call.mode === "partner");
+
+      if (!canMatch) break;
+
       state.call.type = message.callType === "video" ? "Video" : "Voice";
       state.call.sessionId = message.sessionId;
       state.call.status = "connecting";
+      state.screen = "call";
       render();
       await preparePeerConnection(message.peerId, iceServers, attemptId);
       break;
+    }
+
     case "offer":
       if (peerConnection) await receiveOffer(message.data);
       else pendingOffer = message.data;
       break;
+
     case "answer":
       if (peerConnection) {
         await peerConnection.setRemoteDescription(message.data);
         await flushPendingIceCandidates();
       }
       break;
+
     case "ice-candidate":
       if (message.data) {
         if (peerConnection?.remoteDescription) await peerConnection.addIceCandidate(message.data);
         else pendingIceCandidates.push(message.data);
       }
       break;
+
     case "call-connected":
       state.coins = Number(message.coins ?? state.coins);
-      onCallConnected({ type: message.callType === "video" ? "Video" : "Voice", sessionId: message.sessionId });
+      onCallConnected({
+        type: message.callType === "video" ? "Video" : "Voice",
+        sessionId: message.sessionId
+      });
       break;
+
     case "wallet-update":
       state.coins = Number(message.coins);
       render();
       attachRemoteMedia();
       break;
+
     case "minute-billed":
       break;
+
     case "insufficient-coins":
       state.coins = Number(message.coins ?? state.coins);
       finishCall("Not enough coins to start this call.");
       showInsufficientCoinsPopup();
       break;
+
     case "search-timeout":
       if (state.screen === "call" && state.call.status === "searching") {
         finishCall(message.message || "No users are available right now. Please try again after some time.");
       }
       break;
+
     case "call-ended":
       finishCall(message.reason === "insufficient-coins"
         ? "Not enough coins to continue this call."
@@ -873,8 +920,13 @@ async function handleCallServerMessage(message, iceServers, attemptId = callAtte
           ? "Could not establish a connection. Please try again."
           : "Call Ended");
       break;
+
     case "error":
-      finishCall(message.message || "The calling service encountered an error.");
+      if (state.call.status === "inviting") {
+        showPartnerInviteError(message.message || "Unable to send the invitation.");
+      } else {
+        finishCall(message.message || "The calling service encountered an error.");
+      }
       break;
   }
 }
@@ -1110,137 +1162,261 @@ function closeCoinPopup() {
 
 // PARTNER INVITATION
 
-function setPartnerFeedback(message, isError = false) {
-  const node = document.getElementById("partner-feedback");
-  if (!node) return;
-  node.textContent = message || "";
-  node.classList.toggle("is-error", Boolean(isError));
+function closePartnerSocket() {
+  if (!callSocket) return;
+  const oldSocket = callSocket;
+  callSocket = null;
+  if (oldSocket.readyState === WebSocket.OPEN ||
+      oldSocket.readyState === WebSocket.CONNECTING) {
+    oldSocket.close();
+  }
+}
+
+function showPartnerInviteError(message) {
+  closePartnerSocket();
+  state.call.status = "idle";
+  state.call.sessionId = null;
+  state.call.inviteCode = null;
+  state.call.message = message || "Unable to send the invitation.";
+  state.screen = "partner";
+  render();
+}
+
+async function getCallIceServers() {
+  const response = await fetch(CALL_API + "/api/turn-credentials", {
+    headers: { "X-Telegram-Init-Data": tg.initData },
+    cache: "no-store"
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || "Unable to prepare secure calling.");
+  }
+  return data.iceServers || [];
+}
+
+function connectPartnerSocket(iceServers, attemptId = callAttemptId) {
+  return new Promise((resolve, reject) => {
+    if (!tg?.initData) {
+      reject(new Error("Please open MeetStrangers4u from Telegram."));
+      return;
+    }
+
+    const ws = new WebSocket(
+      "wss://call.lxreward.xyz/ws?initData=" +
+      encodeURIComponent(tg.initData)
+    );
+    callSocket = ws;
+    let opened = false;
+    let settled = false;
+
+    const timeout = setTimeout(() => {
+      if (!opened && !settled) {
+        settled = true;
+        if (callSocket === ws) closePartnerSocket();
+        reject(new Error("Calling service connection timed out. Please try again."));
+      }
+    }, 10000);
+
+    ws.onopen = () => {
+      if (callSocket !== ws || attemptId !== callAttemptId) {
+        ws.close();
+        return;
+      }
+      opened = true;
+      settled = true;
+      clearTimeout(timeout);
+      resolve(ws);
+    };
+
+    ws.onmessage = event => {
+      if (callSocket !== ws || attemptId !== callAttemptId) return;
+      let message;
+      try {
+        message = JSON.parse(event.data);
+      } catch (_) {
+        return;
+      }
+
+      handleCallServerMessage(message, iceServers, attemptId).catch(err => {
+        if (attemptId !== callAttemptId || callSocket !== ws) return;
+        console.error("Partner call signal error:", err);
+        sendCallMessage({ type: "end-call" });
+        finishCall("A secure call connection could not be established. Please try again.");
+      });
+    };
+
+    ws.onerror = () => {
+      if (callSocket !== ws) return;
+      if (!opened && !settled) {
+        settled = true;
+        clearTimeout(timeout);
+        reject(new Error("Unable to connect to the calling service. Please try again."));
+      } else if (state.call.status === "inviting") {
+        showPartnerInviteError("Calling connection was interrupted. Please try again.");
+      } else {
+        finishCall("Unable to connect to the calling service. Please try again.");
+      }
+    };
+
+    ws.onclose = () => {
+      if (callSocket !== ws) return;
+      if (!opened && !settled) {
+        settled = true;
+        clearTimeout(timeout);
+        reject(new Error("Calling service connection closed. Please try again."));
+      } else if (state.call.status !== "ended") {
+        if (state.call.status === "inviting") {
+          showPartnerInviteError("Calling connection was interrupted. Please try again.");
+        } else {
+          finishCall("Calling connection was interrupted. Please try again.");
+        }
+      }
+    };
+  });
 }
 
 async function sendInvitation() {
   const input = document.getElementById("partner-id");
   const targetId = input?.value.trim() || "";
-  if (!/^\d{5,20}$/.test(targetId)) {
-    setPartnerFeedback("Enter a valid numeric Telegram User ID.", true);
+
+  if (!/^\d{1,20}$/.test(targetId)) {
+    alert("Please enter a valid Telegram User ID.");
     return;
   }
+
+  if (["searching", "connecting", "connected", "inviting"].includes(state.call.status)) {
+    alert("You must finish your current call activity first.");
+    return;
+  }
+
   if (!tg?.initData) {
-    setPartnerFeedback("Please open MeetStrangers4u from the Telegram bot.", true);
+    alert("Please open MeetStrangers4u from Telegram.");
     return;
   }
+
+  const attemptId = ++callAttemptId;
+  closePartnerSocket();
+
+  const callType = state.call.type === "Video" ? "video" : "voice";
+  state.call.mode = "partner";
+  state.call.status = "inviting";
+  state.call.message = "Preparing your invitation...";
+  state.call.inviteCode = null;
+  state.screen = "partner";
+  render();
+
   try {
     if (!accountLoaded) await loadAccount();
+    if (attemptId !== callAttemptId) return;
+
+    if (state.coins < 100) {
+      throw new Error("You need at least 100 coins to send a Partner Call invitation.");
+    }
+
+    const iceServers = await getCallIceServers();
+    if (attemptId !== callAttemptId) return;
+
+    await connectPartnerSocket(iceServers, attemptId);
+    if (attemptId !== callAttemptId) return;
+
     const response = await fetch(CALL_API + "/api/partner-invites", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Telegram-Init-Data": tg.initData },
-      body: JSON.stringify({ targetId, callType: state.call.type === "Video" ? "video" : "voice" }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": tg.initData
+      },
+      body: JSON.stringify({ targetId, callType }),
       cache: "no-store"
     });
+
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || "Unable to send the invitation.");
-    state.partnerInvite = data.invite;
-    render();
-    setPartnerFeedback("Invitation sent through the Telegram bot.");
-  } catch (err) {
-    setPartnerFeedback(err.message || "Unable to send the invitation.", true);
-  }
-}
+    if (attemptId !== callAttemptId) return;
 
-async function cancelPartnerInvite(code = state.partnerInvite?.code) {
-  if (!code || !tg?.initData) return;
-  try {
-    const response = await fetch(CALL_API + "/api/partner-invites/cancel", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Telegram-Init-Data": tg.initData },
-      body: JSON.stringify({ code }),
-      cache: "no-store"
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || "Unable to cancel this invitation.");
-    state.partnerInvite = null;
-    render();
-    setPartnerFeedback("Invitation cancelled.");
-  } catch (err) {
-    setPartnerFeedback(err.message || "Unable to cancel this invitation.", true);
-  }
-}
-
-function declinePartnerInvite() {
-  const code = document.getElementById("partner-code")?.value.trim() || "";
-  if (!/^\d{8}$/.test(code)) {
-    setPartnerFeedback("Enter the 8-digit invitation code first.", true);
-    return;
-  }
-  cancelPartnerInvite(code);
-}
-
-async function joinPartnerCall() {
-  const code = document.getElementById("partner-code")?.value.trim() || "";
-  if (!/^\d{8}$/.test(code)) {
-    setPartnerFeedback("Enter the 8-digit invitation code.", true);
-    return;
-  }
-  if (!tg?.initData) {
-    setPartnerFeedback("Please open MeetStrangers4u from the Telegram bot.", true);
-    return;
-  }
-  const attemptId = ++callAttemptId;
-  try {
-    if (!accountLoaded) await loadAccount();
-    if (attemptId !== callAttemptId || state.screen !== "partner") return;
-    const turnResponse = await fetch(CALL_API + "/api/turn-credentials", {
-      headers: { "X-Telegram-Init-Data": tg.initData },
-      cache: "no-store"
-    });
-    const turnData = await turnResponse.json().catch(() => ({}));
-    if (attemptId !== callAttemptId || state.screen !== "partner") return;
-    if (!turnResponse.ok) throw new Error(turnData.message || "Unable to prepare secure calling.");
-
-    cleanupCallResources();
-    state.call = {
-      type: state.call.type === "Video" ? "Video" : "Voice",
-      mode: "partner", status: "searching", sessionId: null, startedAt: null, message: ""
-    };
-    state.history.push("partner");
-    state.screen = "call";
-    render();
-
-    const ws = new WebSocket("wss://call.lxreward.xyz/ws?initData=" + encodeURIComponent(tg.initData));
-    callSocket = ws;
-    ws.onopen = () => {
-      if (callSocket === ws && state.screen === "call" && state.call.status === "searching") {
-        ws.send(JSON.stringify({ type: "join-partner", code }));
-      } else if (callSocket === ws) {
-        callSocket = null;
-        ws.close();
+    if (!response.ok) {
+      if (data.error === "USER_UNAVAILABLE" ||
+          data.error === "USER_NOT_FOUND") {
+        throw new Error("User unavailable.");
       }
-    };
-    ws.onmessage = event => {
-      if (callSocket !== ws) return;
-      let message;
-      try { message = JSON.parse(event.data); } catch (_) { return; }
-      handleCallServerMessage(message, turnData.iceServers || [], attemptId).catch(err => {
-        if (attemptId !== callAttemptId || callSocket !== ws) return;
-        console.error("Private call signal error:", err);
-        sendCallMessage({ type: "end-call" });
-        finishCall("A secure private call could not be established. Please try again.");
-      });
-    };
-    ws.onerror = () => {
-      if (callSocket === ws) finishCall("Unable to connect to the calling service. Please try again.");
-    };
-    ws.onclose = () => {
-      if (callSocket === ws && state.call.status !== "ended") {
-        finishCall("Calling connection was interrupted. Please try again.");
-      }
-    };
+      throw new Error(data.message || "Unable to send the invitation.");
+    }
+
+    if (state.call.status === "inviting") {
+      state.call.inviteCode = data.code;
+      state.call.message = data.accepted
+        ? "Your partner accepted. Connecting your call..."
+        : data.partnerOnline
+          ? "Invitation sent. Waiting for your partner to accept."
+          : "Invitation sent — partner is currently offline.";
+      render();
+    }
   } catch (err) {
     if (attemptId !== callAttemptId) return;
-    if (state.screen === "partner") setPartnerFeedback(err.message || "Unable to join this private call.", true);
-    else finishCall(err.message || "Unable to join this private call.");
+    showPartnerInviteError(err.message || "Unable to send the invitation.");
   }
 }
 
+async function cancelPartnerInvitation() {
+  const code = state.call.inviteCode;
+  ++callAttemptId;
+
+  if (code && !sendCallMessage({ type: "cancel-partner", code })) {
+    try {
+      await fetch(CALL_API + "/api/partner-invites/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Telegram-Init-Data": tg?.initData || ""
+        },
+        body: JSON.stringify({ code }),
+        cache: "no-store"
+      });
+    } catch (err) {
+      console.warn("Partner invitation cancellation:", err.message);
+    }
+  }
+
+  closePartnerSocket();
+  state.call.mode = null;
+  state.call.status = "idle";
+  state.call.sessionId = null;
+  state.call.inviteCode = null;
+  state.call.message = "Invitation cancelled.";
+  state.screen = "partner";
+  render();
+}
+
+async function acceptPartnerInvitation(code, requestedType) {
+  if (!code || !/^\d{8}$/.test(String(code))) return;
+
+  const type = requestedType === "video" ? "Video" : "Voice";
+  callAttemptId++;
+  cleanupCallResources();
+  closePartnerSocket();
+
+  state.call = {
+    type,
+    mode: "partner",
+    status: "connecting",
+    sessionId: null,
+    startedAt: null,
+    message: "Accepting your Partner Call invitation..."
+  };
+  state.screen = "call";
+  render();
+
+  try {
+    if (!accountLoaded) await loadAccount();
+
+    const iceServers = await getCallIceServers();
+    await connectPartnerSocket(iceServers, callAttemptId);
+
+    if (!sendCallMessage({ type: "join-partner", code: String(code) })) {
+      throw new Error("Unable to accept the invitation. Please try again.");
+    }
+  } catch (err) {
+    finishCall(err.message || "Unable to accept the Partner Call invitation.");
+  }
+}
 
 // MAIN RENDER
 
@@ -1279,4 +1455,11 @@ function render() {
 // INITIALIZE APP
 
 render();
-loadAccount().catch(err => console.warn("MeetStrangers4u account sync:", err.message));
+loadAccount().then(() => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("partner") === "1" && params.get("code")) {
+    acceptPartnerInvitation(params.get("code"), params.get("type"));
+  }
+}).catch(err => {
+  console.warn("MeetStrangers4u account sync:", err.message);
+});
