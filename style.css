@@ -1033,3 +1033,44 @@ body.call-matching-screen-active .call-flow-panel>.secondary-button{margin-top:0
   from{opacity:0;translate:0 8px}
   to{opacity:1;translate:0 0}
 }
+
+
+/* Profile palette: align with the midnight-blue Connect & Discover home */
+#app.compact-view .profile-page .profile-avatar{
+  border-color:rgba(105,190,255,.52);
+  background:linear-gradient(145deg,#287CCB 0%,#174B91 58%,#102B63 100%);
+  box-shadow:0 10px 28px rgba(20,105,190,.22),inset 0 1px 0 rgba(255,255,255,.14);
+}
+#app.compact-view .profile-page .profile-member-tag{
+  border-color:rgba(91,180,245,.30);
+  color:#A9DEFF;
+  background:rgba(25,112,190,.13);
+}
+#app.compact-view .profile-page .profile-balance{
+  border-color:rgba(74,165,230,.34);
+  background:radial-gradient(ellipse at 12% 0%,rgba(32,139,218,.20),transparent 58%),linear-gradient(115deg,#0D3269 0%,#0B2555 58%,#0A1A43 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 8px 22px rgba(0,0,0,.14);
+}
+#app.compact-view .profile-page .wallet-button{
+  border-color:rgba(85,181,245,.38);
+  color:#C8EAFF;
+  background:rgba(24,112,190,.22);
+}
+#app.compact-view .profile-page .profile-menu-row{
+  border-color:rgba(91,145,215,.24);
+  background:linear-gradient(110deg,rgba(13,39,82,.96),rgba(10,27,62,.94));
+}
+#app.compact-view .profile-page .profile-menu-row.earn-row{
+  border-color:rgba(64,165,231,.42);
+  background:radial-gradient(ellipse at 10% 50%,rgba(28,143,218,.20),transparent 58%),linear-gradient(110deg,#103D76 0%,#102C60 60%,#0C204D 100%);
+}
+#app.compact-view .profile-page .profile-menu-icon{
+  background:#123563;
+  color:#A9DFFF;
+}
+#app.compact-view .profile-page .earn-icon{
+  color:#B8E6FF;
+  background:rgba(36,139,211,.22);
+}
+#app.compact-view .profile-page .about-icon{color:#9FD8FF}
+#app.compact-view .profile-page .profile-section-label{color:#8EAFD5}
