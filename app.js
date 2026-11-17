@@ -66,7 +66,7 @@ function header() {
         <div class="brand-lockup">
           
           <div class="brand-copy">
-              <div class="brand-tagline" style="${state.screen === "home" ? 'margin-top:0;margin-left:17px;font-weight:750;font-size:11px' : state.screen === "profile" ? 'position:absolute;left:calc(50% + 14px);top:50%;transform:translate(-50%,-50%);margin:0;font-weight:750;font-size:12px' : 'position:absolute;left:calc(50% - 24px);top:calc(50% - 2px);transform:translate(-50%,-50%);margin:0;font-weight:750;font-size:9px'}">CHAT&nbsp; · &nbsp;CONNECT&nbsp; · &nbsp;EXPLORE</div>
+              <div class="brand-tagline" style="${state.screen === "home" ? 'margin-top:0;margin-left:17px;font-weight:750;font-size:11px' : state.screen === "profile" ? 'position:absolute;left:calc(50% + 14px);top:50%;transform:translate(-50%,-50%);margin:0;font-weight:750;font-size:13px' : 'position:absolute;left:calc(50% - 24px);top:calc(50% - 2px);transform:translate(-50%,-50%);margin:0;font-weight:750;font-size:9px'}">CHAT&nbsp; · &nbsp;CONNECT&nbsp; · &nbsp;EXPLORE</div>
           </div>
         </div>
       </div>
