@@ -1193,6 +1193,7 @@ async function joinPartnerCall() {
       cache: "no-store"
     });
     const turnData = await turnResponse.json().catch(() => ({}));
+    if (attemptId !== callAttemptId || state.screen !== "partner") return;
     if (!turnResponse.ok) throw new Error(turnData.message || "Unable to prepare secure calling.");
 
     cleanupCallResources();
