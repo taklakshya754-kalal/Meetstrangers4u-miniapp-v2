@@ -70,7 +70,7 @@ function header() {
           </div>
         </div>
       </div>
-      <div class="coin-pill"><span>💰 ${state.coins}</span><span class="coin-add">+</span></div>
+      <button type="button" class="coin-pill" onclick="navigate('profile')" aria-label="Open profile and coin balance"><span>💰 ${state.coins}</span><span class="coin-add" aria-hidden="true">+</span></button>
     </header>
   `;
 }
