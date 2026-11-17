@@ -27,6 +27,7 @@ let pendingOffer = null;
 let mediaReadySent = false;
 let accountLoaded = false;
 let callAttemptId = 0;
+let searchCancelledToastTimer = null;
 
 function icon(name) {
   const icons = {
@@ -646,15 +647,29 @@ function escapeHTML(value) {
 
 function navigate(screen) {
   if (screen === state.screen) return;
-  state.history.push(state.screen);
+  const searchWasCancelled = cancelActiveSearch(false);
+  if (!searchWasCancelled && ["voice", "video"].includes(state.screen) && state.call.status === "idle") {
+    callAttemptId++;
+  }
+  if (!searchWasCancelled) state.history.push(state.screen);
   state.screen = screen;
   render();
+  if (searchWasCancelled) {
+    showSearchCancelledToast("Search cancelled. To keep searching, please stay on this page without going back or navigating to another section.");
+  }
 }
 
 function goBack() {
+  const searchWasCancelled = cancelActiveSearch(false);
+  if (!searchWasCancelled && ["voice", "video"].includes(state.screen) && state.call.status === "idle") {
+    callAttemptId++;
+  }
   const previous = state.history.pop();
   state.screen = previous || "home";
   render();
+  if (searchWasCancelled) {
+    showSearchCancelledToast("Search cancelled. To keep searching, please stay on this page without going back or navigating to another section.");
+  }
 }
 
 
@@ -699,13 +714,14 @@ function sendCallMessage(payload) {
 
 async function startRandomCall(callType) {
   const attemptId = ++callAttemptId;
+  const originScreen = state.screen;
   const type = callType === "Video" ? "Video" : "Voice";
   const connectionFee = type === "Video" ? 20 : 10;
   if (["searching", "connecting", "connected"].includes(state.call.status)) return;
 
   try {
     if (!accountLoaded) await loadAccount();
-    if (attemptId !== callAttemptId) return;
+    if (attemptId !== callAttemptId || state.screen !== originScreen) return;
   } catch (err) {
     alert(err.message);
     return;
@@ -731,19 +747,25 @@ async function startRandomCall(callType) {
       cache: "no-store"
     });
     const turnData = await turnResponse.json().catch(() => ({}));
-    if (attemptId !== callAttemptId) return;
+    if (attemptId !== callAttemptId || state.screen !== "call" || state.call.status !== "searching") return;
     if (!turnResponse.ok) throw new Error(turnData.message || "Unable to prepare secure calling.");
 
     const ws = new WebSocket("wss://call.lxreward.xyz/ws?initData=" + encodeURIComponent(tg.initData));
     callSocket = ws;
     ws.onopen = () => {
-      if (callSocket === ws) ws.send(JSON.stringify({ type: "find", callType: type.toLowerCase() }));
+      if (callSocket === ws && state.screen === "call" && state.call.status === "searching") {
+        ws.send(JSON.stringify({ type: "find", callType: type.toLowerCase() }));
+      } else if (callSocket === ws) {
+        callSocket = null;
+        ws.close();
+      }
     };
     ws.onmessage = event => {
       if (callSocket !== ws) return;
       let message;
       try { message = JSON.parse(event.data); } catch (_) { return; }
-      handleCallServerMessage(message, turnData.iceServers || []).catch(err => {
+      handleCallServerMessage(message, turnData.iceServers || [], attemptId).catch(err => {
+        if (attemptId !== callAttemptId || callSocket !== ws) return;
         console.error("Calling signal error:", err);
         sendCallMessage({ type: "end-call" });
         finishCall("A secure call connection could not be established. Please try again.");
@@ -762,19 +784,21 @@ async function startRandomCall(callType) {
   }
 }
 
-async function handleCallServerMessage(message, iceServers) {
+async function handleCallServerMessage(message, iceServers, attemptId = callAttemptId) {
+  if (attemptId !== callAttemptId || !callSocket || state.screen !== "call") return;
   switch (message.type) {
     case "ready":
       break;
     case "searching":
-      state.call.status = "searching";
+      if (state.call.status !== "searching") break;
       render();
       break;
     case "matched":
+      if (state.call.status !== "searching") break;
       state.call.sessionId = message.sessionId;
       state.call.status = "connecting";
       render();
-      await preparePeerConnection(message.peerId, iceServers);
+      await preparePeerConnection(message.peerId, iceServers, attemptId);
       break;
     case "offer":
       if (peerConnection) await receiveOffer(message.data);
@@ -809,7 +833,9 @@ async function handleCallServerMessage(message, iceServers) {
       showInsufficientCoinsPopup();
       break;
     case "search-timeout":
-      finishCall(message.message || "No users are available right now. Please try again after some time.");
+      if (state.screen === "call" && state.call.status === "searching") {
+        finishCall(message.message || "No users are available right now. Please try again after some time.");
+      }
       break;
     case "call-ended":
       finishCall(message.reason === "insufficient-coins"
@@ -824,10 +850,15 @@ async function handleCallServerMessage(message, iceServers) {
   }
 }
 
-async function preparePeerConnection(peerId, iceServers) {
+async function preparePeerConnection(peerId, iceServers, attemptId = callAttemptId) {
   try {
     const isVideo = state.call.type === "Video";
-    localMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+    const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+    if (attemptId !== callAttemptId || state.screen !== "call" || state.call.status !== "connecting") {
+      mediaStream.getTracks().forEach(track => track.stop());
+      return;
+    }
+    localMediaStream = mediaStream;
     remoteMediaStream = new MediaStream();
     // Keep candidates received while microphone/camera permission was pending.
     mediaReadySent = false;
@@ -963,6 +994,49 @@ function cleanupCallResources() {
   mediaReadySent = false;
 }
 
+function showSearchCancelledToast(message) {
+  const existing = document.getElementById("search-cancelled-toast");
+  if (existing) existing.remove();
+  if (searchCancelledToastTimer) clearTimeout(searchCancelledToastTimer);
+
+  const toast = document.createElement("div");
+  toast.id = "search-cancelled-toast";
+  toast.className = "search-cancelled-toast";
+  toast.setAttribute("role", "status");
+  toast.textContent = message || "Search cancelled.";
+  document.body.appendChild(toast);
+
+  searchCancelledToastTimer = setTimeout(() => {
+    toast.remove();
+    searchCancelledToastTimer = null;
+  }, 5000);
+}
+
+function cancelActiveSearch() {
+  if (state.screen !== "call" || !["searching", "connecting"].includes(state.call.status)) return false;
+
+  const socket = callSocket;
+  const hasSession = Boolean(state.call.sessionId);
+  callAttemptId++;
+
+  if (socket) {
+    if (socket.readyState === WebSocket.OPEN) {
+      try {
+        socket.send(JSON.stringify({ type: hasSession ? "end-call" : "cancel-search" }));
+      } catch (_) {}
+    }
+    callSocket = null;
+    if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+      socket.close();
+    }
+  }
+
+  cleanupCallResources();
+  const type = state.call.type;
+  state.call = { type, status: "idle", sessionId: null, startedAt: null, message: "" };
+  return true;
+}
+
 function finishCall(message) {
   callAttemptId++;
   cleanupCallResources();
@@ -979,9 +1053,11 @@ function finishCall(message) {
 }
 
 function cancelRandomCall() {
-  if (state.call.sessionId) sendCallMessage({ type: "end-call" });
-  else sendCallMessage({ type: "cancel-search" });
-  finishCall("Search cancelled.");
+  const type = state.call.type;
+  if (!cancelActiveSearch()) return;
+  state.screen = state.history.pop() || (type === "Video" ? "video" : "voice");
+  render();
+  showSearchCancelledToast("Search cancelled.");
 }
 
 function requestEndCall() {
