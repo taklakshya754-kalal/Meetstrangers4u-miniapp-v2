@@ -973,6 +973,8 @@ async function handleCallServerMessage(message, iceServers, attemptId = callAtte
 
       const profileBalance = document.querySelector(".profile-balance-value");
       if (profileBalance) profileBalance.textContent = "\u{1F4B0} " + state.coins;
+
+      attachRemoteMedia();
       break;
 
     case "minute-billed":
