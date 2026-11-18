@@ -640,22 +640,22 @@ function profileInfoScreen(kind) {
         {
           icon: "◇",
           title: "Protect Your Personal Information",
-          body: "Never share passwords, OTPs, bank details, your home address, or other sensitive information."
+          body: "Never share passwords, OTPs, bank details, or other private information."
         },
         {
           icon: "♡",
           title: "Connect With Respect",
-          body: "Be kind, respect boundaries, and avoid harassment, pressure, scams, or suspicious links."
+          body: "Respect boundaries. Avoid harassment, pressure, scams, and suspicious links."
         },
         {
           icon: "⚑",
           title: "Stay in Control",
-          body: "Trust your instincts. You can leave any chat or call whenever you feel uncomfortable."
+          body: "Leave any chat or call whenever you feel uncomfortable."
         },
         {
           icon: "✕",
           title: "Report Unwanted Behaviour",
-          body: "Report anything that feels unsafe or inappropriate. Your comfort always comes first."
+          body: "Report unsafe or inappropriate behaviour. Your comfort comes first."
         }
       ]
     : [
