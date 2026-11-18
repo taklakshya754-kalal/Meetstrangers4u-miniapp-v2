@@ -19,6 +19,8 @@ const CONNECT_TIMEOUT_MS = 30000;
 const AUTH_MAX_AGE_SECONDS = 86400;
 const MINI_APP_URL = process.env.MINI_APP_URL || "https://meetstrangers4u-miniapp-v2.vercel.app/";
 const PARTNER_INVITE_TTL_MS = 10 * 60 * 1000;
+const BOT_CALL_INTERNAL_SECRET = process.env.BOT_CALL_INTERNAL_SECRET || "";
+const BOT_PARTNER_INVITE_TTL_MS = 10 * 60 * 1000;
 
 if (!BOT_TOKEN) throw new Error("BOT_TOKEN is required");
 if (!process.env.DB_PASSWORD) throw new Error("DB_PASSWORD is required");
@@ -127,7 +129,14 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      if (partnerInviteCreatingUsers.has(callerId) || partnerInviteCreatingUsers.has(targetId)) {
+      if (
+        partnerInviteCreatingUsers.has(callerId) ||
+        partnerInviteCreatingUsers.has(targetId) ||
+        botPartnerInviteCreatingUsers.has(callerId) ||
+        botPartnerInviteCreatingUsers.has(targetId) ||
+        botPartnerInviteByUser.has(callerId) ||
+        botPartnerInviteByUser.has(targetId)
+      ) {
         sendJson(res, 409, {
           error: "INVITE_ALREADY_PROCESSING",
           message: "An invitation is already being processed."
@@ -203,7 +212,9 @@ const server = http.createServer(async (req, res) => {
             activeCallerWs.sessionId || activeCallerWs.searching ||
             (activeTargetWs && activeTargetWs.readyState === WebSocket.OPEN &&
               (activeTargetWs.sessionId || activeTargetWs.searching)) ||
-            partnerInviteByUser.has(callerId) || partnerInviteByUser.has(targetId)) {
+            partnerInviteByUser.has(callerId) || partnerInviteByUser.has(targetId) ||
+            botPartnerInviteCreatingUsers.has(callerId) || botPartnerInviteCreatingUsers.has(targetId) ||
+            botPartnerInviteByUser.has(callerId) || botPartnerInviteByUser.has(targetId)) {
           sendJson(res, 409, {
             error: "USER_BECAME_BUSY",
             message: "One of these users is no longer available."
@@ -315,6 +326,254 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/internal/bot-partner-invites") {
+    try {
+      if (!isValidBotCallInternalRequest(req)) {
+        sendJson(res, 401, { error: "UNAUTHORIZED" });
+        return;
+      }
+
+      const body = await readJsonBody(req);
+      const callerId = String(body.callerId || "").trim();
+      const targetId = String(body.targetId || "").trim();
+      const kind = body.callType === "video" ? "video" :
+        body.callType === "voice" ? "voice" : null;
+      const coverBoth = body.coverBoth === true;
+
+      if (!/^\d{1,20}$/.test(callerId) ||
+          !/^\d{1,20}$/.test(targetId) ||
+          callerId === targetId || !kind) {
+        sendJson(res, 400, { error: "INVALID_INVITE_DETAILS" });
+        return;
+      }
+
+      if (
+        botPartnerInviteCreatingUsers.has(callerId) ||
+        botPartnerInviteCreatingUsers.has(targetId) ||
+        botPartnerInviteByUser.has(callerId) ||
+        botPartnerInviteByUser.has(targetId) ||
+        partnerInviteCreatingUsers.has(callerId) ||
+        partnerInviteCreatingUsers.has(targetId) ||
+        partnerInviteByUser.has(callerId) ||
+        partnerInviteByUser.has(targetId)
+      ) {
+        sendJson(res, 409, { error: "INVITE_ALREADY_PENDING" });
+        return;
+      }
+
+      botPartnerInviteCreatingUsers.add(callerId);
+      botPartnerInviteCreatingUsers.add(targetId);
+
+      try {
+        for (const userId of [callerId, targetId]) {
+          const ws = clients.get(userId);
+          if (ws && ws.readyState === WebSocket.OPEN &&
+              (ws.sessionId || ws.searching)) {
+            sendJson(res, 409, {
+              error: userId === callerId ? "CALLER_BUSY" : "TARGET_BUSY"
+            });
+            return;
+          }
+        }
+
+        const callerCoins = await getCoins(callerId);
+        const targetCoins = await getCoins(targetId);
+
+        if (callerCoins === null) {
+          sendJson(res, 404, { error: "CALLER_NOT_FOUND" });
+          return;
+        }
+        if (targetCoins === null) {
+          sendJson(res, 404, { error: "TARGET_NOT_FOUND" });
+          return;
+        }
+
+        const requiredPerUser = feeFor(kind) + rateFor(kind);
+        const callerRequired = coverBoth
+          ? requiredPerUser * 2
+          : requiredPerUser;
+
+        if (callerCoins < callerRequired) {
+          sendJson(res, 409, {
+            error: "CALLER_INSUFFICIENT_COINS",
+            required: callerRequired,
+            balance: callerCoins
+          });
+          return;
+        }
+
+        if (!coverBoth && targetCoins < requiredPerUser) {
+          sendJson(res, 409, {
+            error: "TARGET_NEEDS_COVER",
+            required: requiredPerUser,
+            balance: targetCoins
+          });
+          return;
+        }
+
+        let code;
+        do {
+          code = crypto.randomBytes(12).toString("hex");
+        } while (botPartnerInvites.has(code));
+
+        const invite = {
+          code,
+          callerId,
+          targetId,
+          kind,
+          coverBoth,
+          accepted: false,
+          responded: false,
+          expiresAt: Date.now() + BOT_PARTNER_INVITE_TTL_MS,
+          timer: null
+        };
+
+        botPartnerInvites.set(code, invite);
+        botPartnerInviteByUser.set(callerId, code);
+        botPartnerInviteByUser.set(targetId, code);
+
+        invite.timer = setTimeout(() => {
+          cancelBotPartnerInvite(code);
+        }, BOT_PARTNER_INVITE_TTL_MS);
+
+        sendJson(res, 200, {
+          ok: true,
+          code,
+          callType: kind,
+          coverBoth,
+          expiresInSeconds: Math.floor(BOT_PARTNER_INVITE_TTL_MS / 1000)
+        });
+      } finally {
+        botPartnerInviteCreatingUsers.delete(callerId);
+        botPartnerInviteCreatingUsers.delete(targetId);
+      }
+    } catch (err) {
+      const status = err.statusCode || 500;
+      sendJson(res, status, {
+        error: status === 400 ? "BAD_REQUEST" : "SERVER_ERROR"
+      });
+      if (status === 500) console.error("POST internal bot invite:", err.message);
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/internal/bot-partner-invites/cancel") {
+    try {
+      if (!isValidBotCallInternalRequest(req)) {
+        sendJson(res, 401, { error: "UNAUTHORIZED" });
+        return;
+      }
+
+      const body = await readJsonBody(req);
+      const code = String(body.code || "").trim();
+      const callerId = String(body.callerId || "").trim();
+      const invite = botPartnerInvites.get(code);
+
+      if (!invite) {
+        sendJson(res, 200, { ok: true, cancelled: false });
+        return;
+      }
+
+      if (callerId !== invite.callerId) {
+        sendJson(res, 403, { error: "INVITE_UNAUTHORIZED" });
+        return;
+      }
+
+      if (invite.responded || invite.accepted) {
+        sendJson(res, 409, { error: "INVITE_ALREADY_RESPONDED" });
+        return;
+      }
+
+      const cancelled = cancelBotPartnerInvite(code);
+
+      sendJson(res, 200, { ok: true, cancelled });
+    } catch (err) {
+      const status = err.statusCode || 500;
+      sendJson(res, status, {
+        error: status === 400 ? "BAD_REQUEST" : "SERVER_ERROR"
+      });
+      if (status === 500) {
+        console.error("POST internal bot invite cancel:", err.message);
+      }
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/internal/bot-partner-invites/respond") {
+    try {
+      if (!isValidBotCallInternalRequest(req)) {
+        sendJson(res, 401, { error: "UNAUTHORIZED" });
+        return;
+      }
+
+      const body = await readJsonBody(req);
+      const code = String(body.code || "").trim();
+      const userId = String(body.userId || "").trim();
+      const accept = body.accept === true;
+      const invite = botPartnerInvites.get(code);
+
+      if (!invite || invite.expiresAt <= Date.now()) {
+        if (invite) cancelBotPartnerInvite(code);
+        sendJson(res, 404, { error: "INVITE_NOT_FOUND" });
+        return;
+      }
+
+      if (userId !== invite.targetId) {
+        sendJson(res, 403, { error: "INVITE_UNAUTHORIZED" });
+        return;
+      }
+
+      if (invite.responded) {
+        if (accept && invite.accepted) {
+          sendJson(res, 200, {
+            ok: true,
+            accepted: true,
+            alreadyAccepted: true,
+            callerId: invite.callerId,
+            targetId: invite.targetId,
+            callType: invite.kind,
+            coverBoth: invite.coverBoth,
+            code: invite.code
+          });
+        } else {
+          sendJson(res, 409, { error: "INVITE_ALREADY_RESPONDED" });
+        }
+        return;
+      }
+
+      invite.responded = true;
+
+      if (!accept) {
+        cancelBotPartnerInvite(code);
+        sendJson(res, 200, {
+          ok: true,
+          accepted: false,
+          callerId: invite.callerId,
+          targetId: invite.targetId
+        });
+        return;
+      }
+
+      invite.accepted = true;
+      sendJson(res, 200, {
+        ok: true,
+        accepted: true,
+        callerId: invite.callerId,
+        targetId: invite.targetId,
+        callType: invite.kind,
+        coverBoth: invite.coverBoth,
+        code: invite.code
+      });
+    } catch (err) {
+      const status = err.statusCode || 500;
+      sendJson(res, status, {
+        error: status === 400 ? "BAD_REQUEST" : "SERVER_ERROR"
+      });
+      if (status === 500) console.error("POST internal bot invite respond:", err.message);
+    }
+    return;
+  }
+
   sendJson(res, 404, { error: "NOT_FOUND" });
 });
 
@@ -366,6 +625,11 @@ const partnerInvites = new Map();       // invite code -> pending invite
 const partnerInviteByUser = new Map();  // Telegram user id -> invite code
 const partnerInviteCreatingUsers = new Set();
 
+// Separate storage for Telegram-bot initiated Partner Calls.
+const botPartnerInvites = new Map();
+const botPartnerInviteByUser = new Map();
+const botPartnerInviteCreatingUsers = new Set();
+
 async function readJsonBody(req) {
   let raw = "";
   for await (const chunk of req) {
@@ -388,6 +652,29 @@ async function readJsonBody(req) {
 function isPartnerUserBusy(userId) {
   const ws = clients.get(String(userId));
   return !ws || ws.readyState !== WebSocket.OPEN || !!ws.sessionId || !!ws.searching;
+}
+
+function isValidBotCallInternalRequest(req) {
+  const supplied = Buffer.from(String(req.headers["x-bot-call-secret"] || ""));
+  const expected = Buffer.from(BOT_CALL_INTERNAL_SECRET);
+  return expected.length > 0 &&
+    supplied.length === expected.length &&
+    crypto.timingSafeEqual(supplied, expected);
+}
+
+function cancelBotPartnerInvite(code) {
+  const invite = botPartnerInvites.get(String(code));
+  if (!invite) return false;
+
+  botPartnerInvites.delete(invite.code);
+  if (botPartnerInviteByUser.get(invite.callerId) === invite.code) {
+    botPartnerInviteByUser.delete(invite.callerId);
+  }
+  if (botPartnerInviteByUser.get(invite.targetId) === invite.code) {
+    botPartnerInviteByUser.delete(invite.targetId);
+  }
+  clearTimeout(invite.timer);
+  return true;
 }
 
 function cancelPartnerInvite(code, eventType = "partner-invite-cancelled", reason = "cancelled") {
@@ -517,6 +804,41 @@ async function debitBoth(session, amount) {
     db.release();
   }
 }
+async function debitCallerForBoth(session, amount) {
+  const total = amount * 2;
+  const db = await pool.connect();
+  let transactionStarted = false;
+
+  try {
+    await db.query("BEGIN");
+    transactionStarted = true;
+
+    const r = await db.query(
+      "UPDATE public.users SET coins = coins - $1 WHERE user_id = $2 AND coins >= $1 RETURNING coins",
+      [total, session.payerId]
+    );
+
+    if (!r.rowCount) {
+      const e = new Error("INSUFFICIENT_BALANCE");
+      e.code = "INSUFFICIENT_BALANCE";
+      throw e;
+    }
+
+    await db.query("COMMIT");
+    transactionStarted = false;
+    return { [session.payerId]: Number(r.rows[0].coins) };
+  } catch (err) {
+    if (transactionStarted) {
+      try { await db.query("ROLLBACK"); } catch (rollbackError) {
+        console.error("Caller-cover-both rollback failed:", rollbackError.message);
+      }
+    }
+    throw err;
+  } finally {
+    db.release();
+  }
+}
+
 async function debitOne(userId, amount) {
   const r = await pool.query(
     "UPDATE public.users SET coins = coins - $1 WHERE user_id = $2 AND coins >= $1 RETURNING coins",
@@ -532,10 +854,13 @@ async function settleConnectionFee(session) {
   session.feeGraceExpired = true;
   session.feeSettlementStarted = true;
   try {
-    const balances = await debitBoth(session, session.fee);
+    const balances = session.botFlow && session.coverBoth
+      ? await debitCallerForBoth(session, session.fee)
+      : await debitBoth(session, session.fee);
+
     session.feeSettled = true;
-    for (const userId of session.userIds) {
-      send(clients.get(userId), { type: "wallet-update", coins: balances[userId] });
+    for (const [userId, coins] of Object.entries(balances)) {
+      send(clients.get(userId), { type: "wallet-update", coins });
     }
   } catch (err) {
     endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
@@ -550,6 +875,7 @@ function endSession(session, reason, notify = true, disconnectedUserId = null) {
     settleConnectionFee(session);
   }
   const chargeDisconnectingUserOnly =
+    !session.botFlow &&
     session.active && !session.feeSettled && !session.feeSettlementStarted &&
     elapsed < 2000 && disconnectedUserId && session.userIds.includes(disconnectedUserId);
 
@@ -559,6 +885,9 @@ function endSession(session, reason, notify = true, disconnectedUserId = null) {
   clearTimeout(session.billingTimer);
   clearInterval(session.billingTimer);
   sessions.delete(session.id);
+  if (session.botFlow && session.botInviteCode) {
+    cancelBotPartnerInvite(session.botInviteCode);
+  }
   for (const userId of session.userIds) {
     const ws = clients.get(userId);
     if (notify && ws) send(ws, { type: "call-ended", sessionId: session.id, reason });
@@ -577,11 +906,25 @@ async function billMinute(session) {
   if (session.ended || session.billingInProgress) return;
   session.billingInProgress = true;
   try {
-    const balances = await debitBoth(session, session.rate);
+    const balances = session.botFlow && session.coverBoth
+      ? await debitCallerForBoth(session, session.rate)
+      : await debitBoth(session, session.rate);
+
     session.billedMinutes += 1;
     for (const userId of session.userIds) {
-      send(clients.get(userId), { type: "wallet-update", coins: balances[userId] });
-      send(clients.get(userId), { type: "minute-billed", minutes: session.billedMinutes, amount: session.rate });
+      if (Object.prototype.hasOwnProperty.call(balances, userId)) {
+        send(clients.get(userId), { type: "wallet-update", coins: balances[userId] });
+      }
+
+      const amount = session.botFlow && session.coverBoth
+        ? (userId === session.payerId ? session.rate * 2 : 0)
+        : session.rate;
+
+      send(clients.get(userId), {
+        type: "minute-billed",
+        minutes: session.billedMinutes,
+        amount
+      });
     }
   } catch (err) {
     endSession(session, err.code === "INSUFFICIENT_BALANCE" ? "insufficient-coins" : "billing-error");
@@ -598,9 +941,15 @@ async function activateSession(session) {
   session.activating = false;
   session.startedAt = Date.now();
   for (const userId of session.userIds) {
+    const coveredByCaller = session.botFlow && session.coverBoth;
+    const isPayer = !coveredByCaller || userId === session.payerId;
+
     send(clients.get(userId), {
-      type: "call-connected", sessionId: session.id,
-      callType: session.kind, fee: session.fee, perMinute: session.rate
+      type: "call-connected",
+      sessionId: session.id,
+      callType: session.kind,
+      fee: isPayer ? session.fee * (coveredByCaller ? 2 : 1) : 0,
+      perMinute: isPayer ? session.rate * (coveredByCaller ? 2 : 1) : 0
     });
   }
   session.feeTimer = setTimeout(() => {
@@ -613,7 +962,12 @@ async function activateSession(session) {
   }, 60000);
 }
 async function beginSearch(ws, kind) {
-  if (partnerInviteByUser.has(ws.userId) || partnerInviteCreatingUsers.has(ws.userId)) {
+  if (
+    partnerInviteByUser.has(ws.userId) ||
+    partnerInviteCreatingUsers.has(ws.userId) ||
+    botPartnerInviteByUser.has(ws.userId) ||
+    botPartnerInviteCreatingUsers.has(ws.userId)
+  ) {
     sendError(ws, "PARTNER_INVITE_PENDING", "Cancel or finish your pending partner invitation before starting random search.");
     return;
   }
@@ -685,6 +1039,133 @@ wss.on("connection", ws => {
     let msg;
     try { msg = JSON.parse(raw.toString()); } catch (_) { sendError(ws, "BAD_MESSAGE", "Invalid message."); return; }
     try {
+      if (msg.type === "join-bot-partner") {
+        const code = String(msg.code || "").trim();
+        const invite = botPartnerInvites.get(code);
+
+        if (!invite || invite.expiresAt <= Date.now()) {
+          if (invite) cancelBotPartnerInvite(code);
+          sendError(ws, "BOT_PARTNER_INVITE_INVALID", "This invitation is invalid or expired.");
+          return;
+        }
+
+        if (!invite.accepted) {
+          sendError(ws, "BOT_PARTNER_INVITE_NOT_ACCEPTED", "Accept the Telegram invitation first.");
+          return;
+        }
+
+        const expectedRole = ws.userId === invite.callerId ? "caller" :
+          ws.userId === invite.targetId ? "target" : null;
+
+        if (!expectedRole || msg.role !== expectedRole) {
+          sendError(ws, "BOT_PARTNER_INVITE_UNAUTHORIZED", "This invitation belongs to another Telegram account.");
+          return;
+        }
+
+        if (ws.sessionId || ws.searching ||
+            clients.get(ws.userId) !== ws ||
+            ws.readyState !== WebSocket.OPEN) {
+          sendError(ws, "BOT_PARTNER_USER_BUSY", "You are not available to join this call.");
+          return;
+        }
+
+        let session = invite.sessionId ? sessions.get(invite.sessionId) : null;
+
+        if (!session) {
+          const id = crypto.randomUUID();
+          session = {
+            id,
+            kind: invite.kind,
+            userIds: [invite.callerId, invite.targetId],
+            fee: feeFor(invite.kind),
+            rate: rateFor(invite.kind),
+            botFlow: true,
+            botInviteCode: code,
+            coverBoth: invite.coverBoth,
+            payerId: invite.callerId,
+            joined: new Set(),
+            ready: new Set(),
+            active: false,
+            activating: false,
+            billingInProgress: false,
+            ended: false,
+            billedMinutes: 0,
+            connectTimer: null,
+            feeTimer: null,
+            billingTimer: null,
+            startedAt: null,
+            feeGraceExpired: false,
+            feeSettlementStarted: false,
+            feeSettled: false
+          };
+
+          sessions.set(id, session);
+          invite.sessionId = id;
+          session.connectTimer = setTimeout(
+            () => endSession(session, "connection-timeout"),
+            CONNECT_TIMEOUT_MS
+          );
+        }
+
+        if (session.ended || !session.userIds.includes(ws.userId) ||
+            session.joined.has(ws.userId)) {
+          sendError(ws, "BOT_PARTNER_JOIN_INVALID", "You have already joined or this call is no longer available.");
+          return;
+        }
+
+        const peerId = session.userIds.find(id => id !== ws.userId);
+
+        if (session.joined.has(peerId)) {
+          const peerWs = clients.get(peerId);
+          if (!peerWs || peerWs.readyState !== WebSocket.OPEN ||
+              peerWs.sessionId !== session.id) {
+            endSession(session, "partner-unavailable");
+            sendError(ws, "BOT_PARTNER_USER_UNAVAILABLE", "The other user is no longer available.");
+            return;
+          }
+        }
+
+        session.joined.add(ws.userId);
+        ws.sessionId = session.id;
+
+        if (session.joined.size === 2) {
+          const callerWs = clients.get(invite.callerId);
+          const targetWs = clients.get(invite.targetId);
+
+          if (!callerWs || !targetWs ||
+              callerWs.readyState !== WebSocket.OPEN ||
+              targetWs.readyState !== WebSocket.OPEN ||
+              callerWs.sessionId !== session.id ||
+              targetWs.sessionId !== session.id) {
+            endSession(session, "partner-unavailable");
+            return;
+          }
+
+          clearTimeout(session.connectTimer);
+          session.connectTimer = setTimeout(
+            () => endSession(session, "connection-timeout"),
+            CONNECT_TIMEOUT_MS
+          );
+
+          cancelBotPartnerInvite(code);
+
+          send(callerWs, {
+            type: "matched",
+            sessionId: session.id,
+            callType: session.kind,
+            peerId: targetWs.userId
+          });
+
+          send(targetWs, {
+            type: "matched",
+            sessionId: session.id,
+            callType: session.kind,
+            peerId: callerWs.userId
+          });
+        }
+        return;
+      }
+
       if (msg.type === "join-partner") {
         const code = String(msg.code || "").trim();
         const invite = partnerInvites.get(code);
@@ -786,6 +1267,9 @@ wss.on("connection", ws => {
   ws.on("close", () => {
     const isCurrentClient = clients.get(ws.userId) === ws;
     if (isCurrentClient) {
+      const pendingBotCode = botPartnerInviteByUser.get(ws.userId);
+      if (pendingBotCode) cancelBotPartnerInvite(pendingBotCode);
+
       const pendingCode = ws.partnerInviteCode || partnerInviteByUser.get(ws.userId);
       if (pendingCode) cancelPartnerInvite(pendingCode, "partner-invite-cancelled", "participant-disconnected");
     }

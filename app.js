@@ -9,6 +9,7 @@ if (tg) {
 const app = document.getElementById("app");
 const launchParams = new URLSearchParams(window.location.search);
 const partnerLaunch = launchParams.get("partner") === "1";
+const botCallLaunch = launchParams.get("botcall") === "1";
 const launchCallType = launchParams.get("type") === "video" ? "Video" : "Voice";
 
 const state = {
@@ -1492,6 +1493,51 @@ async function acceptPartnerInvitation(code, requestedType) {
   }
 }
 
+async function acceptBotPartnerInvitation(code, role, requestedType) {
+  if (!/^[a-f0-9]{24}$/i.test(String(code || ""))) return;
+  if (!["caller", "target"].includes(role)) return;
+
+  const attemptId = ++callAttemptId;
+  const type = requestedType === "video" ? "Video" : "Voice";
+
+  cleanupCallResources();
+  closePartnerSocket();
+
+  state.call = {
+    type,
+    mode: "partner",
+    status: "connecting",
+    sessionId: null,
+    startedAt: null,
+    message: "Connecting your Partner Call..."
+  };
+  state.screen = "call";
+  render();
+
+  try {
+    if (!accountLoaded) await loadAccount();
+    if (attemptId !== callAttemptId) return;
+
+    const iceServers = await getCallIceServers();
+    if (attemptId !== callAttemptId) return;
+
+    await connectPartnerSocket(iceServers, attemptId);
+    if (attemptId !== callAttemptId) return;
+
+    if (!sendCallMessage({
+      type: "join-bot-partner",
+      code: String(code),
+      role
+    })) {
+      throw new Error("Unable to join the call. Please try again.");
+    }
+  } catch (err) {
+    if (attemptId === callAttemptId) {
+      finishCall(err.message || "Unable to join the Partner Call.");
+    }
+  }
+}
+
 // MAIN RENDER
 
 function render() {
@@ -1531,7 +1577,14 @@ function render() {
 render();
 loadAccount().then(() => {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("partner") === "1" && params.get("code")) {
+
+  if (params.get("botcall") === "1" && params.get("code")) {
+    acceptBotPartnerInvitation(
+      params.get("code"),
+      params.get("role"),
+      params.get("type")
+    );
+  } else if (params.get("partner") === "1" && params.get("code")) {
     acceptPartnerInvitation(params.get("code"), params.get("type"));
   }
 }).catch(err => {
