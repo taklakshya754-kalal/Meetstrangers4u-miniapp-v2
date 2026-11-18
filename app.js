@@ -1099,9 +1099,14 @@ function attachRemoteMedia() {
   const video = document.getElementById("remote-video");
 
   if (audio) {
+    audio.autoplay = true;
+    audio.playsInline = true;
+    audio.muted = false;
+
     if (audio.srcObject !== remoteMediaStream) {
       audio.srcObject = remoteMediaStream;
     }
+
     audio.play().catch(err => {
       console.warn("Remote audio playback blocked:", err.name, err.message);
     });
@@ -1595,6 +1600,25 @@ function render() {
   app.innerHTML = (screens[state.screen] || homeScreen)();
 }
 
+
+function resumeRemoteAudioPlayback() {
+  const audio = document.getElementById("remote-audio");
+  if (!audio || !audio.srcObject) return;
+
+  audio.muted = false;
+
+  if (audio.paused) {
+    const playback = audio.play();
+    if (playback?.catch) {
+      playback.catch(err => {
+        console.warn("Remote audio resume failed:", err.name, err.message);
+      });
+    }
+  }
+}
+
+document.addEventListener("pointerdown", resumeRemoteAudioPlayback, true);
+document.addEventListener("keydown", resumeRemoteAudioPlayback, true);
 
 // INITIALIZE APP
 
