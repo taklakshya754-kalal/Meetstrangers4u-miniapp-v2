@@ -187,10 +187,11 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        if (callerCoins < 100 || targetCoins < 100) {
+        const requiredFee = feeFor(kind);
+        if (callerCoins < requiredFee || targetCoins < requiredFee) {
           sendJson(res, 409, {
             error: "INSUFFICIENT_COINS",
-            message: "Both users need at least 100 coins to use calling."
+            message: "Both users need at least " + requiredFee + " coins for the " + kind + " Partner Call connection fee."
           });
           return;
         }
