@@ -1087,10 +1087,28 @@ function maybeSendMediaReady() {
 }
 
 function attachRemoteMedia() {
+  if (!remoteMediaStream) return;
+
   const audio = document.getElementById("remote-audio");
   const video = document.getElementById("remote-video");
-  if (audio && remoteMediaStream) audio.srcObject = remoteMediaStream;
-  if (video && remoteMediaStream) video.srcObject = remoteMediaStream;
+
+  if (audio) {
+    if (audio.srcObject !== remoteMediaStream) {
+      audio.srcObject = remoteMediaStream;
+    }
+    audio.play().catch(err => {
+      console.warn("Remote audio playback blocked:", err.name, err.message);
+    });
+  }
+
+  if (video) {
+    if (video.srcObject !== remoteMediaStream) {
+      video.srcObject = remoteMediaStream;
+    }
+    video.play().catch(err => {
+      console.warn("Remote video playback blocked:", err.name, err.message);
+    });
+  }
 }
 
 function onCallSearching(type, sessionId) {
