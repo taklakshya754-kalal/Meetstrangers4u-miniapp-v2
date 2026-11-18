@@ -967,8 +967,12 @@ async function handleCallServerMessage(message, iceServers, attemptId = callAtte
 
     case "wallet-update":
       state.coins = Number(message.coins);
-      render();
-      attachRemoteMedia();
+
+      const coinValue = document.querySelector(".coin-pill span:first-child");
+      if (coinValue) coinValue.textContent = "\u{1F4B0} " + state.coins;
+
+      const profileBalance = document.querySelector(".profile-balance-value");
+      if (profileBalance) profileBalance.textContent = "\u{1F4B0} " + state.coins;
       break;
 
     case "minute-billed":
