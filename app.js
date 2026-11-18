@@ -639,55 +639,45 @@ function profileInfoScreen(kind) {
     ? [
         {
           icon: "◇",
-          title: "Your Privacy Comes First",
-          body: "MeetStrangers4u is a place to discover conversations and new perspectives. Share only what you feel comfortable sharing, and remember that you are in control of what you reveal."
-        },
-        {
-          icon: "⌁",
-          title: "Keep Personal Information Private",
-          body: "Never share passwords, one-time passwords (OTPs), bank details, payment information, home address, or other sensitive personal details with someone you have just met online."
+          title: "Protect Your Personal Information",
+          body: "Never share passwords, OTPs, bank details, your home address, or other sensitive information."
         },
         {
           icon: "♡",
           title: "Connect With Respect",
-          body: "Treat every person with kindness. Harassment, threats, pressure, impersonation, scams, and unwanted behaviour have no place in a respectful community."
+          body: "Be kind, respect boundaries, and avoid harassment, pressure, scams, or suspicious links."
         },
         {
           icon: "⚑",
-          title: "Trust Your Instincts",
-          body: "Take your time before trusting someone. Be cautious with links, requests for money, private photos, or conversations that make you feel pressured or uncomfortable."
+          title: "Stay in Control",
+          body: "Trust your instincts. You can leave any chat or call whenever you feel uncomfortable."
         },
         {
           icon: "✕",
-          title: "You Can End a Conversation",
-          body: "You are never required to continue a chat or call. If something does not feel right, leave the conversation and choose your own comfort and safety."
+          title: "Report Unwanted Behaviour",
+          body: "Report anything that feels unsafe or inappropriate. Your comfort always comes first."
         }
       ]
     : [
         {
           icon: "◎",
-          title: "A World of New Connections",
-          body: "MeetStrangers4u brings people together across countries, cultures, and backgrounds. Every conversation is a chance to hear a new story, exchange ideas, and discover a different point of view."
+          title: "Meet People Around the World",
+          body: "Discover new cultures, exchange ideas, and hear stories from different backgrounds."
         },
         {
           icon: "✦",
-          title: "Meet. Talk. Discover.",
-          body: "Whether you want to make a new friend, enjoy a spontaneous conversation, or connect with someone you already know, MeetStrangers4u gives you ways to make that first connection."
-        },
-        {
-          icon: "⌁",
-          title: "Explore Your Experience",
-          body: "Discover text conversations, random connections, private partner calls, voice and video experiences, and interactive fun as features are made available in the app."
+          title: "Chat, Call & Explore",
+          body: "Enjoy conversations, random connections, partner calls, and interactive experiences."
         },
         {
           icon: "♡",
           title: "A Community Built on Respect",
-          body: "We believe good connections begin with mutual respect. Be welcoming, respect boundaries, and help make every interaction comfortable for everyone."
+          body: "We believe every great connection starts with kindness, trust, and mutual respect."
         },
         {
           icon: "✧",
           title: "Our Mission",
-          body: "To make meeting new people simple and enjoyable, bring different perspectives closer, and turn everyday conversations into meaningful connections."
+          body: "To bring people closer and turn simple conversations into meaningful connections."
         }
       ];
 
@@ -699,12 +689,12 @@ function profileInfoScreen(kind) {
         <p class="profile-info-kicker">${privacy ? "YOUR COMFORT MATTERS" : "GET TO KNOW US"}</p>
         <h1 class="page-title">${privacy ? "Privacy & Safety" : "About MeetStrangers4u"}</h1>
         <p class="profile-info-lead">${privacy
-          ? "Connect with confidence. Protect your personal information, respect others, and always put your safety first."
-          : "More than just a conversation — a place to meet people, share stories, and discover connections beyond boundaries."}</p>
+          ? "Connect confidently. Protect your privacy and put safety first."
+          : "Meet new people, share stories, and discover connections worldwide."}</p>
       </div>
 
       <div class="profile-info-sections">
-        ${sections.map((section, index) => `
+        ${sections.map(section => `
           <article class="profile-info-section">
             <div class="profile-info-section-icon" aria-hidden="true">${section.icon}</div>
             <div class="profile-info-section-copy">
@@ -717,7 +707,6 @@ function profileInfoScreen(kind) {
 
       <div class="profile-info-signoff">
         <strong>${privacy ? "Connect Freely. Stay Safe. Respect Everyone." : "One World. Countless Stories."}</strong>
-        <span>${privacy ? "Your safety and comfort always come first." : "MeetStrangers4u · Meet New People. Discover New Connections."}</span>
       </div>
     </section>
     ${bottomNav()}
