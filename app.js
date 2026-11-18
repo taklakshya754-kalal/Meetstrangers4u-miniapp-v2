@@ -274,6 +274,14 @@ function partnerScreen() {
       <h1 class="page-title">Partner Call</h1>
       <p class="page-subtitle">Invite someone using their unique MeetStrangers4u User ID.</p>
 
+      <div class="compact-call-pricing ${type === "Video" ? "video-pricing" : ""}">
+        <div class="compact-pricing-main">
+          <strong>${type === "Video" ? "20" : "10"} Coins <span>Call Fee</span></strong>
+          <strong>+${type === "Video" ? "50" : "20"} Coins / Min</strong>
+        </div>
+        <small>Call fee applies after connection · Per-minute charge starts after 1 minute</small>
+      </div>
+
       <div class="partner-call-section">
         <label for="partner-id">Partner User ID</label>
         <input
@@ -979,10 +987,11 @@ async function handleCallServerMessage(message, iceServers, attemptId = callAtte
 
     case "call-ended":
       finishCall(message.reason === "insufficient-coins"
-        ? "Not enough coins to continue this call."
+        ? "Your coin balance ran out. The call has ended."
         : message.reason === "connection-timeout"
           ? "Could not establish a connection. Please try again."
           : "Call Ended");
+      if (message.reason === "insufficient-coins") showInsufficientCoinsPopup();
       break;
 
     case "error":
@@ -1216,7 +1225,7 @@ function showInsufficientCoinsPopup() {
   const modal = document.createElement("div");
   modal.id = "coin-shortage-modal";
   modal.className = "coin-modal-backdrop";
-  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Not Enough Coins</h3><p>You need at least 100 coins to use call features. Please add coins to continue.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\'earn\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
+  modal.innerHTML = '<div class="coin-modal" role="dialog" aria-modal="true" aria-labelledby="coin-modal-title"><div class="coin-modal-icon">💰</div><h3 id="coin-modal-title">Coins Finished</h3><p>Your coin balance is not enough to continue this call. Watch an ad to earn more coins, then start another call.</p><button class="primary-button" onclick="closeCoinPopup(); navigate(\\\'earn\\\')">▶ Watch Ad</button><button class="coin-modal-close" onclick="closeCoinPopup()">Maybe Later</button></div>';
   document.body.appendChild(modal);
 }
 
@@ -1373,8 +1382,9 @@ async function sendInvitation() {
     if (!accountLoaded) await loadAccount();
     if (attemptId !== callAttemptId) return;
 
-    if (state.coins < 100) {
-      throw new Error("You need at least 100 coins to send a Partner Call invitation.");
+    const requiredFee = callType === "video" ? 20 : 10;
+    if (state.coins < requiredFee) {
+      throw new Error("You need at least " + requiredFee + " coins for the Partner Call connection fee.");
     }
 
     const iceServers = await getCallIceServers();
