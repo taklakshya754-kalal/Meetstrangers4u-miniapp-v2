@@ -110,7 +110,7 @@
     for(const candidate of peer.pendingIce.splice(0)){try{await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));}catch(_){}}
   }
   async function handleRtcSignal(from, signal) {
-    if(!voiceState.active || !signal) { rtcPendingSignals.push({from,signal}); return; }
+    if(!voiceState.active || !signal) { if(rtcPendingSignals.length<20)rtcPendingSignals.push({from,signal}); return; }
     const peer=createVoicePeer(from);
     if(signal.candidate){
       if(peer.pc.remoteDescription){try{await peer.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));}catch(_){}}
@@ -157,6 +157,7 @@
   function stopVoice() {
     voiceState.peers.forEach(peer=>{try{peer.pc.close();}catch(_){}});
     voiceState.peers.clear();
+    rtcPendingSignals=[];
     if(voiceState.stream)voiceState.stream.getTracks().forEach(t=>t.stop());
     voiceState.stream=null;voiceState.active=false;voiceState.muted=false;voiceState.busy=false;
     document.querySelectorAll('[id^="td-remote-audio-"]').forEach(a=>a.remove());
@@ -168,6 +169,7 @@
   function renderGame(spinning=false) {
     const overlay=document.getElementById("td-setup-overlay");
     if(!overlay || !gameState) return;
+    const chatDraft=document.getElementById("td-chat-input")?.value||"";
     const players=gameState.players||lobbyState.players||[];
     const scores=gameState.scores||{};
     const active=players.find(p=>p.id===gameState.selectedId);
@@ -198,6 +200,7 @@
       (gameState.ranked&&phase==="finished"?'<div class="td-score-panel"><div class="td-label">FINAL RANKING</div>'+rank.map((p,i)=>'<div class="td-score-row"><span>'+(i+1)+'. '+esc(p.name)+'</span><b>'+Number(p.score||0)+' Score</b></div>').join("")+'</div>':'')+
       ''<div class="td-voice-panel"><div class="td-label">VOICE CHAT · OPTIONAL</div><div class="td-voice-state">'+(voiceState.active?(voiceState.muted?"Mic muted":"Microphone on"):voiceState.busy?"Requesting microphone…":"Tap to join voice")+'</div>'+(voiceState.error?'<p class="td-voice-error">'+esc(voiceState.error)+'</p>':'')+(voiceState.active?'<div class="td-action-grid"><button class="td-primary td-voice-mute" id="td-voice-mute">'+(voiceState.muted?"🔊 Unmute":"🔇 Mute")+'</button><button class="td-secondary" id="td-voice-stop">Leave Voice</button></div>':'<button class="td-primary td-voice-start" id="td-voice-start" '+(voiceState.busy?'disabled':'')+'>🎙️ Join Voice Chat</button>')+'</div>'+<div class="td-chat-panel"><div class="td-label">ROOM CHAT</div><div class="td-chat-log" id="td-chat-log">'+chatRows+'</div><div class="td-chat-input"><input id="td-chat-input" maxlength="240" placeholder="Message players…"><button id="td-chat-send">Send</button></div></div>'+
       '<button class="td-secondary" id="td-game-leave">Leave Game</button><p class="td-footnote">Game score only · wallet coins are not used</p></div>';
+    const chatInput=overlay.querySelector("#td-chat-input");if(chatInput)chatInput.value=chatDraft;
     const spinBtn=overlay.querySelector("#td-spin");
     spinBtn?.addEventListener("click",()=>sendGameAction("spin"));
     overlay.querySelector("#td-truth")?.addEventListener("click",()=>sendGameAction("choose-challenge",{choice:"truth"}));
