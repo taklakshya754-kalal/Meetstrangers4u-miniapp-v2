@@ -1507,3 +1507,10 @@ body {
 #app .partner-video-clean .page-title{font-size:20px;font-weight:750;line-height:1.15;letter-spacing:-.2px;color:#D4D9E8;margin:0 0 5px}
 #app .partner-video-clean>.page-subtitle{margin:0 0 7px}
 @media(max-width:380px){#app .partner-video-clean{padding:14px 12px}}
+
+/* Draggable compact active-call pill while user browses other screens */
+#app .floating-active-call{position:fixed;z-index:9999;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;min-height:44px;padding:7px 12px;border:1px solid rgba(126,156,229,.42);border-radius:999px;background:linear-gradient(135deg,rgba(17,28,63,.96),rgba(44,38,91,.97));box-shadow:0 8px 26px rgba(0,0,0,.34),0 0 16px rgba(83,112,222,.14);color:#EDF3FF;font:inherit;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+#app .floating-active-call:active{cursor:grabbing}
+#app .floating-active-call .floating-call-icon{font-size:17px;line-height:1}
+#app .floating-active-call .floating-call-live{font-size:9px;font-weight:800;letter-spacing:1px;color:#7CE6C2}
+#app .floating-active-call .floating-call-time{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.3px;color:#F4F6FF}
