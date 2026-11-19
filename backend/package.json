@@ -6,7 +6,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js"
+    "check": "node --check server.js",
+    "start-truth-dare": "node truth-dare-server.js",
+    "check-truth-dare": "node --check truth-dare-server.js"
   },
   "engines": {
     "node": ">=20"
