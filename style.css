@@ -1519,3 +1519,29 @@ body {
 #app .call-ended-panel{gap:9px}
 #app .call-ended-panel>.primary-button{margin-top:auto;min-height:49px;width:100%}
 #app .call-ended-panel>.secondary-button{margin-top:0;min-height:49px;width:100%}
+
+/* Privacy & About: cooler midnight-blue palette, reduced purple */
+#app .profile-info-page{
+  background:
+    radial-gradient(ellipse at 50% 0%,rgba(55,105,205,.16),transparent 38%),
+    radial-gradient(ellipse at 100% 55%,rgba(38,86,155,.10),transparent 42%),
+    linear-gradient(145deg,#142544 0%,#101C38 58%,#0D1832 100%);
+  border-color:rgba(90,130,210,.34);
+}
+#app .profile-info-symbol{
+  border-color:rgba(110,155,235,.38);
+  color:#BFD8FF;
+  background:linear-gradient(145deg,rgba(64,105,185,.26),rgba(24,57,105,.25));
+  box-shadow:0 0 18px rgba(66,112,205,.12),inset 0 1px 0 rgba(255,255,255,.10);
+}
+#app .profile-info-kicker{color:#9EBCEB}
+#app .profile-info-section-icon{
+  border-color:rgba(105,145,220,.28);
+  color:#B7D1F5;
+  background:linear-gradient(145deg,rgba(49,87,151,.23),rgba(20,48,90,.24));
+}
+#app .profile-info-signoff{
+  border-color:rgba(92,132,200,.26);
+  background:linear-gradient(110deg,rgba(28,51,91,.38),rgba(17,39,77,.34));
+}
+#app .profile-info-signoff strong{color:#C8DBF8}
