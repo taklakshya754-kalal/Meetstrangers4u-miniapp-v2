@@ -139,6 +139,142 @@ function enterQueue(player, count, mode) {
   }
 }
 
+// Server-authoritative gameplay state. Wallet/coin systems are intentionally not referenced.
+const PROMPTS = {
+  normal: {
+    truth: [
+      "What is a harmless habit you hope nobody notices?",
+      "What is the funniest misunderstanding you have had?",
+      "Which song do you secretly enjoy?",
+      "What is one small thing that instantly improves your mood?",
+      "What was your most awkward first impression?",
+      "What is a skill you wish you could learn overnight?",
+      "What is the strangest food combination you like?",
+      "What is a silly fear you had as a child?"
+    ],
+    dare: [
+      "Do your best dramatic movie entrance for 10 seconds.",
+      "Speak like a news reporter until your next turn.",
+      "Make up a two-line song about the room.",
+      "Do a slow-motion celebration for 10 seconds.",
+      "Describe your day using only three emojis, then explain.",
+      "Give the group a funny nickname (keep it friendly).",
+      "Try to make everyone laugh with a silly face.",
+      "Narrate your next 20 seconds like a sports commentator."
+    ]
+  },
+  advanced: {
+    truth: [
+      "What is a goal you have been postponing, and why?",
+      "What is a lesson you learned the hard way?",
+      "What is something you are proud of but rarely mention?",
+      "When did you last step outside your comfort zone?",
+      "What quality do you value most in a close friend?",
+      "What is one opinion you changed recently?",
+      "What is a challenge you handled better than expected?",
+      "What is a promise to yourself you want to keep?"
+    ],
+    dare: [
+      "Give a 30-second motivational speech to your future self.",
+      "Perform a dramatic reading of a random sentence in chat.",
+      "Invent a handshake and explain its three steps.",
+      "Tell a short story with five words chosen by the room.",
+      "Do a 20-second plank only if comfortable; otherwise act one out.",
+      "Show a talent or describe it if you prefer not to use camera.",
+      "Give a sincere compliment to each player in the room.",
+      "Create an imaginary product and pitch it in 30 seconds."
+    ]
+  },
+  dark: {
+    truth: [
+      "What is your most harmless villain origin story?",
+      "Which mildly embarrassing moment still haunts you?",
+      "What is the most chaotic thing in your browser bookmarks (skip details if private)?",
+      "What ridiculous conspiracy would you invent about your own life?",
+      "What is a petty hill you would defend for no reason?",
+      "What is your most cursed but harmless shower thought?",
+      "What would your warning label say?",
+      "What is the funniest way you have sabotaged your own plans?"
+    ],
+    dare: [
+      "Deliver a villain monologue about losing your charger.",
+      "Roast your own profile description gently for 15 seconds.",
+      "Pretend your phone is giving you a performance review.",
+      "Describe a banana like it is a terrifying movie villain.",
+      "Give a dramatic apology to an imaginary houseplant.",
+      "Read your next message as if you are a haunted elevator.",
+      "Make a fake breaking-news headline about yourself.",
+      "Invent a useless superpower and demonstrate it."
+    ]
+  }
+};
+function initGame(room) {
+  room.game = { scores: Object.fromEntries(room.players.map(p => [p.id, 0])), round: 0, phase: "spin", turnId: null, challenge: null, votes: {}, chatAt: new Map() };
+  room.status = "game";
+  broadcast(room, "game-state", { roomId: room.id, mode: room.mode, round: 0, phase: "spin", scores: room.game.scores, targetScore: 1000, players: room.players.map(safePlayer) });
+}
+function playerInGame(room, player) { return !!room && room.status === "game" && room.game && room.players.some(p => p.id === player.id); }
+function spinBottle(room, player) {
+  const game = room.game;
+  if (!playerInGame(room, player) || game.phase !== "spin") return send(player.ws, "error", { code: "TURN_BUSY" });
+  game.round++;
+  const chosen = room.players[crypto.randomInt(room.players.length)];
+  game.turnId = chosen.id; game.phase = "choose"; game.challenge = null; game.votes = {};
+  broadcast(room, "bottle-spin", { round: game.round, selectedId: chosen.id, selectedName: chosen.name, spinMs: 4200, scores: game.scores });
+}
+function choosePrompt(room, player, type) {
+  const game = room.game;
+  if (!playerInGame(room, player) || game.phase !== "choose" || game.turnId !== player.id) return send(player.ws, "error", { code: "NOT_YOUR_TURN" });
+  if (type !== "truth" && type !== "dare") return send(player.ws, "error", { code: "INVALID_CHOICE" });
+  const pool = PROMPTS[room.mode][type];
+  const prompt = pool[crypto.randomInt(pool.length)];
+  game.challenge = { id: crypto.randomBytes(8).toString("hex"), type, text: prompt, playerId: player.id, playerName: player.name };
+  game.phase = "task";
+  broadcast(room, "challenge", { round: game.round, challenge: game.challenge });
+}
+function submitTask(room, player) {
+  const game = room.game;
+  if (!playerInGame(room, player) || game.phase !== "task" || game.turnId !== player.id || !game.challenge) return send(player.ws, "error", { code: "NOT_YOUR_TURN" });
+  game.phase = "verify"; game.votes = {};
+  broadcast(room, "task-submitted", { round: game.round, challenge: game.challenge, requiredVotes: room.playerCount === 2 ? 1 : 2, votes: {} });
+}
+function finishRound(room, accepted, skipped, reason) {
+  const game = room.game, challenge = game.challenge;
+  if (!challenge) return;
+  let delta = skipped ? (challenge.type === "truth" ? -25 : -50) : accepted ? (challenge.type === "truth" ? 25 : 50) : 0;
+  game.scores[challenge.playerId] = Math.max(-1000, (game.scores[challenge.playerId] || 0) + delta);
+  const scores = game.scores;
+  const winner = Object.entries(scores).find(([id, score]) => score >= 1000);
+  game.phase = winner ? "finished" : "spin";
+  game.challenge = null; game.votes = {};
+  const ranked = room.players.map(p => ({ id: p.id, name: p.name, score: scores[p.id] || 0 })).sort((a,b)=>b.score-a.score);
+  broadcast(room, "challenge-result", { round: game.round, playerId: challenge.playerId, type: challenge.type, accepted: !!accepted, skipped: !!skipped, delta, reason: reason || null, scores, ranked, nextPhase: game.phase });
+  if (winner) broadcast(room, "game-over", { winner: ranked[0], ranked, targetScore: 1000 });
+}
+function castVote(room, player, vote) {
+  const game = room.game, challenge = game.challenge;
+  if (!playerInGame(room, player) || game.phase !== "verify" || !challenge) return send(player.ws, "error", { code: "NO_VOTE_PENDING" });
+  if (player.id === challenge.playerId) return send(player.ws, "error", { code: "CANNOT_VERIFY_SELF" });
+  if (vote !== "yes" && vote !== "no") return send(player.ws, "error", { code: "INVALID_VOTE" });
+  if (Object.prototype.hasOwnProperty.call(game.votes, player.id)) return send(player.ws, "error", { code: "VOTE_ALREADY_CAST" });
+  game.votes[player.id] = vote;
+  const voters = room.players.length - 1, required = room.playerCount === 2 ? 1 : 2;
+  const yes = Object.values(game.votes).filter(v => v === "yes").length, no = Object.values(game.votes).filter(v => v === "no").length;
+  broadcast(room, "verification-update", { votes: game.votes, yes, no, required });
+  if (yes >= required) return finishRound(room, true, false, "verified");
+  if (no > voters - required) return finishRound(room, false, false, "verification-failed");
+}
+function relayChat(room, player, textValue) {
+  const game = room.game;
+  if (!playerInGame(room, player) || typeof textValue !== "string") return send(player.ws, "error", { code: "INVALID_CHAT" });
+  const message = textValue.trim().slice(0, 240);
+  if (!message) return;
+  const last = game.chatAt.get(player.id) || 0;
+  if (Date.now() - last < 900) return send(player.ws, "error", { code: "CHAT_RATE_LIMIT" });
+  game.chatAt.set(player.id, Date.now());
+  broadcast(room, "chat-message", { id: crypto.randomBytes(6).toString("hex"), playerId: player.id, playerName: player.name, text: message, at: Date.now() });
+}
+
 wss.on("connection", (ws, req) => {
   const url = new URL(req.url, "http://localhost");
   let user;
@@ -175,6 +311,7 @@ wss.on("connection", (ws, req) => {
       if (room.players.length === room.playerCount && room.players.every(p => p.ready)) {
         room.status = "starting";
         broadcast(room, "game-start", { roomId: room.id, mode: room.mode, players: room.players.map(safePlayer), targetScore: 1000 });
+        initGame(room);
       }
       return;
     }
@@ -183,6 +320,16 @@ wss.on("connection", (ws, req) => {
       send(ws, "left-room");
       return;
     }
+    const room = rooms.get(player.roomId);
+    if (msg.type === "spin") return spinBottle(room, player);
+    if (msg.type === "choose-challenge") return choosePrompt(room, player, String(msg.choice || ""));
+    if (msg.type === "submit-task") return submitTask(room, player);
+    if (msg.type === "skip-challenge") {
+      if (!playerInGame(room, player) || room.game.phase !== "task" || room.game.turnId !== player.id) return send(ws, "error", { code: "NOT_YOUR_TURN" });
+      return finishRound(room, false, true, "skipped");
+    }
+    if (msg.type === "verify-vote") return castVote(room, player, String(msg.vote || ""));
+    if (msg.type === "chat") return relayChat(room, player, msg.text);
     send(ws, "error", { code: "UNKNOWN_ACTION" });
   });
 
