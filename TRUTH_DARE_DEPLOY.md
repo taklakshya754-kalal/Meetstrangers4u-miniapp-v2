@@ -36,15 +36,17 @@ In the Cloudflare Tunnel dashboard, add a public hostname:
 - Hostname: `truth-dare.lxreward.xyz`
 - Service: `http://127.0.0.1:3012`
 
-The service handles both `/health` HTTP and `/ws` WebSocket paths. Use the tunnel's WebSocket support and do not expose port 3002 directly.
+The service handles both `/health` HTTP and `/ws` WebSocket paths. Use the tunnel's WebSocket support and do not expose port 3012 directly.
 
 ## Verify
 ```bash
 journalctl -u truth-dare.service -n 80 --no-pager
-curl -fsS http://127.0.0.1:3002/health
+curl -fsS http://127.0.0.1:3012/health
 ```
 
 ## Current limitations
 - Match queues and rooms are memory-only: restarting the service clears them.
-- The service currently supports matchmaking, room membership, and readiness only. The full synchronized game turns, Truth/Dare prompt selection, verification voting, Score updates, bottle spin, and winner calculation are not implemented yet.
-- Do not advertise this as a fully playable game until those features are added and tested.
+- Branch code now includes synchronized bottle spin, server-selected mode prompts, task completion, verifier voting, game-only Score, winner event, chat, and opt-in audio WebRTC signaling.
+- Voice uses public STUN only; without a TURN relay, some restrictive networks may fail to establish peer audio.
+- Rooms and scores are in memory and are cleared on service restart.
+- The branch has not yet been deployed to the public Mini App or tested with two real Telegram users; do not treat it as fully production-ready until that end-to-end test is done.
