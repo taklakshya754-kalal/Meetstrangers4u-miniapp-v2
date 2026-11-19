@@ -26,7 +26,13 @@ jobs:
         run: node --check truth-dare.test.js
         working-directory: backend
       - name: Run Truth Dare integration test
-        run: npm run test-truth-dare
+        run: npm run test-truth-dare 2>&1 | tee test-output.txt
         working-directory: backend
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: truth-dare-test-log
+          path: backend/test-output.txt
       - name: Check main app script
         run: node --check app.js
