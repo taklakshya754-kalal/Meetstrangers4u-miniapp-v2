@@ -9,6 +9,7 @@
   const WS_ENDPOINT = window.TRUTH_DARE_WS_URL || "wss://truth-dare.lxreward.xyz/ws";
   let selectedMode = "normal", selectedPlayers = 2, socket = null, currentOverlay = null;
   let lobbyState = { status: "idle", players: [], roomId: null, ready: false, target: 1000, count: 2, mode: "normal" };
+  let gameState = null;
   let connectTimer = null;
 
   function close() {
@@ -85,6 +86,59 @@
     });
     overlay.querySelector(".td-retry-btn")?.addEventListener("click", () => startQueue(lobbyState.count, lobbyState.mode));
   }
+  function sendGameAction(type, payload={}) {
+    if(socket && socket.readyState===WebSocket.OPEN) socket.send(JSON.stringify({type,...payload}));
+  }
+  function renderGame(spinning=false) {
+    const overlay=document.getElementById("td-setup-overlay");
+    if(!overlay || !gameState) return;
+    const players=gameState.players||lobbyState.players||[];
+    const scores=gameState.scores||{};
+    const active=players.find(p=>p.id===gameState.selectedId);
+    const me=players.find(p=>p.id===gameState.userId);
+    const isMyTurn=gameState.selectedId===gameState.userId;
+    const challenge=gameState.challenge;
+    const phase=gameState.phase||"spin";
+    const rank=(gameState.ranked||players.map(p=>({id:p.id,name:p.name,score:scores[p.id]||0}))).sort((a,b)=>b.score-a.score);
+    const scoreRows=rank.map(p=>'<div class="td-score-row '+(p.id===gameState.selectedId?'active':'')+'"><span>'+esc(p.name)+(p.id===gameState.userId?' (You)':'')+'</span><b>'+Number(p.score||scores[p.id]||0)+' Score</b></div>').join("");
+    const chatRows=(gameState.chat||[]).slice(-18).map(m=>'<div class="td-chat-line"><b>'+esc(m.playerName)+'</b> '+esc(m.text)+'</div>').join("");
+    let action="";
+    if(phase==="spin") action='<button class="td-primary" id="td-spin">🎯 Spin the Bottle</button><p class="td-footnote">Anyone in the room can spin to choose the next player.</p>';
+    if(phase==="choose" && isMyTurn) action='<div class="td-action-grid"><button class="td-primary" id="td-truth">💭 Truth</button><button class="td-primary td-dare" id="td-dare">🔥 Dare</button></div>';
+    if(phase==="task" && isMyTurn) action='<button class="td-primary" id="td-complete">✅ I completed it</button><button class="td-secondary" id="td-skip">Skip challenge</button>';
+    if(phase==="verify" && !isMyTurn && !(gameState.votes||{})[gameState.userId]) action='<div class="td-action-grid"><button class="td-primary td-verify-yes" id="td-vote-yes">✓ Verify</button><button class="td-secondary td-verify-no" id="td-vote-no">✕ Not done</button></div>';
+    if(phase==="verify" && (gameState.votes||{})[gameState.userId]) action='<p class="td-footnote">Your verification vote has been submitted.</p>';
+    if(phase==="finished") action='<button class="td-primary" id="td-game-close">Close Game</button>';
+    overlay.innerHTML='<div class="td-sheet td-game-sheet" role="dialog" aria-modal="true" aria-label="Truth or Dare game">'+
+      '<button class="td-close" id="td-game-exit" type="button" aria-label="Leave game">×</button>'+
+      '<div class="td-kicker">LIVE GAME · ROUND '+Number(gameState.round||0)+'</div><div class="td-title">Truth <span>or</span> Dare</div>'+
+      '<div class="td-game-status">'+esc(gameState.resultText||((phase==="spin")?"Ready for the next spin":phase==="choose"?"Choose your challenge":phase==="task"?"Challenge time!":phase==="verify"?"Players are verifying": "Game finished"))+'</div>'+
+      '<div class="td-bottle-wrap"><div class="td-bottle '+(spinning?"td-spin-anim":"")+'" style="--td-rotation:'+Number(gameState.spinRotation||0)+'deg">🍾</div></div>'+
+      '<div class="td-selected">'+(active?'Selected: <b>'+esc(active.name)+'</b>':(phase==="choose"?'Choose Truth or Dare':'Spin to select a player'))+'</div>'+
+      '<div class="td-score-panel"><div class="td-label">SCORES · TARGET 1000</div>'+scoreRows+'</div>'+
+      (challenge?'<div class="td-challenge-card"><div class="td-challenge-type">'+(challenge.type==="truth"?"💭 TRUTH":"🔥 DARE")+'</div><div class="td-challenge-text">'+esc(challenge.text)+'</div><small>For '+esc(challenge.playerName||"player")+'</small></div>':'')+
+      (phase==="verify"?'<div class="td-vote-summary">Verified: '+Number(gameState.yes||0)+' / '+Number(gameState.requiredVotes||0)+' approvals needed</div>':'')+
+      action+
+      (gameState.ranked&&phase==="finished"?'<div class="td-score-panel"><div class="td-label">FINAL RANKING</div>'+rank.map((p,i)=>'<div class="td-score-row"><span>'+(i+1)+'. '+esc(p.name)+'</span><b>'+Number(p.score||0)+' Score</b></div>').join("")+'</div>':'')+
+      '<div class="td-chat-panel"><div class="td-label">ROOM CHAT</div><div class="td-chat-log" id="td-chat-log">'+chatRows+'</div><div class="td-chat-input"><input id="td-chat-input" maxlength="240" placeholder="Message players…"><button id="td-chat-send">Send</button></div></div>'+
+      '<button class="td-secondary" id="td-game-leave">Leave Game</button><p class="td-footnote">Game score only · wallet coins are not used</p></div>';
+    const spinBtn=overlay.querySelector("#td-spin");
+    spinBtn?.addEventListener("click",()=>sendGameAction("spin"));
+    overlay.querySelector("#td-truth")?.addEventListener("click",()=>sendGameAction("choose-challenge",{choice:"truth"}));
+    overlay.querySelector("#td-dare")?.addEventListener("click",()=>sendGameAction("choose-challenge",{choice:"dare"}));
+    overlay.querySelector("#td-complete")?.addEventListener("click",()=>sendGameAction("submit-task"));
+    overlay.querySelector("#td-skip")?.addEventListener("click",()=>sendGameAction("skip-challenge"));
+    overlay.querySelector("#td-vote-yes")?.addEventListener("click",()=>sendGameAction("verify-vote",{vote:"yes"}));
+    overlay.querySelector("#td-vote-no")?.addEventListener("click",()=>sendGameAction("verify-vote",{vote:"no"}));
+    const sendChat=()=>{const input=overlay.querySelector("#td-chat-input");const val=input?.value.trim();if(val){sendGameAction("chat",{text:val});input.value="";}};
+    overlay.querySelector("#td-chat-send")?.addEventListener("click",sendChat);
+    overlay.querySelector("#td-chat-input")?.addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
+    const log=overlay.querySelector("#td-chat-log");if(log)log.scrollTop=log.scrollHeight;
+    overlay.querySelector("#td-game-leave")?.addEventListener("click",close);
+    overlay.querySelector("#td-game-exit")?.addEventListener("click",close);
+    overlay.querySelector("#td-game-close")?.addEventListener("click",close);
+  }
+
   function startQueue(count, mode) {
     stopSocket(true);
     lobbyState = { status:"connecting", players:[], roomId:null, ready:false, target:1000, count, mode };
@@ -106,10 +160,18 @@
       if(data.type==="room-formed"){ lobbyState.status="room"; lobbyState.roomId=data.roomId; lobbyState.players=data.players||[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="ready-update"){ lobbyState.players=data.players||lobbyState.players; renderLobby(); }
       if(data.type==="game-start"){ lobbyState.status="starting"; lobbyState.players=data.players||lobbyState.players; renderLobby(); }
-      if(data.type==="player-left"){ lobbyState.players=data.players||[]; renderLobby(); }
-      if(data.type==="room-closed"){ lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
+      if(data.type==="game-state"){ gameState={...data, userId:window.Telegram.WebApp.initDataUnsafe?.user?.id?String(window.Telegram.WebApp.initDataUnsafe.user.id):null, chat:[], resultText:null, selectedId:null, votes:{}, yes:0, requiredVotes:0, phase:"spin"}; renderGame(); }
+      if(data.type==="bottle-spin" && gameState){ gameState.round=data.round; gameState.selectedId=data.selectedId; gameState.resultText=null; gameState.phase="choose"; const idx=(gameState.players||[]).findIndex(p=>p.id===data.selectedId); gameState.spinRotation=1440+Math.max(0,idx)*360/Math.max(1,(gameState.players||[]).length); renderGame(true); }
+      if(data.type==="challenge" && gameState){ gameState.challenge=data.challenge; gameState.phase="task"; gameState.resultText="Selected player: choose and complete the task"; renderGame(); }
+      if(data.type==="task-submitted" && gameState){ gameState.challenge=data.challenge; gameState.phase="verify"; gameState.votes={}; gameState.requiredVotes=data.requiredVotes; gameState.yes=0; gameState.resultText="Others: verify whether the task was completed"; renderGame(); }
+      if(data.type==="verification-update" && gameState){ gameState.votes=data.votes||{}; gameState.yes=data.yes||0; gameState.no=data.no||0; gameState.requiredVotes=data.required||gameState.requiredVotes; renderGame(); }
+      if(data.type==="challenge-result" && gameState){ gameState.scores=data.scores||gameState.scores; gameState.phase=data.nextPhase||"spin"; gameState.challenge=null; gameState.votes={}; gameState.ranked=data.ranked; gameState.resultText=data.skipped?"Challenge skipped · "+data.delta+" Score":data.accepted?"Verified · +"+data.delta+" Score":"Verification failed · no score"; renderGame(); }
+      if(data.type==="game-over" && gameState){ gameState.phase="finished"; gameState.ranked=data.ranked; gameState.resultText="🏆 "+data.winner.name+" wins!"; renderGame(); }
+      if(data.type==="chat-message" && gameState){ gameState.chat=(gameState.chat||[]).concat(data).slice(-40); renderGame(); }
+      if(data.type==="player-left" && gameState){ gameState.players=data.players||[]; renderGame(); }
+      if(data.type==="room-closed"){ gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="queue-cancelled"){ lobbyState.status="idle"; }
-      if(data.type==="error"){ lobbyState.status="offline"; renderLobby(); }
+      if(data.type==="error"){ if(gameState){gameState.resultText="Action failed: "+String(data.code||"error");renderGame();}else{lobbyState.status="offline";renderLobby();} }
     };
     ws.onerror=()=>{ if(socket===ws){lobbyState.status="offline";renderLobby();} };
     ws.onclose=()=>{ if(socket===ws && !["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();} };
