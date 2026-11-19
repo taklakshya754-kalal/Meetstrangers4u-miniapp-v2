@@ -9,3 +9,15 @@
 
 /* Lobby preview styling */
 .td-room-preview{margin:18px 0;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.025);border-radius:16px;padding:13px}.td-room-label{font-size:10px;letter-spacing:1.3px;color:#a4acd0;font-weight:800;margin-bottom:11px}.td-slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.td-slot{min-height:95px;border:1px dashed rgba(155,135,255,.3);border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px;background:rgba(120,95,255,.04)}.td-slot-avatar{font-size:20px;color:#c5b8ff}.td-slot b{font-size:11px;color:#e5e6f4}.td-slot small{font-size:9px;color:#9aa2c2}.td-lobby-warning{border:1px solid rgba(255,198,100,.22);background:rgba(255,198,100,.055);border-radius:13px;padding:12px;margin:14px 0;color:#e7d29c}.td-lobby-warning b{font-size:12px}.td-lobby-warning p{font-size:11px;line-height:1.5;color:#c4b992;margin:6px 0 0}.td-lobby-summary{display:grid;grid-template-columns:1fr auto;gap:9px;padding:12px 4px;color:#aab2cf;font-size:12px}.td-lobby-summary b{color:#f0efff;text-align:right}.td-back-setup{background:linear-gradient(100deg,#444c70,#5b5287);box-shadow:none}
+
+/* Live matchmaking state indicators and ready controls */
+.td-lobby-status{display:flex;align-items:flex-start;gap:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:13px;padding:12px;color:#c4c9df;font-size:12px;line-height:1.5;margin:12px 0}
+.td-status-dot{width:9px;height:9px;flex-shrink:0;margin-top:4px;border-radius:50%;background:#8f81ff;box-shadow:0 0 10px rgba(143,129,255,.6)}
+.td-status-dot.waiting{background:#f1c86b;box-shadow:0 0 10px rgba(241,200,107,.5);animation:td-pulse 1.4s infinite}
+.td-status-dot.room{background:#70e4b3;box-shadow:0 0 10px rgba(112,228,179,.5)}
+.td-status-dot.starting{background:#70e4b3;animation:td-pulse .7s infinite}
+.td-status-dot.offline{background:#ff7f97;box-shadow:none}
+.td-slot.td-filled{border-style:solid;border-color:rgba(112,228,179,.26);background:rgba(112,228,179,.055)}
+.td-ready-btn{margin:5px 0 9px;background:linear-gradient(100deg,#16a97a,#47d3a4);box-shadow:0 7px 24px rgba(22,169,122,.18)}
+.td-secondary{width:100%;border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:13px;background:rgba(255,255,255,.045);color:#d4d8ec;font-size:13px;font-weight:750;margin-top:2px}
+@keyframes td-pulse{50%{opacity:.45;transform:scale(.88)}}
