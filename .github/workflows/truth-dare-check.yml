@@ -1,0 +1,38 @@
+name: Truth Dare syntax checks
+
+on:
+  push:
+    branches: [truth-dare-complete-flow]
+  pull_request:
+    branches: [truth-dare-complete-flow]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install backend test dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: backend
+      - name: Check Truth Dare server
+        run: node --check truth-dare-server.js
+        working-directory: backend
+      - name: Check Truth Dare client
+        run: node --check truth-dare.js
+      - name: Check integration test file
+        run: node --check truth-dare.test.js
+        working-directory: backend
+      - name: Run Truth Dare integration test
+        run: set -o pipefail; npm run test-truth-dare 2>&1 | tee test-output.txt
+        working-directory: backend
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: truth-dare-test-log
+          path: backend/test-output.txt
+      - name: Check main app script
+        run: node --check app.js

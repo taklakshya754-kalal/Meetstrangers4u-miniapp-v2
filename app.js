@@ -510,7 +510,7 @@ function funZoneScreen() {
       <div style="height:22px"></div>
 
       <button class="call-card"
-        onclick="alert('Truth or Dare will be added next.')">
+        onclick="window.openTruthDareSetup && window.openTruthDareSetup()">
 
         🎯
 
