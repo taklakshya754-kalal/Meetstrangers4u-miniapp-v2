@@ -57,7 +57,8 @@
     if (lobbyState.status === "waiting") { heading = "Finding Players"; message = "Waiting for real players with the same settings. Keep this screen open."; }
     if (lobbyState.status === "room") { heading = "Room Lobby"; message = "Players joined! Everyone must tap Ready to start."; }
     if (lobbyState.status === "starting") { heading = "Starting Game"; message = "All players are ready. Preparing the game…"; }
-    if (lobbyState.status === "offline") { heading = "Matchmaking Offline"; message = "Game service is not reachable yet. Try again later."; }\n    if (lobbyState.status === "closed") { heading = "Room Closed"; message = "A player left before the game began. You can search for a new room."; }
+    if (lobbyState.status === "offline") { heading = "Matchmaking Offline"; message = "Game service is not reachable yet. Try again later."; }
+    if (lobbyState.status === "closed" { heading = "Room Closed"; message = "A player left before the game began. You can search for a new room."; }
     const list = lobbyState.players || [];
     const slots = Array.from({length:lobbyState.count}, (_,i) => {
       const p=list[i];
