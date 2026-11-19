@@ -10,9 +10,12 @@
   let selectedMode = "normal", selectedPlayers = 2, socket = null, currentOverlay = null;
   let lobbyState = { status: "idle", players: [], roomId: null, ready: false, target: 1000, count: 2, mode: "normal" };
   let gameState = null;
+  let voiceState = { active:false, muted:false, busy:false, stream:null, peers:new Map(), error:null };
+  let rtcPendingSignals = [];
   let connectTimer = null, gameSpinTimer = null;
 
   function close() {
+    stopVoice();
     stopSocket(true);
     document.getElementById("td-setup-overlay")?.remove();
     currentOverlay = null;
@@ -87,6 +90,78 @@
     });
     overlay.querySelector(".td-retry-btn")?.addEventListener("click", () => startQueue(lobbyState.count, lobbyState.mode));
   }
+  function sendRtc(to, signal) { if(socket && socket.readyState===WebSocket.OPEN) socket.send(JSON.stringify({type:"rtc-signal",to,signal})); }
+  function createVoicePeer(peerId) {
+    if(voiceState.peers.has(peerId)) return voiceState.peers.get(peerId);
+    const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.google.com:19302"}]});
+    const state={pc,pendingIce:[]}; voiceState.peers.set(peerId,state);
+    if(voiceState.stream) voiceState.stream.getTracks().forEach(track=>pc.addTrack(track,voiceState.stream));
+    pc.onicecandidate=e=>{if(e.candidate)sendRtc(peerId,{candidate:e.candidate.toJSON?e.candidate.toJSON():e.candidate});};
+    pc.ontrack=e=>{
+      let audio=document.getElementById("td-remote-audio-"+peerId);
+      if(!audio){audio=document.createElement("audio");audio.id="td-remote-audio-"+peerId;audio.autoplay=true;audio.playsInline=true;audio.style.position="fixed";audio.style.width="1px";audio.style.height="1px";audio.style.opacity="0";audio.style.pointerEvents="none";document.body.appendChild(audio);}
+      audio.srcObject=e.streams[0];audio.play().catch(()=>{});
+    };
+    pc.onconnectionstatechange=()=>{if(pc.connectionState==="failed"||pc.connectionState==="closed"){const a=document.getElementById("td-remote-audio-"+peerId);if(a)a.remove();}};
+    return state;
+  }
+  async function flushVoiceIce(peer) {
+    if(!peer.pc.remoteDescription) return;
+    for(const candidate of peer.pendingIce.splice(0)){try{await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));}catch(_){}}
+  }
+  async function handleRtcSignal(from, signal) {
+    if(!voiceState.active || !signal) { rtcPendingSignals.push({from,signal}); return; }
+    const peer=createVoicePeer(from);
+    if(signal.candidate){
+      if(peer.pc.remoteDescription){try{await peer.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));}catch(_){}}
+      else peer.pendingIce.push(signal.candidate);
+      return;
+    }
+    if(signal.type==="offer" && signal.description){
+      await peer.pc.setRemoteDescription(new RTCSessionDescription(signal.description));
+      await flushVoiceIce(peer);
+      const answer=await peer.pc.createAnswer();await peer.pc.setLocalDescription(answer);
+      sendRtc(from,{type:"answer",description:peer.pc.localDescription});
+    } else if(signal.type==="answer" && signal.description){
+      await peer.pc.setRemoteDescription(new RTCSessionDescription(signal.description));
+      await flushVoiceIce(peer);
+    }
+  }
+  async function startVoice() {
+    if(voiceState.active||voiceState.busy) return;
+    if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){voiceState.error="Voice calling is not supported in this browser.";renderGame();return;}
+    voiceState.busy=true;voiceState.error=null;renderGame();
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      voiceState.stream=stream;voiceState.active=true;voiceState.muted=false;voiceState.busy=false;
+      const peers=(gameState?.players||[]).filter(p=>p.id!==gameState.userId);
+      for(const p of peers){
+        const peer=createVoicePeer(p.id);
+        if(String(gameState.userId)<String(p.id)){
+          const offer=await peer.pc.createOffer();await peer.pc.setLocalDescription(offer);
+          sendRtc(p.id,{type:"offer",description:peer.pc.localDescription});
+        }
+      }
+      const pending=rtcPendingSignals.splice(0);
+      for(const signal of pending) await handleRtcSignal(signal.from,signal.signal);
+      renderGame();
+    }catch(err){
+      voiceState.busy=false;voiceState.active=false;voiceState.error=err?.name==="NotAllowedError"?"Microphone permission was denied.":(err?.message||"Could not start voice.");
+      if(voiceState.stream)voiceState.stream.getTracks().forEach(t=>t.stop());voiceState.stream=null;renderGame();
+    }
+  }
+  function toggleVoiceMute() {
+    if(!voiceState.active||!voiceState.stream)return;
+    voiceState.muted=!voiceState.muted;voiceState.stream.getAudioTracks().forEach(t=>t.enabled=!voiceState.muted);renderGame();
+  }
+  function stopVoice() {
+    voiceState.peers.forEach(peer=>{try{peer.pc.close();}catch(_){}});
+    voiceState.peers.clear();
+    if(voiceState.stream)voiceState.stream.getTracks().forEach(t=>t.stop());
+    voiceState.stream=null;voiceState.active=false;voiceState.muted=false;voiceState.busy=false;
+    document.querySelectorAll('[id^="td-remote-audio-"]').forEach(a=>a.remove());
+  }
+
   function sendGameAction(type, payload={}) {
     if(socket && socket.readyState===WebSocket.OPEN) socket.send(JSON.stringify({type,...payload}));
   }
@@ -121,7 +196,7 @@
       (phase==="verify"?'<div class="td-vote-summary">Verified: '+Number(gameState.yes||0)+' / '+Number(gameState.requiredVotes||0)+' approvals needed</div>':'')+
       action+
       (gameState.ranked&&phase==="finished"?'<div class="td-score-panel"><div class="td-label">FINAL RANKING</div>'+rank.map((p,i)=>'<div class="td-score-row"><span>'+(i+1)+'. '+esc(p.name)+'</span><b>'+Number(p.score||0)+' Score</b></div>').join("")+'</div>':'')+
-      '<div class="td-chat-panel"><div class="td-label">ROOM CHAT</div><div class="td-chat-log" id="td-chat-log">'+chatRows+'</div><div class="td-chat-input"><input id="td-chat-input" maxlength="240" placeholder="Message players…"><button id="td-chat-send">Send</button></div></div>'+
+      ''<div class="td-voice-panel"><div class="td-label">VOICE CHAT · OPTIONAL</div><div class="td-voice-state">'+(voiceState.active?(voiceState.muted?"Mic muted":"Microphone on"):voiceState.busy?"Requesting microphone…":"Tap to join voice")+'</div>'+(voiceState.error?'<p class="td-voice-error">'+esc(voiceState.error)+'</p>':'')+(voiceState.active?'<div class="td-action-grid"><button class="td-primary td-voice-mute" id="td-voice-mute">'+(voiceState.muted?"🔊 Unmute":"🔇 Mute")+'</button><button class="td-secondary" id="td-voice-stop">Leave Voice</button></div>':'<button class="td-primary td-voice-start" id="td-voice-start" '+(voiceState.busy?'disabled':'')+'>🎙️ Join Voice Chat</button>')+'</div>'+<div class="td-chat-panel"><div class="td-label">ROOM CHAT</div><div class="td-chat-log" id="td-chat-log">'+chatRows+'</div><div class="td-chat-input"><input id="td-chat-input" maxlength="240" placeholder="Message players…"><button id="td-chat-send">Send</button></div></div>'+
       '<button class="td-secondary" id="td-game-leave">Leave Game</button><p class="td-footnote">Game score only · wallet coins are not used</p></div>';
     const spinBtn=overlay.querySelector("#td-spin");
     spinBtn?.addEventListener("click",()=>sendGameAction("spin"));
@@ -132,6 +207,9 @@
     overlay.querySelector("#td-vote-yes")?.addEventListener("click",()=>sendGameAction("verify-vote",{vote:"yes"}));
     overlay.querySelector("#td-vote-no")?.addEventListener("click",()=>sendGameAction("verify-vote",{vote:"no"}));
     const sendChat=()=>{const input=overlay.querySelector("#td-chat-input");const val=input?.value.trim();if(val){sendGameAction("chat",{text:val});input.value="";}};
+    overlay.querySelector("#td-voice-start")?.addEventListener("click",startVoice);
+    overlay.querySelector("#td-voice-mute")?.addEventListener("click",toggleVoiceMute);
+    overlay.querySelector("#td-voice-stop")?.addEventListener("click",()=>{stopVoice();renderGame();});
     overlay.querySelector("#td-chat-send")?.addEventListener("click",sendChat);
     overlay.querySelector("#td-chat-input")?.addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
     const log=overlay.querySelector("#td-chat-log");if(log)log.scrollTop=log.scrollHeight;
@@ -169,6 +247,7 @@
       if(data.type==="challenge-result" && gameState){ gameState.scores=data.scores||gameState.scores; gameState.phase=data.nextPhase||"spin"; gameState.challenge=null; gameState.votes={}; gameState.ranked=data.ranked; gameState.resultText=data.skipped?"Challenge skipped · "+data.delta+" Score":data.accepted?"Verified · +"+data.delta+" Score":"Verification failed · no score"; renderGame(); }
       if(data.type==="game-over" && gameState){ gameState.phase="finished"; gameState.ranked=data.ranked; gameState.resultText="🏆 "+data.winner.name+" wins!"; renderGame(); }
       if(data.type==="chat-message" && gameState){ gameState.chat=(gameState.chat||[]).concat(data).slice(-40); renderGame(); }
+      if(data.type==="rtc-signal" && gameState){ handleRtcSignal(String(data.from||""),data.signal).catch(()=>{}); }
       if(data.type==="player-left" && gameState){ gameState.players=data.players||[]; renderGame(); }
       if(data.type==="room-closed"){ gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="queue-cancelled"){ lobbyState.status="idle"; }
