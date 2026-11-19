@@ -2,7 +2,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
-const http = require("node");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const WebSocket = require("ws");
