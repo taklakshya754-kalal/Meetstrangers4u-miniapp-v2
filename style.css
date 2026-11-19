@@ -1572,3 +1572,9 @@ body {
   background:linear-gradient(145deg,#143B7A,#0C2556);
   border-color:rgba(49,112,222,.4);
 }
+
+/* Darken only the outer Privacy/About panel; keep inner point cards unchanged */
+#app .profile-info-page{
+  background:linear-gradient(160deg,#09142D 0%,#071126 55%,#060F22 100%);
+  border-color:rgba(65,100,170,.34);
+}
