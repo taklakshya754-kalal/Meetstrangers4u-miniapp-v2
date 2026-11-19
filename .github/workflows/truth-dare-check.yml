@@ -1,0 +1,22 @@
+name: Truth Dare syntax checks
+
+on:
+  push:
+    branches: [truth-dare-complete-flow]
+  pull_request:
+    branches: [truth-dare-complete-flow]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Check Truth Dare server
+        run: node --check backend/truth-dare-server.js
+      - name: Check Truth Dare client
+        run: node --check truth-dare.js
+      - name: Check main app script
+        run: node --check app.js
