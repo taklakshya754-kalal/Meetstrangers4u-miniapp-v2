@@ -1630,7 +1630,7 @@ function showPartnerCallJoinNotice(invite) {
   pendingPartnerCall = invite;
   document.getElementById("partner-call-join-notice")?.remove();
 
-  const isVideo = invite.type === "Video";
+  const isVideo = invite.type === "video";
   const notice = document.createElement("div");
   notice.id = "partner-call-join-notice";
   notice.className = "partner-call-join-overlay";
@@ -1675,13 +1675,13 @@ loadAccount().then(() => {
       kind: "bot",
       code: params.get("code"),
       role: params.get("role"),
-      type: params.get("type") === "video" ? "Video" : "Voice"
+      type: params.get("type") === "video" ? "video" : "voice"
     });
   } else if (params.get("partner") === "1" && params.get("code")) {
     showPartnerCallJoinNotice({
       kind: "miniapp",
       code: params.get("code"),
-      type: params.get("type") === "video" ? "Video" : "Voice"
+      type: params.get("type") === "video" ? "video" : "voice"
     });
   }
 }).catch(err => {
