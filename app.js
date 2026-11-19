@@ -1636,7 +1636,12 @@ function updateFloatingCallTimer(value) {
 }
 
 function openFloatingActiveCall(event) {
-  if (floatingCallDrag?.moved) return;
+  const box = document.getElementById("floating-active-call");
+  if (box?.dataset.dragged === "true") {
+    delete box.dataset.dragged;
+    event?.preventDefault();
+    return;
+  }
   state.history.push(state.screen);
   state.screen = "call";
   render();
