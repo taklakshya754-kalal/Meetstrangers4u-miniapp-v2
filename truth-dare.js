@@ -10,7 +10,7 @@
   let selectedMode = "normal", selectedPlayers = 2, socket = null, currentOverlay = null;
   let lobbyState = { status: "idle", players: [], roomId: null, ready: false, target: 1000, count: 2, mode: "normal" };
   let gameState = null;
-  let connectTimer = null;
+  let connectTimer = null, gameSpinTimer = null;
 
   function close() {
     stopSocket(true);
@@ -19,6 +19,7 @@
   }
   function stopSocket(sendCancel) {
     if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
+    if (gameSpinTimer) { clearTimeout(gameSpinTimer); gameSpinTimer = null; }
     const old = socket; socket = null;
     if (old && old.readyState === WebSocket.OPEN && sendCancel) {
       try { old.send(JSON.stringify({ type: "cancel-queue" })); } catch (_) {}
@@ -161,7 +162,7 @@
       if(data.type==="ready-update"){ lobbyState.players=data.players||lobbyState.players; renderLobby(); }
       if(data.type==="game-start"){ lobbyState.status="starting"; lobbyState.players=data.players||lobbyState.players; renderLobby(); }
       if(data.type==="game-state"){ gameState={...data, userId:window.Telegram.WebApp.initDataUnsafe?.user?.id?String(window.Telegram.WebApp.initDataUnsafe.user.id):null, chat:[], resultText:null, selectedId:null, votes:{}, yes:0, requiredVotes:0, phase:"spin"}; renderGame(); }
-      if(data.type==="bottle-spin" && gameState){ gameState.round=data.round; gameState.selectedId=data.selectedId; gameState.resultText=null; gameState.phase="choose"; const idx=(gameState.players||[]).findIndex(p=>p.id===data.selectedId); gameState.spinRotation=1440+Math.max(0,idx)*360/Math.max(1,(gameState.players||[]).length); renderGame(true); }
+      if(data.type==="bottle-spin" && gameState){ gameState.round=data.round; gameState.selectedId=data.selectedId; gameState.resultText=null; gameState.phase="spin-animation"; const idx=(gameState.players||[]).findIndex(p=>p.id===data.selectedId); gameState.spinRotation=1440+Math.max(0,idx)*360/Math.max(1,(gameState.players||[]).length); renderGame(true); if(gameSpinTimer)clearTimeout(gameSpinTimer); gameSpinTimer=setTimeout(()=>{if(gameState){gameState.phase="choose";renderGame();}gameSpinTimer=null;},Math.max(1000,Number(data.spinMs||4200))); }
       if(data.type==="challenge" && gameState){ gameState.challenge=data.challenge; gameState.phase="task"; gameState.resultText="Selected player: choose and complete the task"; renderGame(); }
       if(data.type==="task-submitted" && gameState){ gameState.challenge=data.challenge; gameState.phase="verify"; gameState.votes={}; gameState.requiredVotes=data.requiredVotes; gameState.yes=0; gameState.resultText="Others: verify whether the task was completed"; renderGame(); }
       if(data.type==="verification-update" && gameState){ gameState.votes=data.votes||{}; gameState.yes=data.yes||0; gameState.no=data.no||0; gameState.requiredVotes=data.required||gameState.requiredVotes; renderGame(); }
