@@ -26,7 +26,7 @@ jobs:
         run: node --check truth-dare.test.js
         working-directory: backend
       - name: Run Truth Dare integration test
-        run: npm run test-truth-dare 2>&1 | tee test-output.txt
+        run: set -o pipefail; npm run test-truth-dare 2>&1 | tee test-output.txt
         working-directory: backend
       - name: Upload test logs
         if: always()
