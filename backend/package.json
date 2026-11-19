@@ -8,7 +8,8 @@
     "start": "node server.js",
     "check": "node --check server.js",
     "start-truth-dare": "node truth-dare-server.js",
-    "check-truth-dare": "node --check truth-dare-server.js"
+    "check-truth-dare": "node --check truth-dare-server.js",
+    "test-truth-dare": "node --test truth-dare.test.js"
   },
   "engines": {
     "node": ">=20"
