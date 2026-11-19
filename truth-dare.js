@@ -30,13 +30,25 @@
     overlay.querySelectorAll('[data-mode]').forEach(btn => btn.onclick = () => { selectedMode = btn.dataset.mode; overlay.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('selected',x===btn)); });
     overlay.querySelector('#td-confirm-setup').onclick = () => {
       const mode = MODES.find(m=>m.id===selectedMode)?.title || 'Normal';
-      const notice = overlay.querySelector('.td-notice') || document.createElement('div');
-      notice.className='td-notice';
-      notice.textContent = `Setup saved: ${selectedPlayers} players · ${mode}. Live matchmaking is not connected yet; server implementation is the next step.`;
-      overlay.querySelector('.td-primary').insertAdjacentElement('beforebegin', notice);
-      overlay.querySelector('.td-primary').textContent='Got it';
-      overlay.querySelector('.td-primary').onclick=close;
+      showLobby(selectedPlayers, mode);
     };
+  }
+
+  function showLobby(playerCount, modeName) {
+    const setup = document.getElementById('td-setup-overlay');
+    if (!setup) return;
+    setup.innerHTML = `<div class="td-sheet td-lobby-sheet" role="dialog" aria-modal="true" aria-label="Truth or Dare lobby preview">
+      <button class="td-close" type="button" aria-label="Close">×</button>
+      <div class="td-kicker">ROOM SETUP</div><div class="td-title">Game <span>Lobby</span></div>
+      <p class="td-subtitle">Selected configuration · ${playerCount} players · ${modeName}</p>
+      <div class="td-room-preview"><div class="td-room-label">PLAYER SLOTS</div><div class="td-slots">${Array.from({length:playerCount},(_,i)=>`<div class="td-slot"><span class="td-slot-avatar">${i===0?'👤':'＋'}</span><b>${i===0?'You':'Waiting for player'}</b><small>${i===0?'Host':'Open slot'}</small></div>`).join('')}</div></div>
+      <div class="td-lobby-warning"><b>Matchmaking not connected yet</b><p>This is a lobby layout preview. No room has been created and no players are being matched until the secure multiplayer backend is implemented.</p></div>
+      <div class="td-lobby-summary"><span>Mode</span><b>${modeName}</b><span>Win target</span><b>1000 Score</b><span>Real wallet</span><b>Not connected</b></div>
+      <button class="td-primary td-back-setup" type="button">← Back to setup</button>
+      <p class="td-footnote">Players are real users only · No bots or fake participants</p>
+    </div>`;
+    setup.querySelector('.td-close').onclick = close;
+    setup.querySelector('.td-back-setup').onclick = open;
   }
   window.openTruthDareSetup = open;
 })();
