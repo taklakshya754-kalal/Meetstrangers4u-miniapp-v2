@@ -8,7 +8,7 @@ User=root
 WorkingDirectory=/opt/meetstrangers4u-truth-dare/repo/backend
 EnvironmentFile=/root/.stranger-bot.env
 Environment=TRUTH_DARE_HOST=127.0.0.1
-Environment=TRUTH_DARE_PORT=3002
+Environment=TRUTH_DARE_PORT=3012
 Environment=ALLOWED_ORIGINS=https://meetstrangers4u-miniapp-v2.vercel.app
 ExecStart=/usr/bin/node /opt/meetstrangers4u-truth-dare/repo/backend/truth-dare-server.js
 Restart=on-failure
