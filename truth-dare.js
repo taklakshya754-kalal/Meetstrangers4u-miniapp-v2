@@ -57,7 +57,7 @@
     if (lobbyState.status === "waiting") { heading = "Finding Players"; message = "Waiting for real players with the same settings. Keep this screen open."; }
     if (lobbyState.status === "room") { heading = "Room Lobby"; message = "Players joined! Everyone must tap Ready to start."; }
     if (lobbyState.status === "starting") { heading = "Starting Game"; message = "All players are ready. Preparing the game…"; }
-    if (lobbyState.status === "offline") { heading = "Matchmaking Offline"; message = "Game service is not reachable yet. Try again later."; }
+    if (lobbyState.status === "offline") { heading = "Matchmaking Offline"; message = "Game service is not reachable yet. Try again later."; }\n    if (lobbyState.status === "closed") { heading = "Room Closed"; message = "A player left before the game began. You can search for a new room."; }
     const list = lobbyState.players || [];
     const slots = Array.from({length:lobbyState.count}, (_,i) => {
       const p=list[i];
@@ -71,7 +71,7 @@
       <div class="td-room-preview"><div class="td-room-label">PLAYERS · ${list.length}/${lobbyState.count}</div><div class="td-slots">${slots}</div></div>
       <div class="td-lobby-summary"><span>Mode</span><b>${esc(modeTitle)}</b><span>Win target</span><b>1000 Score</b><span>Room</span><b>${lobbyState.roomId?esc(lobbyState.roomId.slice(0,8)):'Searching…'}</b></div>
       ${lobbyState.status==="room" ? `<button class="td-primary td-ready-btn" type="button">${lobbyState.ready?'✓ Ready — Tap to Unready':'I’m Ready'}</button>` : ""}
-      ${lobbyState.status==="offline" ? `<button class="td-primary td-retry-btn" type="button">Retry Matchmaking</button>` : ""}
+      ${(lobbyState.status==="offline" || lobbyState.status==="closed") ? `<button class="td-primary td-retry-btn" type="button">Retry Matchmaking</button>` : ""}
       <button class="td-secondary td-cancel-btn" type="button">${lobbyState.status==="room"?"Leave Room":"Cancel Search"}</button>
       <p class="td-footnote">No bots · No wallet coins · Server-authoritative room</p></div>`;
     overlay.querySelector(".td-close").onclick = close;
@@ -106,7 +106,7 @@
       if(data.type==="ready-update"){ lobbyState.players=data.players||lobbyState.players; renderLobby(); }
       if(data.type==="game-start"){ lobbyState.status="starting"; lobbyState.players=data.players||lobbyState.players; renderLobby(); }
       if(data.type==="player-left"){ lobbyState.players=data.players||[]; renderLobby(); }
-      if(data.type==="room-closed"){ lobbyState.status="waiting"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
+      if(data.type==="room-closed"){ lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="queue-cancelled"){ lobbyState.status="idle"; }
       if(data.type==="error"){ lobbyState.status="offline"; renderLobby(); }
     };
