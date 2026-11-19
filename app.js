@@ -264,23 +264,25 @@ function matchmakingScreen() {
 function partnerScreen() {
   const type = state.call.type === "Video" ? "Video" : "Voice";
   const inviting = state.call.status === "inviting";
+  const connectionFee = type === "Video" ? 20 : 10;
+  const perMinuteRate = type === "Video" ? 50 : 20;
   const statusMessage = state.call.message
     ? `<div class="backend-status-card" style="margin-top:16px"><span class="backend-status-dot"></span><div><strong>${escapeHTML(state.call.message)}</strong></div></div>`
     : "";
 
   return `
     ${header()}
-    <section class="panel partner-call-panel ${type === "Voice" ? "partner-voice-clean" : ""}">
+    <section class="panel partner-call-panel ${type === "Voice" ? "partner-voice-clean" : "partner-video-clean"}">
       <p class="call-flow-eyebrow">PRIVATE ${type.toUpperCase()} CALL</p>
       <h1 class="page-title">Partner Call</h1>
       <p class="page-subtitle">Connect privately with someone using their unique user ID.</p>
 
       <div class="partner-voice-pricing">
         <div class="partner-voice-price-row">
-          <span>Connection fee</span><strong>10 Coins</strong>
+          <span>Connection fee</span><strong>${connectionFee} Coins</strong>
         </div>
         <div class="partner-voice-price-row">
-          <span>Per minute</span><strong>20 Coins / min</strong>
+          <span>Per minute</span><strong>${perMinuteRate} Coins / min</strong>
         </div>
         <p>Connection fee applies after connecting. Per-minute charges begin after the first minute.</p>
       </div>
@@ -298,7 +300,7 @@ function partnerScreen() {
         >
         ${inviting
           ? `<button class="secondary-button" onclick="cancelPartnerInvitation()">Cancel Invitation</button>`
-          : `<button class="primary-button" onclick="sendInvitation()">Send Voice Invitation</button>`
+          : `<button class="primary-button" onclick="sendInvitation()">Send ${type} Invitation</button>`
         }
       </div>
 
