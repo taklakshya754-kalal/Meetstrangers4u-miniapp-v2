@@ -1607,3 +1607,9 @@ body {
   color:#A9DEFF;
   background:rgba(25,112,190,.12);
 }
+
+/* Remove fingerprint/ripple line decorations from Voice and Video home cards */
+#app.home-view .premium-call-card .call-wave-blue,
+#app.home-view .premium-call-card .call-wave-purple{
+  display:none !important;
+}
