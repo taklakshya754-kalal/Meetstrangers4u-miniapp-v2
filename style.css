@@ -1499,3 +1499,11 @@ body {
 
 /* Hide bottom navigation while Partner User ID field is focused */
 #app:has(#partner-id:focus) .bottom-nav{display:none!important}
+
+/* Clean Partner Video Call UI — match the Partner Voice Call layout */
+#app .partner-video-clean{gap:10px;padding:clamp(15px,4vw,21px)}
+#app .partner-video-clean>.page-subtitle{margin:0 0 3px;color:#B4C2DE;font-size:13px;line-height:1.5}
+#app .partner-video-clean .call-flow-eyebrow{font-size:10px;letter-spacing:1.6px;margin:0 0 5px}
+#app .partner-video-clean .page-title{font-size:20px;font-weight:750;line-height:1.15;letter-spacing:-.2px;color:#D4D9E8;margin:0 0 5px}
+#app .partner-video-clean>.page-subtitle{margin:0 0 7px}
+@media(max-width:380px){#app .partner-video-clean{padding:14px 12px}}
