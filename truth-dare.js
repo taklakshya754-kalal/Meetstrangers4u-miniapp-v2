@@ -75,7 +75,7 @@
       <button class="td-secondary td-cancel-btn" type="button">${lobbyState.status==="room"?"Leave Room":"Cancel Search"}</button>
       <p class="td-footnote">No bots · No wallet coins · Server-authoritative room</p></div>`;
     overlay.querySelector(".td-close").onclick = close;
-    overlay.querySelector(".td-cancel-btn").onclick = () => { stopSocket(true); lobbyState.status="idle"; open(); };
+    overlay.querySelector(".td-cancel-btn").onclick = () => { stopSocket(true); close(); open(); };
     overlay.querySelector(".td-ready-btn")?.addEventListener("click", () => {
       if (!socket || socket.readyState !== WebSocket.OPEN) return;
       lobbyState.ready = !lobbyState.ready;
