@@ -14,9 +14,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Install backend test dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: backend
       - name: Check Truth Dare server
         run: node --check backend/truth-dare-server.js
+        working-directory: backend
       - name: Check Truth Dare client
         run: node --check truth-dare.js
+      - name: Run Truth Dare integration test
+        run: npm run test-truth-dare
+        working-directory: backend
       - name: Check main app script
         run: node --check app.js
