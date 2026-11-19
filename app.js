@@ -131,13 +131,13 @@ function homeScreen() {
     <button class="call-card premium-call-card" onclick="navigate('voice')">
       <span class="premium-call-icon">${visualIcon("phone")}</span><span class="premium-call-divider"></span>
       <span class="premium-call-copy"><strong>Voice Calling</strong><small>Connect through voice with people worldwide.</small></span>
-      <span class="premium-call-arrow">→</span><span class="call-wave call-wave-blue"></span>
+      <span class="premium-call-arrow">↗</span><span class="call-wave call-wave-blue"></span>
     </button>
     <div class="call-spacer premium-gap"></div>
     <button class="call-card partner premium-call-card premium-video-card" onclick="navigate('video')">
       <span class="premium-call-icon">${visualIcon("video")}</span><span class="premium-call-divider"></span>
       <span class="premium-call-copy"><strong>Video Calling</strong><small>Meet people face to face around the world.</small></span>
-      <span class="premium-call-arrow">→</span><span class="call-wave call-wave-purple"></span>
+      <span class="premium-call-arrow">↗</span><span class="call-wave call-wave-purple"></span>
     </button>
     <div class="home-bottom-space"></div>
     ${bottomNav()}
