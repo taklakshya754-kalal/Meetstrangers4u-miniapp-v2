@@ -1578,3 +1578,32 @@ body {
   background:linear-gradient(160deg,#09142D 0%,#071126 55%,#060F22 100%);
   border-color:rgba(65,100,170,.34);
 }
+
+/* Profile flow palette — match the dark outer Privacy panel and blue point cards.
+   Avatar/photo, profile text, layout, and navigation remain unchanged. */
+#app .profile-page .profile-balance{
+  border-color:rgba(65,100,170,.34);
+  background:linear-gradient(160deg,#09142D 0%,#071126 55%,#060F22 100%);
+}
+#app .profile-page .profile-menu-row{
+  border-color:rgba(45,101,202,.36);
+  background:linear-gradient(145deg,rgba(18,48,100,.72),rgba(12,30,68,.88));
+}
+#app .profile-page .profile-menu-row.earn-row{
+  border-color:rgba(49,112,222,.42);
+  background:linear-gradient(145deg,#143B7A,#0C2556);
+}
+#app .profile-page .profile-menu-icon{
+  background:linear-gradient(145deg,#1A4C9D,#0C2C66);
+  color:#B7D1F5;
+}
+#app .profile-page .wallet-button{
+  border-color:rgba(49,112,222,.40);
+  color:#C8EAFF;
+  background:linear-gradient(145deg,rgba(26,76,157,.34),rgba(12,44,102,.40));
+}
+#app .profile-page .profile-member-tag{
+  border-color:rgba(91,145,215,.28);
+  color:#A9DEFF;
+  background:rgba(25,112,190,.12);
+}
