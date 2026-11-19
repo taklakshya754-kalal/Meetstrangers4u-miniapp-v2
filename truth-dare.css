@@ -21,3 +21,33 @@
 .td-ready-btn{margin:5px 0 9px;background:linear-gradient(100deg,#16a97a,#47d3a4);box-shadow:0 7px 24px rgba(22,169,122,.18)}
 .td-secondary{width:100%;border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:13px;background:rgba(255,255,255,.045);color:#d4d8ec;font-size:13px;font-weight:750;margin-top:2px}
 @keyframes td-pulse{50%{opacity:.45;transform:scale(.88)}}
+
+
+/* Game room UI */
+.td-game-sheet{padding-bottom:20px}
+.td-game-status{margin:10px 0;padding:10px 12px;border:1px solid rgba(153,129,255,.25);border-radius:12px;background:rgba(123,91,255,.08);color:#d5ceff;font-size:12px;text-align:center}
+.td-bottle-wrap{height:150px;margin:8px 0 2px;display:flex;align-items:center;justify-content:center;position:relative}
+.td-bottle{font-size:70px;filter:drop-shadow(0 12px 18px rgba(155,112,255,.35));transform:rotate(var(--td-rotation,0deg));}
+.td-bottle.td-spin-anim{animation:td-bottle-spin 4.2s cubic-bezier(.14,.74,.15,1) forwards}
+@keyframes td-bottle-spin{from{transform:rotate(0deg)}to{transform:rotate(var(--td-rotation,1440deg))}}
+.td-selected{text-align:center;color:#aeb6d1;font-size:12px;margin:0 0 14px}.td-selected b{color:#f3edff}
+.td-score-panel{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:14px;padding:12px;margin:12px 0}
+.td-score-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 4px;color:#c9cee2;font-size:12px;border-bottom:1px solid rgba(255,255,255,.045)}
+.td-score-row:last-child{border-bottom:0}.td-score-row b{color:#8de6bf;font-variant-numeric:tabular-nums}.td-score-row.active{color:#fff}
+.td-challenge-card{border:1px solid rgba(158,132,255,.32);background:linear-gradient(145deg,rgba(117,84,255,.12),rgba(255,255,255,.025));border-radius:17px;padding:16px;margin:13px 0;text-align:center}
+.td-challenge-type{font-size:10px;font-weight:900;letter-spacing:1.6px;color:#b5a4ff;margin-bottom:10px}
+.td-challenge-text{font-size:16px;line-height:1.5;font-weight:700;color:#f5f4ff;margin-bottom:10px}
+.td-challenge-card small{color:#9da6c6;font-size:10px}
+.td-vote-summary{text-align:center;color:#f0d28d;font-size:11px;margin:8px 0 12px}
+.td-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:8px 0}
+.td-dare{background:linear-gradient(100deg,#e65e79,#ff9a70);box-shadow:0 6px 22px rgba(240,99,120,.2)}
+.td-verify-yes{background:linear-gradient(100deg,#169b72,#48d2a1);box-shadow:0 6px 20px rgba(22,169,122,.16)}
+.td-verify-no{margin:0}
+.td-game-sheet #td-skip{margin:8px 0}
+.td-chat-panel{border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:12px;margin:16px 0;background:rgba(255,255,255,.025)}
+.td-chat-log{height:150px;overflow:auto;display:flex;flex-direction:column;gap:7px;padding:3px 2px 9px;color:#c9cde0;font-size:11px;line-height:1.4}
+.td-chat-line{overflow-wrap:anywhere}.td-chat-line b{color:#b6a5ff;margin-right:4px}
+.td-chat-input{display:flex;gap:7px;margin-top:8px}
+.td-chat-input input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:rgba(5,8,20,.45);color:#fff;padding:10px;font-size:12px;outline:none}
+.td-chat-input button{border:0;border-radius:11px;padding:0 13px;background:#7055ff;color:#fff;font-weight:800;font-size:12px}
+@media(max-width:380px){.td-game-sheet{padding:19px 14px 16px}.td-challenge-text{font-size:14px}.td-bottle-wrap{height:125px}}
