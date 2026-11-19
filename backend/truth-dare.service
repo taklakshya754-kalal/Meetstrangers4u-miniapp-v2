@@ -1,0 +1,19 @@
+[Unit]
+Description=MeetStrangers4u Truth or Dare Matchmaking Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/meetstrangers4u-calling/repo/backend
+EnvironmentFile=/root/.stranger-bot.env
+Environment=TRUTH_DARE_HOST=127.0.0.1
+Environment=TRUTH_DARE_PORT=3002
+Environment=ALLOWED_ORIGINS=https://meetstrangers4u-miniapp-v2.vercel.app
+ExecStart=/usr/bin/node /opt/meetstrangers4u-calling/repo/backend/truth-dare-server.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
