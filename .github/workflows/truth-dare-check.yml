@@ -18,10 +18,13 @@ jobs:
         run: npm install --no-audit --no-fund
         working-directory: backend
       - name: Check Truth Dare server
-        run: node --check backend/truth-dare-server.js
+        run: node --check truth-dare-server.js
         working-directory: backend
       - name: Check Truth Dare client
         run: node --check truth-dare.js
+      - name: Check integration test file
+        run: node --check truth-dare.test.js
+        working-directory: backend
       - name: Run Truth Dare integration test
         run: npm run test-truth-dare
         working-directory: backend
