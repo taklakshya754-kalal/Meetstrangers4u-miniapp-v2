@@ -1150,11 +1150,11 @@ function startCallClock() {
   stopCallClock();
   callClockInterval = setInterval(() => {
     const node = document.getElementById("call-duration");
-    if (!node || !state.call.startedAt) return;
+    if (!state.call.startedAt) return;
     const seconds = Math.max(0, Math.floor((Date.now() - state.call.startedAt) / 1000));
     const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
     const secs = String(seconds % 60).padStart(2, "0");
-    node.textContent = mins + ":" + secs;
+    if (node) node.textContent = mins + ":" + secs;
     updateFloatingCallTimer(mins + ":" + secs);
   }, 1000);
 }
