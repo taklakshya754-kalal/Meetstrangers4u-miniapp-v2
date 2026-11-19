@@ -1,6 +1,6 @@
 # Truth or Dare deployment (isolated service)
 
-This service is separate from the existing calling service. It binds to localhost port 3002 and must be exposed through Cloudflare Tunnel, not directly to the public internet.
+This service is separate from the existing calling service. It binds to localhost port 3012 and must be exposed through Cloudflare Tunnel, not directly to the public internet.
 
 ## Prerequisites
 - Node.js 20+
@@ -26,7 +26,7 @@ systemctl daemon-reload
 systemctl enable truth-dare.service
 systemctl start truth-dare.service
 systemctl status truth-dare.service --no-pager
-curl -fsS http://127.0.0.1:3002/health
+curl -fsS http://127.0.0.1:3012/health
 ```
 
 These steps only start the isolated game service; they do not restart or modify the call service.
@@ -34,7 +34,7 @@ These steps only start the isolated game service; they do not restart or modify 
 ## Cloudflare Tunnel
 In the Cloudflare Tunnel dashboard, add a public hostname:
 - Hostname: `truth-dare.lxreward.xyz`
-- Service: `ws://127.0.0.1:3002`
+- Service: `http://127.0.0.1:3012`
 
 The service handles both `/health` HTTP and `/ws` WebSocket paths. Use the tunnel's WebSocket support and do not expose port 3002 directly.
 
