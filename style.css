@@ -1437,3 +1437,38 @@ body {
   width:0;
   height:0;
 }
+
+
+/* Partner call join notice — isolated invitation UI */
+.partner-call-join-overlay{
+  position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;
+  padding:22px; background:rgba(5,9,24,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.partner-call-join-card{
+  position:relative;width:min(420px,100%);padding:28px 22px 22px;text-align:center;
+  border:1px solid rgba(128,166,255,.28);border-radius:26px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(82,109,216,.24),transparent 54%),
+    linear-gradient(150deg,#192747 0%,#151d3b 60%,#201b42 100%);
+  box-shadow:0 24px 65px rgba(0,0,0,.48),0 0 34px rgba(78,120,255,.14),inset 0 1px 0 rgba(255,255,255,.07);
+}
+.partner-call-join-close{
+  position:absolute;right:13px;top:12px;width:30px;height:30px;border-radius:50%;
+  color:#C2CDE7;background:rgba(255,255,255,.07);font-size:22px;line-height:1;
+}
+.partner-call-join-icon{
+  width:70px;height:70px;margin:0 auto 16px;display:grid;place-items:center;border-radius:22px;
+  color:#D7F0FF;font-size:30px;background:linear-gradient(145deg,#2484DB,#5A51CE);
+  border:1px solid rgba(159,209,255,.4);box-shadow:0 0 30px rgba(55,142,255,.23);
+}
+.partner-call-join-icon.video{background:linear-gradient(145deg,#7551D2,#3C6DC4)}
+.partner-call-join-kicker{color:#9ECFFF;font-size:9px;font-weight:850;letter-spacing:1.8px;margin-bottom:8px}
+.partner-call-join-card h2{font-size:23px;letter-spacing:-.5px;line-height:1.2;margin-bottom:9px}
+.partner-call-join-card p{color:#B7C6E3;font-size:12px;line-height:1.55;margin-bottom:20px}
+.partner-call-join-action{
+  width:100%;min-height:54px;display:flex;align-items:center;justify-content:center;gap:9px;
+  border-radius:16px;color:#fff;font-weight:850;font-size:13px;letter-spacing:.5px;
+  background:linear-gradient(105deg,#2386E5,#6450D2);
+  box-shadow:0 10px 24px rgba(38,103,220,.25),inset 0 1px 0 rgba(255,255,255,.18);
+}
+.partner-call-join-action:active{transform:scale(.985);filter:brightness(1.08)}
+.partner-call-join-foot{margin-top:15px;color:#8196BD;font-size:9px;letter-spacing:.25px}
