@@ -9,14 +9,11 @@ This service is separate from the existing calling service. It binds to localhos
 - Cloudflared already installed and a Cloudflare Tunnel configured
 
 ## Install on the VPS
-From your existing repository folder:
+Clone the feature branch into a **separate directory** so the existing calling backend checkout is never changed:
 
 ```bash
-cd /opt/meetstrangers4u-calling/repo
-git fetch origin truth-dare-complete-flow
-git checkout truth-dare-complete-flow
-git pull origin truth-dare-complete-flow
-cd backend
+git clone --branch truth-dare-complete-flow https://github.com/taklakshya754-kalal/Meetstrangers4u-miniapp-v2.git /opt/meetstrangers4u-truth-dare/repo
+cd /opt/meetstrangers4u-truth-dare/repo/backend
 npm install
 node --check truth-dare-server.js
 ```
