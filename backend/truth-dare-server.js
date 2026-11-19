@@ -20,7 +20,7 @@ const VALID_MODES = new Set(["normal", "advanced", "dark"]);
 const VALID_COUNTS = new Set([2, 3, 4, 5]);
 const queues = new Map(); // config key -> waiting player records
 const rooms = new Map();  // roomId -> room state
-const users = new Map();  // telegram userId -> socket
+const users = new Map();  // telegram userId -> socket\nconst playersByUser = new Map(); // active player session per telegram user
 if (!BOT_TOKEN) throw new Error("BOT_TOKEN is required for Truth or Dare authentication");
 
 const server = http.createServer((req, res) => {
