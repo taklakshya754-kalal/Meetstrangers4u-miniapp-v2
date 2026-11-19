@@ -1496,3 +1496,6 @@ body {
 #app .partner-voice-clean .call-flow-eyebrow{margin:0 0 5px}
 #app .partner-voice-clean .page-title{margin:0 0 5px}
 #app .partner-voice-clean>.page-subtitle{margin:0 0 7px}
+
+/* Hide bottom navigation while Partner User ID field is focused */
+#app:has(#partner-id:focus) .bottom-nav{display:none!important}
