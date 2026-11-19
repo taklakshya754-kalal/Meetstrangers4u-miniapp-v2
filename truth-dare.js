@@ -19,9 +19,9 @@
       <p class="td-subtitle">Set up your game room</p>
       <section class="td-section"><div class="td-label">PLAYERS</div><div class="td-player-grid">${[2,3,4,5].map(n=>`<button class="td-player ${n===selectedPlayers?'selected':''}" data-players="${n}" type="button"><b>${n}</b><small>Players</small></button>`).join('')}</div></section>
       <section class="td-section"><div class="td-label">GAME MODE</div><div class="td-mode-list">${MODES.map(m=>`<button class="td-mode ${m.id===selectedMode?'selected':''}" data-mode="${m.id}" type="button"><span class="td-mode-icon">${m.icon}</span><span class="td-mode-copy"><b>${m.title}</b><small>${m.desc}</small></span><span class="td-check">✓</span></button>`).join('')}</div></section>
-      <section class="td-points"><div class="td-label">GAME POINTS · WALLET COINS ARE NOT USED</div><div class="td-point-row"><span>Truth verified</span><b>+25 pts</b></div><div class="td-point-row"><span>Dare verified</span><b>+50 pts</b></div><div class="td-point-row"><span>Skip Truth</span><b class="minus">−25 pts</b></div><div class="td-point-row"><span>Skip Dare</span><b class="minus">−50 pts</b></div></section>
+      <section class="td-points"><div class="td-label">GAME SCORE · WALLET COINS ARE NOT USED</div><div class="td-point-row"><span>Truth verified</span><b>+25 pts</b></div><div class="td-point-row"><span>Dare verified</span><b>+50 pts</b></div><div class="td-point-row"><span>Skip Truth</span><b class="minus">−25 pts</b></div><div class="td-point-row"><span>Skip Dare</span><b class="minus">−50 pts</b></div></section>
       <button class="td-primary" type="button" id="td-confirm-setup">Continue <span>→</span></button>
-      <p class="td-footnote">Only real players · Points stay inside the game</p>
+      <p class="td-footnote">Only real players · Score stays inside the game</p>
       </div>`;
     document.body.appendChild(overlay);
     overlay.querySelector('.td-close').onclick = close;
