@@ -1491,3 +1491,8 @@ body {
 #app .partner-voice-entry .secondary-button{min-height:45px;border-radius:13px}
 #app .partner-voice-note{margin-top:1px;color:#8B9AB8;font-size:10px;line-height:1.5}
 @media(max-width:380px){#app .partner-voice-clean{padding:14px 12px}#app .partner-voice-entry{padding:11px}}
+
+/* Improve spacing between Partner Voice Call header text */
+#app .partner-voice-clean .call-flow-eyebrow{margin:0 0 5px}
+#app .partner-voice-clean .page-title{margin:0 0 5px}
+#app .partner-voice-clean>.page-subtitle{margin:0 0 7px}
