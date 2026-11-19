@@ -1155,6 +1155,7 @@ function startCallClock() {
     const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
     const secs = String(seconds % 60).padStart(2, "0");
     node.textContent = mins + ":" + secs;
+    updateFloatingCallTimer(mins + ":" + secs);
   }, 1000);
 }
 
@@ -1602,8 +1603,78 @@ function render() {
   };
 
   app.innerHTML = (screens[state.screen] || homeScreen)();
+  if (state.call.status === "connected" && state.screen !== "call") {
+    app.insertAdjacentHTML("beforeend", floatingCallWidgetHTML());
+    updateFloatingCallTimer();
+  }
 }
 
+
+let floatingCallPosition = null;
+let floatingCallDrag = null;
+
+function floatingCallWidgetHTML() {
+  const style = floatingCallPosition
+    ? `left:${floatingCallPosition.x}px;top:${floatingCallPosition.y}px;right:auto;bottom:auto;`
+    : "";
+  const icon = state.call.type === "Video" ? "📹" : "📞";
+  return `<button id="floating-active-call" class="floating-active-call" style="${style}" type="button" onclick="openFloatingActiveCall(event)" onpointerdown="startFloatingCallDrag(event)" aria-label="Return to active call">
+    <span class="floating-call-icon">${icon}</span><span class="floating-call-live">LIVE</span><span class="floating-call-time" id="floating-call-duration">00:00</span>
+  </button>`;
+}
+
+function updateFloatingCallTimer(value) {
+  const node = document.getElementById("floating-call-duration");
+  if (!node || !state.call.startedAt) return;
+  if (value === undefined) {
+    const seconds = Math.max(0, Math.floor((Date.now() - state.call.startedAt) / 1000));
+    const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
+    value = mins + ":" + secs;
+  }
+  node.textContent = value;
+}
+
+function openFloatingActiveCall(event) {
+  if (floatingCallDrag?.moved) return;
+  state.history.push(state.screen);
+  state.screen = "call";
+  render();
+}
+
+function startFloatingCallDrag(event) {
+  if (event.button !== undefined && event.button !== 0) return;
+  const box = document.getElementById("floating-active-call");
+  if (!box) return;
+  const rect = box.getBoundingClientRect();
+  floatingCallDrag = {startX:event.clientX,startY:event.clientY,left:rect.left,top:rect.top,moved:false,pointerId:event.pointerId};
+  box.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+  const move = ev => {
+    if (!floatingCallDrag || ev.pointerId !== floatingCallDrag.pointerId) return;
+    const dx=ev.clientX-floatingCallDrag.startX, dy=ev.clientY-floatingCallDrag.startY;
+    if (Math.abs(dx)>4 || Math.abs(dy)>4) floatingCallDrag.moved=true;
+    if (!floatingCallDrag.moved) return;
+    const maxX=Math.max(0,window.innerWidth-box.offsetWidth), maxY=Math.max(0,window.innerHeight-box.offsetHeight);
+    const x=Math.min(maxX,Math.max(0,floatingCallDrag.left+dx)), y=Math.min(maxY,Math.max(0,floatingCallDrag.top+dy));
+    box.style.left=x+"px";box.style.top=y+"px";box.style.right="auto";box.style.bottom="auto";
+    floatingCallPosition={x,y};
+  };
+  const end = ev => {
+    if (floatingCallDrag && ev.pointerId===floatingCallDrag.pointerId) {
+      const moved=floatingCallDrag.moved;
+      floatingCallDrag=null;
+      if (moved) box.dataset.dragged="true";
+      else delete box.dataset.dragged;
+    }
+    document.removeEventListener("pointermove",move);
+    document.removeEventListener("pointerup",end);
+    document.removeEventListener("pointercancel",end);
+  };
+  document.addEventListener("pointermove",move);
+  document.addEventListener("pointerup",end);
+  document.addEventListener("pointercancel",end);
+}
 
 function resumeRemoteAudioPlayback() {
   const audio = document.getElementById("remote-audio");
