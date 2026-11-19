@@ -1,0 +1,100 @@
+"use strict";
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
+const http = require("node");
+const { spawn } = require("node:child_process");
+const path = require("node:path");
+const WebSocket = require("ws");
+
+const TOKEN = "truth-dare-ci-test-token";
+const PORT = 3123;
+const HOST = "127.0.0.1";
+const SERVER_PATH = path.join(__dirname, "truth-dare-server.js");
+
+function makeInitData(id, name) {
+  const user = JSON.stringify({ id, first_name: name });
+  const params = new URLSearchParams({ auth_date: String(Math.floor(Date.now()/1000)), user });
+  const checkString = [...params.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+"="+v).join("\n");
+  const secret = crypto.createHmac("sha256", "WebAppData").update(TOKEN).digest();
+  const hash = crypto.createHmac("sha256", secret).update(checkString).digest("hex");
+  params.set("hash", hash);
+  return params.toString();
+}
+function client(id,name){
+  const ws=new WebSocket("ws://"+HOST+":"+PORT+"/ws?initData="+encodeURIComponent(makeInitData(id,name)));
+  const c={ws,events:[],waiters:[]};
+  ws.on("message",raw=>{
+    let data;try{data=JSON.parse(raw.toString());}catch{return;}
+    const i=c.waiters.findIndex(w=>w.type===data.type && (!w.predicate||w.predicate(data)));
+    if(i>=0){const w=c.waiters.splice(i,1)[0];clearTimeout(w.timer);w.resolve(data);}else c.events.push(data);
+  });
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(new Error("WebSocket connect timed out")),6000);
+    ws.once("open",()=>{clearTimeout(timer);resolve(c);});
+    ws.once("error",err=>{clearTimeout(timer);reject(err);});
+  });
+}
+function waitEvent(c,type,predicate=()=>true,timeout=7000){
+  const i=c.events.findIndex(e=>e.type===type&&predicate(e));
+  if(i>=0)return Promise.resolve(c.events.splice(i,1)[0]);
+  return new Promise((resolve,reject)=>{
+    const w={type,predicate,resolve,timer:setTimeout(()=>{const j=c.waiters.indexOf(w);if(j>=0)c.waiters.splice(j,1);reject(new Error("Timed out waiting for "+type));},timeout)};
+    c.waiters.push(w);
+  });
+}
+function send(c,msg){c.ws.send(JSON.stringify(msg));}
+async function health(){
+  const res=await fetch("http://"+HOST+":"+PORT+"/health");
+  return res.ok&&((await res.json()).service==="truth-dare-matchmaking");
+}
+
+test("authenticated 2-player game spins, challenge verification, scoring, chat, and RTC relay", {timeout:30000}, async t=>{
+  const server=spawn(process.execPath,[SERVER_PATH],{cwd:__dirname,env:{...process.env,BOT_TOKEN:TOKEN,TRUTH_DARE_HOST:HOST,TRUTH_DARE_PORT:String(PORT),ALLOWED_ORIGINS:"https://meetstrangers4u-miniapp-v2.vercel.app"},stdio:["ignore","pipe","pipe"]});
+  let serverLogs="";
+  server.stdout.on("data",b=>serverLogs+=b.toString());
+  server.stderr.on("data",b=>serverLogs+=b.toString());
+  t.after(async()=>{
+    for(const c of t.clients||[]){try{c.ws.close();}catch{}}
+    if(server.exitCode===null){server.kill("SIGTERM");await new Promise(resolve=>server.once("exit",resolve));}
+  });
+  let healthy=false;
+  for(let i=0;i<80&&!healthy;i++){await new Promise(r=>setTimeout(r,125));try{healthy=await health();}catch{}}
+  assert.ok(healthy,"server health failed; logs: "+serverLogs);
+
+  const a=await client("101","Alice"), b=await client("202","Bob");
+  t.clients=[a,b];
+  await Promise.all([waitEvent(a,"connected"),waitEvent(b,"connected")]);
+  send(a,{type:"queue",playerCount:2,mode:"normal"});
+  send(b,{type:"queue",playerCount:2,mode:"normal"});
+  await Promise.all([waitEvent(a,"room-formed"),waitEvent(b,"room-formed")]);
+  send(a,{type:"ready",ready:true});
+  await Promise.all([waitEvent(a,"ready-update"),waitEvent(b,"ready-update")]);
+  send(b,{type:"ready",ready:true});
+  await Promise.all([waitEvent(a,"game-start"),waitEvent(b,"game-start")]);
+  await Promise.all([waitEvent(a,"game-state"),waitEvent(b,"game-state")]);
+
+  send(a,{type:"spin"});
+  const [spinA,spinB]=await Promise.all([waitEvent(a,"bottle-spin"),waitEvent(b,"bottle-spin")]);
+  assert.equal(spinA.selectedId,spinB.selectedId);
+  const selected=spinA.selectedId==="101"?a:b, verifier=selected===a?b:a;
+  send(selected,{type:"choose-challenge",choice:"truth"});
+  const [challengeA,challengeB]=await Promise.all([waitEvent(a,"challenge"),waitEvent(b,"challenge")]);
+  assert.equal(challengeA.challenge.id,challengeB.challenge.id);
+  send(selected,{type:"submit-task"});
+  await Promise.all([waitEvent(a,"task-submitted"),waitEvent(b,"task-submitted")]);
+  send(verifier,{type:"verify-vote",vote:"yes"});
+  const [resultA,resultB]=await Promise.all([waitEvent(a,"challenge-result"),waitEvent(b,"challenge-result")]);
+  assert.equal(resultA.accepted,true);assert.equal(resultB.accepted,true);
+  const expected=challengeA.challenge.type==="truth"?25:50;
+  assert.equal(resultA.delta,expected);
+  assert.equal(resultA.scores[spinA.selectedId],expected);
+
+  send(a,{type:"chat",text:"CI chat message"});
+  const chat=await waitEvent(b,"chat-message",m=>m.text==="CI chat message");
+  assert.equal(chat.playerId,"101");
+
+  send(a,{type:"rtc-signal",to:"202",signal:{type:"offer",description:{type:"offer",sdp:"test-sdp"}}});
+  const rtc=await waitEvent(b,"rtc-signal");
+  assert.equal(rtc.from,"101");assert.equal(rtc.signal.type,"offer");
+});
