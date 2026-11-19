@@ -1514,3 +1514,8 @@ body {
 #app .floating-active-call .floating-call-icon{font-size:17px;line-height:1}
 #app .floating-active-call .floating-call-live{font-size:9px;font-weight:800;letter-spacing:1px;color:#7CE6C2}
 #app .floating-active-call .floating-call-time{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.3px;color:#F4F6FF}
+
+/* Compact paired actions on the call-ended / expired-invitation screen */
+#app .call-ended-panel{gap:9px}
+#app .call-ended-panel>.primary-button{margin-top:auto;min-height:49px;width:100%}
+#app .call-ended-panel>.secondary-button{margin-top:0;min-height:49px;width:100%}
