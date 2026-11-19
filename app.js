@@ -270,20 +270,22 @@ function partnerScreen() {
 
   return `
     ${header()}
-    <section class="panel partner-call-panel">
+    <section class="panel partner-call-panel ${type === "Voice" ? "partner-voice-clean" : ""}">
       <p class="call-flow-eyebrow">PRIVATE ${type.toUpperCase()} CALL</p>
       <h1 class="page-title">Partner Call</h1>
-      <p class="page-subtitle">Invite someone using their unique MeetStrangers4u User ID.</p>
+      <p class="page-subtitle">Connect privately with someone using their unique user ID.</p>
 
-      <div class="compact-call-pricing ${type === "Video" ? "video-pricing" : ""}">
-        <div class="compact-pricing-main">
-          <strong>${type === "Video" ? "20" : "10"} Coins <span>Call Fee</span></strong>
-          <strong>+${type === "Video" ? "50" : "20"} Coins / Min</strong>
+      <div class="partner-voice-pricing">
+        <div class="partner-voice-price-row">
+          <span>Connection fee</span><strong>10 Coins</strong>
         </div>
-        <small>Call fee applies after connection · Per-minute charge starts after 1 minute</small>
+        <div class="partner-voice-price-row">
+          <span>Per minute</span><strong>20 Coins / min</strong>
+        </div>
+        <p>Connection fee applies after connecting. Per-minute charges begin after the first minute.</p>
       </div>
 
-      <div class="partner-call-section">
+      <div class="partner-call-section partner-voice-entry">
         <label for="partner-id">Partner User ID</label>
         <input
           id="partner-id"
@@ -296,14 +298,14 @@ function partnerScreen() {
         >
         ${inviting
           ? `<button class="secondary-button" onclick="cancelPartnerInvitation()">Cancel Invitation</button>`
-          : `<button class="primary-button" onclick="sendInvitation()">Send ${type} Invitation</button>`
+          : `<button class="primary-button" onclick="sendInvitation()">Send Voice Invitation</button>`
         }
       </div>
 
       ${statusMessage}
 
-      <p class="partner-safety-note">
-        An invitation will be delivered through the Telegram bot. Your partner can accept it directly from the invitation button.
+      <p class="partner-safety-note partner-voice-note">
+        Your invitation will be delivered privately through Telegram.
       </p>
     </section>
     ${bottomNav()}
