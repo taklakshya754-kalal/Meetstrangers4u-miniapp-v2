@@ -248,7 +248,7 @@ function finishRound(room, accepted, skipped, reason) {
   game.phase = winner ? "finished" : "spin";
   game.challenge = null; game.votes = {};
   const ranked = room.players.map(p => ({ id: p.id, name: p.name, score: scores[p.id] || 0 })).sort((a,b)=>b.score-a.score);
-  broadcast(room, "challenge-result", { round: game.round, playerId: challenge.playerId, type: challenge.type, accepted: !!accepted, skipped: !!skipped, delta, reason: reason || null, scores, ranked, nextPhase: game.phase });
+  broadcast(room, "challenge-result", { round: game.round, playerId: challenge.playerId, challengeType: challenge.type, accepted: !!accepted, skipped: !!skipped, delta, reason: reason || null, scores, ranked, nextPhase: game.phase });
   if (winner) broadcast(room, "game-over", { winner: ranked[0], ranked, targetScore: 1000 });
 }
 function castVote(room, player, vote) {
