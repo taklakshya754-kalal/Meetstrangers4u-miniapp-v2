@@ -38,7 +38,7 @@ function waitEvent(c,type,predicate=()=>true,timeout=7000){
   const i=c.events.findIndex(e=>e.type===type&&predicate(e));
   if(i>=0)return Promise.resolve(c.events.splice(i,1)[0]);
   return new Promise((resolve,reject)=>{
-    const w={type,predicate,resolve,timer:setTimeout(()=>{const j=c.waiters.indexOf(w);if(j>=0)c.waiters.splice(j,1);reject(new Error("Timed out waiting for "+type));},timeout)};
+    const w={type,predicate,resolve,timer:setTimeout(()=>{const j=c.waiters.indexOf(w);if(j>=0)c.waiters.splice(j,1);reject(new Error("Timed out waiting for "+type+"; buffered events: "+JSON.stringify(c.events.map(e=>({type:e.type,code:e.code,phase:e.phase})))));},timeout)};
     c.waiters.push(w);
   });
 }
@@ -83,6 +83,8 @@ test("authenticated 2-player game spins, challenge verification, scoring, chat, 
   send(selected,{type:"submit-task"});
   await Promise.all([waitEvent(a,"task-submitted"),waitEvent(b,"task-submitted")]);
   send(verifier,{type:"verify-vote",vote:"yes"});
+  const [voteA,voteB]=await Promise.all([waitEvent(a,"verification-update"),waitEvent(b,"verification-update")]);
+  assert.equal(voteA.yes,1);assert.equal(voteB.yes,1);
   const [resultA,resultB]=await Promise.all([waitEvent(a,"challenge-result"),waitEvent(b,"challenge-result")]);
   assert.equal(resultA.accepted,true);assert.equal(resultB.accepted,true);
   const expected=challengeA.challenge.type==="truth"?25:50;
