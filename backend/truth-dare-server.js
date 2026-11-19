@@ -275,6 +275,16 @@ function relayChat(room, player, textValue) {
   broadcast(room, "chat-message", { id: crypto.randomBytes(6).toString("hex"), playerId: player.id, playerName: player.name, text: message, at: Date.now() });
 }
 
+function relayRtcSignal(room, player, targetId, signal) {
+  if (!playerInGame(room, player) || typeof targetId !== "string" || !signal || typeof signal !== "object") return send(player.ws, "error", { code: "INVALID_RTC_SIGNAL" });
+  if (JSON.stringify(signal).length > 8192) return send(player.ws, "error", { code: "RTC_SIGNAL_TOO_LARGE" });
+  const target = room.players.find(p => p.id === targetId && p.id !== player.id);
+  if (!target) return send(player.ws, "error", { code: "RTC_PEER_NOT_FOUND" });
+  const allowed = signal.type === "offer" || signal.type === "answer" || Object.prototype.hasOwnProperty.call(signal, "candidate");
+  if (!allowed) return send(player.ws, "error", { code: "INVALID_RTC_SIGNAL" });
+  send(target.ws, "rtc-signal", { from: player.id, signal });
+}
+
 wss.on("connection", (ws, req) => {
   const url = new URL(req.url, "http://localhost");
   let user;
@@ -330,6 +340,7 @@ wss.on("connection", (ws, req) => {
     }
     if (msg.type === "verify-vote") return castVote(room, player, String(msg.vote || ""));
     if (msg.type === "chat") return relayChat(room, player, msg.text);
+    if (msg.type === "rtc-signal") return relayRtcSignal(room, player, String(msg.to || ""), msg.signal);
     send(ws, "error", { code: "UNKNOWN_ACTION" });
   });
 
