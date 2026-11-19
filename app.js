@@ -1623,17 +1623,66 @@ document.addEventListener("keydown", resumeRemoteAudioPlayback, true);
 // INITIALIZE APP
 
 render();
+
+let pendingPartnerCall = null;
+
+function showPartnerCallJoinNotice(invite) {
+  pendingPartnerCall = invite;
+  document.getElementById("partner-call-join-notice")?.remove();
+
+  const isVideo = invite.type === "Video";
+  const notice = document.createElement("div");
+  notice.id = "partner-call-join-notice";
+  notice.className = "partner-call-join-overlay";
+  notice.innerHTML = `
+    <div class="partner-call-join-card" role="dialog" aria-modal="true" aria-labelledby="partner-join-title">
+      <button class="partner-call-join-close" type="button" aria-label="Dismiss notification" onclick="dismissPartnerCallJoinNotice()">×</button>
+      <div class="partner-call-join-icon ${isVideo ? "video" : ""}">${isVideo ? "▣" : "☎"}</div>
+      <div class="partner-call-join-kicker">PRIVATE PARTNER CALL</div>
+      <h2 id="partner-join-title">Your partner is ready</h2>
+      <p>Tap below to join the call and activate audio.</p>
+      <button class="partner-call-join-action" type="button" onclick="joinPendingPartnerCall()">
+        <span>🔊</span> JOIN ${isVideo ? "VIDEO" : "VOICE"} CALL
+      </button>
+      <div class="partner-call-join-foot">Secure connection · Only invited participants</div>
+    </div>`;
+  document.body.appendChild(notice);
+}
+
+function dismissPartnerCallJoinNotice() {
+  document.getElementById("partner-call-join-notice")?.remove();
+}
+
+async function joinPendingPartnerCall() {
+  const invite = pendingPartnerCall;
+  if (!invite) return;
+  dismissPartnerCallJoinNotice();
+  pendingPartnerCall = null;
+
+  // User tap is the explicit gesture to start the invitation join and audio playback flow.
+  if (invite.kind === "bot") {
+    await acceptBotPartnerInvitation(invite.code, invite.role, invite.type);
+  } else {
+    await acceptPartnerInvitation(invite.code, invite.type);
+  }
+}
+
 loadAccount().then(() => {
   const params = new URLSearchParams(window.location.search);
 
   if (params.get("botcall") === "1" && params.get("code")) {
-    acceptBotPartnerInvitation(
-      params.get("code"),
-      params.get("role"),
-      params.get("type")
-    );
+    showPartnerCallJoinNotice({
+      kind: "bot",
+      code: params.get("code"),
+      role: params.get("role"),
+      type: params.get("type") === "video" ? "Video" : "Voice"
+    });
   } else if (params.get("partner") === "1" && params.get("code")) {
-    acceptPartnerInvitation(params.get("code"), params.get("type"));
+    showPartnerCallJoinNotice({
+      kind: "miniapp",
+      code: params.get("code"),
+      type: params.get("type") === "video" ? "Video" : "Voice"
+    });
   }
 }).catch(err => {
   console.warn("MeetStrangers4u account sync:", err.message);
