@@ -8,7 +8,7 @@ const http = require("http");
 const crypto = require("crypto");
 const WebSocket = require("ws");
 
-const PORT = Number(process.env.TRUTH_DARE_PORT || 3002);
+const PORT = Number(process.env.TRUTH_DARE_PORT || 3012);
 const HOST = process.env.TRUTH_DARE_HOST || "127.0.0.1";
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ALLOWED_ORIGINS = new Set(
