@@ -441,7 +441,7 @@ function callFlowScreen() {
         <h1 class="page-title">${state.call.message || "Call Ended"}</h1>
         <p class="page-subtitle">Your call session has ended.</p>
         <button class="primary-button" onclick="${isPartner ? "navigate('partner')" : `startRandomCall('${type}')`}">${isPartner ? "Back to Partner Call" : "Search Again"}</button>
-        <button class="secondary-button" onclick="navigate('${isPartner ? "partner" : isVideo ? "video" : "voice"}')">Back to ${isPartner ? "Partner" : type} Calls</button>
+        <button class="secondary-button" onclick="navigate('home')">Back to Home Screen</button>
       </section>
       ${bottomNav()}
     `;
