@@ -100,13 +100,12 @@ test("authenticated 2-player game spins, challenge verification, scoring, chat, 
   assert.equal(rtc.from,"101");assert.equal(rtc.signal.type,"offer");
 });
 
-test("private-room decline notifies the host and aborts the waiting room", {timeout:15000}, async t=>{
+test("multi-player private-room decline keeps room open and host can replace invite; lobby voice signaling works", {timeout:25000}, async t=>{
   const server=spawn(process.execPath,[SERVER_PATH],{cwd:__dirname,env:{...process.env,BOT_TOKEN:TOKEN,TRUTH_DARE_HOST:HOST,TRUTH_DARE_PORT:String(PORT),TRUTH_DARE_TEST_MODE:"1",ALLOWED_ORIGINS:"https://meetstrangers4u-miniapp-v2.vercel.app"},stdio:["ignore","pipe","pipe"]});
-  let logs="";
-  server.stdout.on("data",b=>logs+=b.toString());server.stderr.on("data",b=>logs+=b.toString());
+  let logs="";server.stdout.on("data",b=>logs+=b.toString());server.stderr.on("data",b=>logs+=b.toString());
   t.after(async()=>{for(const c of t.clients||[]){try{c.ws.close();}catch{}}if(server.exitCode===null){server.kill("SIGTERM");await new Promise(resolve=>server.once("exit",resolve));}});
   let ok=false;for(let i=0;i<80&&!ok;i++){await new Promise(r=>setTimeout(r,125));try{ok=await health();}catch{}}
-  assert.ok(ok,"decline test server health failed: "+logs);
+  assert.ok(ok,"multi-player decline test server health failed: "+logs);
   const host=await client("51001","DeclineHost");t.clients=[host];await waitEvent(host,"connected");
   send(host,{type:"create-custom-room",mode:"normal",inviteIds:["51002","51003"]});
   const created=await waitEvent(host,"custom-room-created");
@@ -114,12 +113,44 @@ test("private-room decline notifies the host and aborts the waiting room", {time
   send(guest,{type:"join-custom-room",token:created.testInviteTokens[0]});
   await waitEvent(guest,"custom-joined");
   const declineUrl="http://"+HOST+":"+PORT+"/invite/decline?token="+encodeURIComponent(created.testInviteTokens[1]);
-  const response=await fetch(declineUrl);
-  assert.equal(response.status,200);
-  assert.match(await response.text(),/Invitation declined/);
-  const [hostNotice,guestClosed]=await Promise.all([waitEvent(host,"invite-declined"),waitEvent(guest,"room-closed")]);
-  assert.equal(hostNotice.inviteeId,"51003");
-  assert.equal(guestClosed.reason,"invite-declined");
+  const response=await fetch(declineUrl);assert.equal(response.status,200);assert.match(await response.text(),/Invitation declined/);
+  const hostNotice=await waitEvent(host,"invite-declined");
+  assert.equal(hostNotice.inviteeId,"51003");assert.equal(hostNotice.closeRoom,false);
+  assert.match(hostNotice.inviteeName,/Decline|51003/);
+  await new Promise(resolve=>setTimeout(resolve,100));assert.equal(guest.events.some(e=>e.type==="room-closed"),false,"room must remain open after a multi-player decline");
+  send(host,{type:"host-add-invite",inviteeId:"51004"});
+  const sent=await waitEvent(host,"custom-invite-sent");
+  assert.equal(sent.inviteeId,"51004");assert.equal(sent.sent,false);assert.ok(sent.testInviteToken);
+  const replacement=await client("51004","ReplacementGuest");t.clients.push(replacement);await waitEvent(replacement,"connected");
+  send(replacement,{type:"join-custom-room",token:sent.testInviteToken});
+  await Promise.all([waitEvent(replacement,"custom-joined"),waitEvent(host,"room-formed"),waitEvent(guest,"room-formed")]);
+  send(host,{type:"voice-status",active:true});
+  const [voiceHost,voiceGuest]=await Promise.all([waitEvent(host,"voice-joined"),waitEvent(guest,"voice-joined")]);
+  assert.equal(voiceHost.playerId,"51001");assert.equal(voiceGuest.playerId,"51001");
+  send(host,{type:"rtc-signal",to:"51004",signal:{type:"offer",description:{type:"offer",sdp:"lobby-voice-test"}}});
+  const rtc=await waitEvent(replacement,"rtc-signal");
+  assert.equal(rtc.from,"51001");assert.equal(rtc.signal.type,"offer");
+  send(guest,{type:"host-add-invite",inviteeId:"51005"});
+  const nonHostErr=await waitEvent(guest,"error",e=>e.code==="HOST_ONLY_INVITE");
+  assert.equal(nonHostErr.code,"HOST_ONLY_INVITE");
+});
+
+test("two-player private-room decline closes the room and notifies host", {timeout:15000}, async t=>{
+  const server=spawn(process.execPath,[SERVER_PATH],{cwd:__dirname,env:{...process.env,BOT_TOKEN:TOKEN,TRUTH_DARE_HOST:HOST,TRUTH_DARE_PORT:String(PORT),TRUTH_DARE_TEST_MODE:"1",ALLOWED_ORIGINS:"https://meetstrangers4u-miniapp-v2.vercel.app"},stdio:["ignore","pipe","pipe"]});
+  let logs="";server.stdout.on("data",b=>logs+=b.toString());server.stderr.on("data",b=>logs+=b.toString());
+  t.after(async()=>{for(const c of t.clients||[]){try{c.ws.close();}catch{}}if(server.exitCode===null){server.kill("SIGTERM");await new Promise(resolve=>server.once("exit",resolve));}});
+  let ok=false;for(let i=0;i<80&&!ok;i++){await new Promise(r=>setTimeout(r,125));try{ok=await health();}catch{}}
+  assert.ok(ok,"two-player decline test server health failed: "+logs);
+  const host=await client("52001","TwoPlayerHost");t.clients=[host];await waitEvent(host,"connected");
+  send(host,{type:"create-custom-room",mode:"normal",inviteIds:["52002"]});
+  const created=await waitEvent(host,"custom-room-created");
+  const url="http://"+HOST+":"+PORT+"/invite/decline?token="+encodeURIComponent(created.testInviteTokens[0]);
+  const response=await fetch(url);assert.equal(response.status,200);
+  const notice=await waitEvent(host,"invite-declined");
+  assert.equal(notice.inviteeId,"52002");assert.equal(notice.closeRoom,true);
+  send(host,{type:"host-add-invite",inviteeId:"52003"});
+  const closedErr=await waitEvent(host,"error",e=>e.code==="HOST_ONLY_INVITE");
+  assert.equal(closedErr.code,"HOST_ONLY_INVITE");
 });
 
 test("private-room host can create an invite-only room and invalid invitations are rejected", {timeout:15000}, async t=>{

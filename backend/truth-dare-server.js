@@ -45,15 +45,17 @@ const server = http.createServer((req, res) => {
       privateInvites.delete(token);
       const room=rooms.get(inv.roomId);
       if(room&&room.status==="inviting"){
+        room.inviteIds.delete(inv.inviteeId);
         const host=room.players.find(p=>p.id===inv.hostId);
-        if(host)send(host.ws,"invite-declined",{inviteeId:inv.inviteeId});
-        for(const p of room.players){
-          p.roomId=null;p.ready=false;
-          if(p.id!==inv.hostId)send(p.ws,"room-closed",{reason:"invite-declined"});
+        const inviteeName=inv.inviteeName||"User ID "+inv.inviteeId;
+        if(room.playerCount===2){
+          if(host)send(host.ws,"invite-declined",{inviteeId:inv.inviteeId,inviteeName,closeRoom:true});
+          for(const p of room.players){p.roomId=null;p.ready=false;if(p.id!==inv.hostId)send(p.ws,"room-closed",{reason:"invite-declined"});}
+          room.status="closed";rooms.delete(room.id);
+          for(const [pendingToken,pending] of privateInvites)if(pending.roomId===room.id)privateInvites.delete(pendingToken);
+        }else if(host){
+          send(host.ws,"invite-declined",{inviteeId:inv.inviteeId,inviteeName,closeRoom:false,players:room.players.map(safePlayer),pendingInviteCount:[...privateInvites.values()].filter(v=>v.roomId===room.id&&v.status==="pending").length});
         }
-        room.status="closed";
-        rooms.delete(room.id);
-        for(const [pendingToken,pending] of privateInvites)if(pending.roomId===room.id)privateInvites.delete(pendingToken);
       }
     }
     res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"});
@@ -92,16 +94,19 @@ async function sendPrivateInvite(invite) {
   const data=await response.json().catch(()=>({ok:false}));
   return !!data.ok;
 }
+function registerPrivateInvite(room,host,inviteeId){
+  const token=crypto.randomBytes(24).toString("hex");
+  const active=playersByUser.get(inviteeId);
+  const inv={token,roomId:room.id,hostId:host.id,inviteeId,inviteeName:active?.name||null,playerCount:room.playerCount,mode:room.mode,status:"pending",expiresAt:Date.now()+INVITE_TTL_MS};
+  privateInvites.set(token,inv);room.inviteIds.add(inviteeId);
+  const expiry=setTimeout(()=>{const current=privateInvites.get(token);if(current&&current.status==="pending")privateInvites.delete(token);},INVITE_TTL_MS);expiry.unref?.();
+  return inv;
+}
 function makePrivateRoom(host,inviteIds,mode) {
   const roomId=crypto.randomBytes(12).toString("hex"),count=inviteIds.length+1;
   const room={id:roomId,playerCount:count,mode,status:"inviting",createdAt:Date.now(),players:[host],isPrivate:true,inviteIds:new Set(inviteIds)};
   rooms.set(roomId,room);host.roomId=roomId;host.queueKey=null;host.host=true;host.ready=false;
-  for(const inviteeId of inviteIds){
-    const token=crypto.randomBytes(24).toString("hex");
-    const inv={token,roomId,hostId:host.id,inviteeId,playerCount:count,mode,status:"pending",expiresAt:Date.now()+INVITE_TTL_MS};
-    privateInvites.set(token,inv);
-    const expiry=setTimeout(()=>{const current=privateInvites.get(token);if(current&&current.status==="pending")privateInvites.delete(token);},INVITE_TTL_MS);expiry.unref?.();
-  }
+  for(const inviteeId of inviteIds)registerPrivateInvite(room,host,inviteeId);
   send(host.ws,"custom-room-created",{roomId,playerCount:count,mode,players:room.players.map(safePlayer),...(process.env.TRUTH_DARE_TEST_MODE==="1"?{testInviteTokens:[...privateInvites.values()].filter(v=>v.roomId===roomId).map(v=>v.token)}:{})});
   const expireRoom=setTimeout(()=>{const active=rooms.get(roomId);if(!active||active.status!=="inviting")return;for(const p of active.players){p.roomId=null;p.ready=false;send(p.ws,"room-closed",{reason:"invite-expired"});}for(const [token,inv] of privateInvites)if(inv.roomId===roomId)privateInvites.delete(token);rooms.delete(roomId);},INVITE_TTL_MS);expireRoom.unref?.();
   (async()=>{let sent=0,failed=0;for(const id of inviteIds){const inv=[...privateInvites.values()].find(v=>v.roomId===roomId&&v.inviteeId===id&&v.status==="pending");if(inv&&await sendPrivateInvite(inv))sent++;else failed++;}send(host.ws,"custom-invites-sent",{sent,failed});})();
@@ -111,13 +116,14 @@ function joinPrivateRoom(player,token) {
   if(!invite||invite.status!=="pending"||Date.now()>invite.expiresAt)return send(player.ws,"error",{code:"INVITE_EXPIRED"});
   if(invite.inviteeId!==player.id)return send(player.ws,"error",{code:"INVITE_WRONG_USER"});
   const room=rooms.get(invite.roomId);
-  if(!room||!room.isPrivate||room.status!=="inviting")return send(player.ws,"error",{code:"ROOM_UNAVAILABLE"});
+  if(!room||!room.isPrivate||!["inviting","lobby"].includes(room.status))return send(player.ws,"error",{code:"ROOM_UNAVAILABLE"});
   if(player.roomId||player.queueKey)return send(player.ws,"error",{code:"PLAYER_BUSY"});
   if(room.players.length>=room.playerCount)return send(player.ws,"error",{code:"ROOM_FULL"});
   if(room.players.some(p=>p.id===player.id))return send(player.ws,"error",{code:"ALREADY_JOINED"});
   privateInvites.delete(token);player.roomId=room.id;player.queueKey=null;player.host=false;player.ready=false;room.players.push(player);
   send(player.ws,"custom-joined",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer)});
-  if(room.players.length===room.playerCount){room.status="lobby";broadcast(room,"room-formed",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer),hostId:room.players[0].id});}
+  const host=room.players[0];send(host.ws,"custom-room-updated",{roomId:room.id,players:room.players.map(safePlayer),pendingInviteCount:[...privateInvites.values()].filter(v=>v.roomId===room.id&&v.status==="pending").length});
+  if(room.players.length===room.playerCount){room.status="lobby";for(const [pendingToken,pending] of privateInvites)if(pending.roomId===room.id)privateInvites.delete(pendingToken);broadcast(room,"room-formed",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer),hostId:room.players[0].id});}else if(room.status==="lobby"){broadcast(room,"room-formed",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer),hostId:room.players[0].id});}
 }
 
 function validateInitData(initData) {
@@ -150,7 +156,7 @@ function broadcast(room, type, payload = {}) {
   for (const p of room.players) send(p.ws, type, payload);
 }
 function configKey(count, mode) { return count + ":" + mode; }
-function safePlayer(p) { return { id: p.id, name: p.name, host: p.host, ready: p.ready }; }
+function safePlayer(p) { return { id: p.id, name: p.name, host: p.host, ready: p.ready, voiceActive: !!p.voiceActive }; }
 
 function removeFromQueue(player) {
   for (const [key, list] of queues) {
@@ -342,7 +348,7 @@ function relayChat(room, player, textValue) {
 }
 
 function relayRtcSignal(room, player, targetId, signal) {
-  if (!playerInGame(room, player) || typeof targetId !== "string" || !signal || typeof signal !== "object") return send(player.ws, "error", { code: "INVALID_RTC_SIGNAL" });
+  if (!room || !["inviting","lobby","game"].includes(room.status) || !room.players.some(p=>p.id===player.id) || typeof targetId !== "string" || !signal || typeof signal !== "object") return send(player.ws, "error", { code: "INVALID_RTC_SIGNAL" });
   if (JSON.stringify(signal).length > 8192) return send(player.ws, "error", { code: "RTC_SIGNAL_TOO_LARGE" });
   const target = room.players.find(p => p.id === targetId && p.id !== player.id);
   if (!target) return send(player.ws, "error", { code: "RTC_PEER_NOT_FOUND" });
@@ -386,6 +392,23 @@ wss.on("connection", (ws, req) => {
       makePrivateRoom(player,inviteIds,mode);return;
     }
     if(msg.type==="join-custom-room")return joinPrivateRoom(player,String(msg.token||""));
+    if(msg.type==="host-add-invite"){
+      const inviteeId=String(msg.inviteeId||""),room=rooms.get(player.roomId);
+      if(!room||!room.isPrivate||!["inviting","lobby"].includes(room.status)||!player.host)return send(ws,"error",{code:"HOST_ONLY_INVITE"});
+      if(!/^\d{5,16}$/.test(inviteeId)||inviteeId===player.id)return send(ws,"error",{code:"INVALID_INVITE_ID"});
+      if(room.players.some(p=>p.id===inviteeId)||room.inviteIds.has(inviteeId))return send(ws,"error",{code:"ALREADY_INVITED"});
+      const pendingCount=[...privateInvites.values()].filter(v=>v.roomId===room.id&&v.status==="pending").length;
+      if(room.players.length+pendingCount>=room.playerCount)return send(ws,"error",{code:"ROOM_FULL"});
+      const active=playersByUser.get(inviteeId);if(active&&(active.roomId||active.queueKey))return send(ws,"error",{code:"INVITEE_BUSY"});
+      const inv=registerPrivateInvite(room,player,inviteeId);
+      (async()=>{const sent=await sendPrivateInvite(inv);if(!sent&&process.env.TRUTH_DARE_TEST_MODE!=="1"){privateInvites.delete(inv.token);room.inviteIds.delete(inviteeId);}send(ws,"custom-invite-sent",{inviteeId,sent,...(process.env.TRUTH_DARE_TEST_MODE==="1"?{testInviteToken:inv.token}:{})});})();return;
+    }
+    if(msg.type==="voice-status"){
+      const room=rooms.get(player.roomId);
+      if(!room||!["inviting","lobby","game"].includes(room.status)||!room.players.some(p=>p.id===player.id))return send(ws,"error",{code:"VOICE_ROOM_UNAVAILABLE"});
+      player.voiceActive=msg.active===true;
+      broadcast(room,player.voiceActive?"voice-joined":"voice-left",{playerId:player.id,players:room.players.map(safePlayer)});return;
+    }
     if (msg.type === "queue") {
       const count = Number(msg.playerCount), mode = String(msg.mode || "");
       if (!VALID_COUNTS.has(count) || !VALID_MODES.has(mode)) return send(ws, "error", { code: "INVALID_SETTINGS" });
