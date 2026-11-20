@@ -167,3 +167,7 @@
 .td-reward-row:last-of-type{border-bottom:0}
 .td-reward-row strong{color:#f5d98f;font-size:12px;white-space:nowrap}
 .td-winner-rewards p{font-size:10px;color:#aeb5d0;text-align:center;margin:7px 0 0}
+
+
+/* Reward card note for two-player games */
+.td-reward-selection-note{font-size:10px;line-height:1.4;color:#c8baff;text-align:center;margin:8px 0 6px;padding:7px 8px;border-radius:10px;background:rgba(124,91,255,.08);border:1px solid rgba(153,129,255,.14)}
