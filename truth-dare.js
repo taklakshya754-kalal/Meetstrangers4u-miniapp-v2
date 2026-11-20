@@ -318,6 +318,8 @@
   }
 
   window.openTruthDareSetup=open;
-  const startParam=window.Telegram?.WebApp?.initDataUnsafe?.start_param||new URLSearchParams(location.search).get("tdjoin");
-  if(startParam&&startParam.startsWith("tdjoin_")){window.Telegram?.WebApp?.ready?.();joinCustomRoom(startParam.slice(7));}
+  const queryStartParam=new URLSearchParams(location.search).get("tdjoin");
+  const telegramStartParam=window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+  const startParam=[queryStartParam,telegramStartParam].find(value=>typeof value==="string"&&value.startsWith("tdjoin_"));
+  if(startParam){window.Telegram?.WebApp?.ready?.();joinCustomRoom(startParam.slice(7));}
 })();
