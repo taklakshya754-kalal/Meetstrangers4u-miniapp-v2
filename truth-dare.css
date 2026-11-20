@@ -132,3 +132,11 @@
 #td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:8px;margin-bottom:12px;}
 #td-setup-overlay.td-custom-room-active .td-points{margin-top:10px;margin-bottom:10px;}
 @media(max-height:700px){#td-setup-overlay.td-custom-room-active .td-sheet{height:calc(100dvh - 12px - env(safe-area-inset-bottom));}}
+
+
+/* Custom Room: balanced vertical spacing and lower invite/create group */
+#td-setup-overlay.td-custom-room-active .td-setup-content{display:flex;flex-direction:column;min-height:100%;box-sizing:border-box;}
+#td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:10px;margin-bottom:14px;}
+#td-setup-overlay.td-custom-room-active .td-points{margin-top:10px;margin-bottom:14px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:auto;margin-bottom:10px;}
+#td-setup-overlay.td-custom-room-active .td-footnote{margin-bottom:2px;}
