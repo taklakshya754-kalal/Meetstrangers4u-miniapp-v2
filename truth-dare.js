@@ -301,7 +301,7 @@
     ws.onerror=()=>{if(socket===ws){lobbyState.status="offline";renderLobby();}};ws.onclose=()=>{if(socket===ws&&!["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();}};
   }
   function joinCustomRoom(token) {
-    if(!token)return;stopSocket(true);lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal",isCustom:true};renderLobby();
+    if(!token)return;open();stopSocket(true);lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal",isCustom:true};renderLobby();
     if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}let ws;try{ws=new WebSocket(WS_ENDPOINT+"?inviteToken="+encodeURIComponent(token)+"&initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
     connectTimer=setTimeout(()=>{if(socket===ws&&ws.readyState!==WebSocket.OPEN){lobbyState.status="offline";renderLobby();try{ws.close();}catch(_){}}},12000);
     ws.onopen=()=>{if(socket!==ws)return;if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}ws.send(JSON.stringify({type:"join-custom-room",token}));};
