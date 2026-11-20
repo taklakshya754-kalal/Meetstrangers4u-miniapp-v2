@@ -79,7 +79,7 @@
       <p class="td-footnote">Real users only · Score stays inside the game</p></div></div>`;
     document.body.appendChild(overlay);
     overlay.querySelector(".td-close").onclick = () => backFromSetup(overlay);
-    overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+    overlay.addEventListener("click", e => { if (e.target === overlay) backFromSetup(overlay); });
     overlay.querySelectorAll("[data-players]").forEach(btn => btn.onclick = () => { selectedPlayers=Number(btn.dataset.players); overlay.querySelectorAll("[data-players]").forEach(x=>x.classList.toggle("selected",x===btn)); });
     overlay.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => { selectedMode=btn.dataset.mode; overlay.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===btn)); });
     overlay.querySelector("#td-random-match").onclick=()=>startQueue(selectedPlayers,selectedMode);
@@ -151,7 +151,7 @@
       open();
       if (wasCustom) document.getElementById("td-custom-match")?.click();
     };
-    overlay.querySelector(".td-cancel-btn").onclick = () => { stopSocket(true); close(); open(); };
+    overlay.querySelector(".td-cancel-btn").onclick = () => { const wasCustom=!!lobbyState.isCustom; stopSocket(true); gameState=null; close(); open(); if(wasCustom) document.getElementById("td-custom-match")?.click(); };
     overlay.querySelectorAll("[data-add-player]").forEach(btn=>btn.addEventListener("click",()=>{lobbyState.addInviteOpen=true;renderLobby();}));
     overlay.querySelector("#td-send-player-invite")?.addEventListener("click",()=>{const input=overlay.querySelector("#td-add-player-id");const id=(input?.value||"").trim();if(!/^\d{5,16}$/.test(id)){showToast("Enter a valid Telegram User ID");return;}if(!socket||socket.readyState!==WebSocket.OPEN){showToast("Room connection is unavailable");return;}socket.send(JSON.stringify({type:"host-add-invite",inviteeId:id}));lobbyState.addInviteOpen=false;renderLobby();});
     overlay.querySelector("#td-lobby-voice-join")?.addEventListener("click",startVoice);
