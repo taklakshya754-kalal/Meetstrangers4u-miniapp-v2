@@ -99,3 +99,32 @@ test("authenticated 2-player game spins, challenge verification, scoring, chat, 
   const rtc=await waitEvent(b,"rtc-signal");
   assert.equal(rtc.from,"101");assert.equal(rtc.signal.type,"offer");
 });
+
+test("private-room host can create an invite-only room and invalid invitations are rejected", {timeout:15000}, async t=>{
+  const server=spawn(process.execPath,[SERVER_PATH],{cwd:__dirname,env:{...process.env,BOT_TOKEN:TOKEN,TRUTH_DARE_HOST:HOST,TRUTH_DARE_PORT:String(PORT),TRUTH_DARE_TEST_MODE:"1",ALLOWED_ORIGINS:"https://meetstrangers4u-miniapp-v2.vercel.app"},stdio:["ignore","pipe","pipe"]});
+  let logs="";
+  server.stdout.on("data",b=>logs+=b.toString());server.stderr.on("data",b=>logs+=b.toString());
+  t.after(async()=>{for(const c of t.clients||[]){try{c.ws.close();}catch{}}if(server.exitCode===null){server.kill("SIGTERM");await new Promise(resolve=>server.once("exit",resolve));}});
+  let ok=false;for(let i=0;i<80&&!ok;i++){await new Promise(r=>setTimeout(r,125));try{ok=await health();}catch{}}
+  assert.ok(ok,"private test server health failed: "+logs);
+  const host=await client("50001","RoomHost");t.clients=[host];await waitEvent(host,"connected");
+  send(host,{type:"create-custom-room",mode:"normal",inviteIds:["50002"]});
+  const created=await waitEvent(host,"custom-room-created");
+  assert.equal(created.playerCount,2);assert.equal(created.players.length,1);assert.equal(created.players[0].id,"50001");
+  assert.equal(created.testInviteTokens.length,1,"test server exposes invite token only in test mode");
+  const sent=await waitEvent(host,"custom-invites-sent");
+  assert.equal(sent.sent,0);assert.equal(sent.failed,1,"test mode simulates unavailable Telegram delivery");
+  const guest=await client("50002","InvitedGuest");t.clients.push(guest);await waitEvent(guest,"connected");
+  send(guest,{type:"join-custom-room",token:created.testInviteTokens[0]});
+  const [joined,hostForm,guestForm]=await Promise.all([waitEvent(guest,"custom-joined"),waitEvent(host,"room-formed"),waitEvent(guest,"room-formed")]);
+  assert.equal(joined.playerCount,2);assert.equal(hostForm.players.length,2);assert.equal(guestForm.roomId,hostForm.roomId);
+  send(host,{type:"ready",ready:true});await Promise.all([waitEvent(host,"ready-update"),waitEvent(guest,"ready-update")]);
+  send(guest,{type:"ready",ready:true});
+  await Promise.all([waitEvent(host,"game-start"),waitEvent(guest,"game-start"),waitEvent(host,"game-state"),waitEvent(guest,"game-state")]);
+  send(host,{type:"create-custom-room",mode:"normal",inviteIds:["50001"]});
+  const err=await waitEvent(host,"error",e=>e.code==="INVALID_INVITE_IDS");
+  assert.equal(err.code,"INVALID_INVITE_IDS");
+  send(host,{type:"join-custom-room",token:"invalid-token"});
+  const joinErr=await waitEvent(host,"error",e=>e.code==="INVITE_EXPIRED");
+  assert.equal(joinErr.code,"INVITE_EXPIRED");
+});
