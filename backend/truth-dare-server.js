@@ -116,14 +116,14 @@ function joinPrivateRoom(player,token) {
   if(!invite||invite.status!=="pending"||Date.now()>invite.expiresAt)return send(player.ws,"error",{code:"INVITE_EXPIRED"});
   if(invite.inviteeId!==player.id)return send(player.ws,"error",{code:"INVITE_WRONG_USER"});
   const room=rooms.get(invite.roomId);
-  if(!room||!room.isPrivate||room.status!=="inviting")return send(player.ws,"error",{code:"ROOM_UNAVAILABLE"});
+  if(!room||!room.isPrivate||!["inviting","lobby"].includes(room.status))return send(player.ws,"error",{code:"ROOM_UNAVAILABLE"});
   if(player.roomId||player.queueKey)return send(player.ws,"error",{code:"PLAYER_BUSY"});
   if(room.players.length>=room.playerCount)return send(player.ws,"error",{code:"ROOM_FULL"});
   if(room.players.some(p=>p.id===player.id))return send(player.ws,"error",{code:"ALREADY_JOINED"});
   privateInvites.delete(token);player.roomId=room.id;player.queueKey=null;player.host=false;player.ready=false;room.players.push(player);
   send(player.ws,"custom-joined",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer)});
   const host=room.players[0];send(host.ws,"custom-room-updated",{roomId:room.id,players:room.players.map(safePlayer),pendingInviteCount:[...privateInvites.values()].filter(v=>v.roomId===room.id&&v.status==="pending").length});
-  if(room.players.length===room.playerCount){room.status="lobby";for(const [pendingToken,pending] of privateInvites)if(pending.roomId===room.id)privateInvites.delete(pendingToken);broadcast(room,"room-formed",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer),hostId:room.players[0].id});}
+  if(room.players.length===room.playerCount){room.status="lobby";for(const [pendingToken,pending] of privateInvites)if(pending.roomId===room.id)privateInvites.delete(pendingToken);broadcast(room,"room-formed",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer),hostId:room.players[0].id});}else if(room.status==="lobby"){broadcast(room,"room-formed",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer),hostId:room.players[0].id});}
 }
 
 function validateInitData(initData) {
@@ -394,7 +394,7 @@ wss.on("connection", (ws, req) => {
     if(msg.type==="join-custom-room")return joinPrivateRoom(player,String(msg.token||""));
     if(msg.type==="host-add-invite"){
       const inviteeId=String(msg.inviteeId||""),room=rooms.get(player.roomId);
-      if(!room||!room.isPrivate||room.status!=="inviting"||!player.host)return send(ws,"error",{code:"HOST_ONLY_INVITE"});
+      if(!room||!room.isPrivate||!["inviting","lobby"].includes(room.status)||!player.host)return send(ws,"error",{code:"HOST_ONLY_INVITE"});
       if(!/^\d{5,16}$/.test(inviteeId)||inviteeId===player.id)return send(ws,"error",{code:"INVALID_INVITE_ID"});
       if(room.players.some(p=>p.id===inviteeId)||room.inviteIds.has(inviteeId))return send(ws,"error",{code:"ALREADY_INVITED"});
       const pendingCount=[...privateInvites.values()].filter(v=>v.roomId===room.id&&v.status==="pending").length;
