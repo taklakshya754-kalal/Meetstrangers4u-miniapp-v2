@@ -39,13 +39,14 @@
     overlay.id = "td-setup-overlay"; overlay.className = "td-overlay"; currentOverlay = overlay;
     overlay.innerHTML = `<div class="td-sheet" role="dialog" aria-modal="true" aria-label="Truth or Dare setup">
       <button class="td-close" type="button" aria-label="Close">×</button>
+      <div class="td-setup-content">
       <div class="td-kicker">FUN ZONE · MULTIPLAYER</div><div class="td-title">Truth <span>or</span> Dare</div>
       <p class="td-subtitle">Set up your game room</p>
       <section class="td-section"><div class="td-label">PLAYERS</div><div class="td-player-grid">${[2,3,4,5].map(n=>`<button class="td-player ${n===selectedPlayers?'selected':''}" data-players="${n}" type="button"><b>${n}</b><small>Players</small></button>`).join("")}</div></section>
       <section class="td-section"><div class="td-label">GAME MODE</div><div class="td-mode-list">${MODES.map(m=>`<button class="td-mode ${m.id===selectedMode?'selected':''}" data-mode="${m.id}" type="button"><span class="td-mode-icon">${m.icon}</span><span class="td-mode-copy"><b>${m.title}</b><small>${m.desc}</small></span><span class="td-check">✓</span></button>`).join("")}</div></section>
       <section class="td-points"><div class="td-label">GAME SCORE · WALLET COINS NOT USED</div><div class="td-point-row"><span>Truth verified</span><b>+25 Score</b></div><div class="td-point-row"><span>Dare verified</span><b>+50 Score</b></div><div class="td-point-row"><span>Skip Truth</span><b class="minus">−25 Score</b></div><div class="td-point-row"><span>Skip Dare</span><b class="minus">−50 Score</b></div></section>
       <button class="td-primary" type="button" id="td-confirm-setup">Find Players <span>→</span></button>
-      <p class="td-footnote">Real users only · Score stays inside the game</p></div>`;
+      <p class="td-footnote">Real users only · Score stays inside the game</p></div></div>`;
     document.body.appendChild(overlay);
     overlay.querySelector(".td-close").onclick = close;
     overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
