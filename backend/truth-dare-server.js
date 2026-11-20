@@ -69,6 +69,7 @@ server.on("upgrade", (req, socket, head) => {
 
 
 async function sendPrivateInvite(invite) {
+  if(process.env.TRUTH_DARE_TEST_MODE==="1")return false;
   const startLink="https://t.me/"+BOT_USERNAME+"?startapp=tdjoin_"+invite.token;
   const declineLink="https://truth-dare.lxreward.xyz/invite/decline?token="+encodeURIComponent(invite.token);
   const payload={chat_id:invite.inviteeId,text:"🎲 You have been invited to a private Truth or Dare room!\n\nPlayers: "+invite.playerCount+" · Mode: "+invite.mode+"\nInvitation expires in 15 minutes.",reply_markup:{inline_keyboard:[[{text:"Accept & Join",url:startLink},{text:"Decline",url:declineLink}]]}};

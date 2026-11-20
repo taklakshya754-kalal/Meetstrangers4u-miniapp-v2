@@ -54,7 +54,7 @@
     overlay.querySelectorAll("[data-players]").forEach(btn => btn.onclick = () => { selectedPlayers=Number(btn.dataset.players); overlay.querySelectorAll("[data-players]").forEach(x=>x.classList.toggle("selected",x===btn)); });
     overlay.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => { selectedMode=btn.dataset.mode; overlay.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===btn)); });
     let playType="random";
-    overlay.querySelectorAll("[data-play-type]").forEach(btn=>btn.onclick=()=>{playType=btn.dataset.playType;overlay.querySelectorAll("[data-play-type]").forEach(x=>x.classList.toggle("selected",x===btn));overlay.querySelector(".td-custom-invites").hidden=playType!=="custom";overlay.querySelector(".td-player-grid").style.opacity=playType==="custom"?"0.45":"1";overlay.querySelector(".td-player-grid").style.pointerEvents=playType==="custom"?"none":"auto";});
+    overlay.querySelectorAll("[data-play-type]").forEach(btn=>btn.onclick=()=>{playType=btn.dataset.playType;overlay.querySelectorAll("[data-play-type]").forEach(x=>x.classList.toggle("selected",x===btn));overlay.querySelector(".td-custom-invites").hidden=playType!=="custom";overlay.querySelector(".td-player-grid").style.display=playType==="custom"?"none":"grid";});
     overlay.querySelector("#td-confirm-setup").onclick=()=>{if(playType==="random")startQueue(selectedPlayers,selectedMode);else startCustomRoom(selectedMode,overlay.querySelector("#td-invite-ids").value);};
 
   }
