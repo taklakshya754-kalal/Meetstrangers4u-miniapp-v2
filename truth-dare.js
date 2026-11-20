@@ -10,7 +10,7 @@
   let selectedMode = "normal", selectedPlayers = 2, socket = null, currentOverlay = null;
   let lobbyState = { status: "idle", players: [], roomId: null, ready: false, target: 1000, count: 2, mode: "normal" };
   let gameState = null;
-  let voiceState = { active:false, muted:false, busy:false, stream:null, peers:new Map(), error:null };
+  let voiceState = { active:false, muted:false, soundMuted:false, busy:false, stream:null, peers:new Map(), error:null };
   let rtcPendingSignals = [];
   let connectTimer = null, gameSpinTimer = null;
 
@@ -77,9 +77,13 @@
     if (lobbyState.status === "offline") { heading = "Matchmaking Offline"; message = "Game service is not reachable yet. Try again later."; }
     if (lobbyState.status === "closed") { heading = "Room Closed"; message = "A player left before the game began. You can search for a new room."; }
     const list = lobbyState.players || [];
+    const myId=String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"");
+    const isHost=list.some(p=>p.host&&String(p.id)===myId);
+    const canAdd=lobbyState.isCustom&&isHost&&["waiting","room"].includes(lobbyState.status)&&list.length<lobbyState.count;
     const slots = Array.from({length:lobbyState.count}, (_,i) => {
       const p=list[i];
-      return `<div class="td-slot ${p?'td-filled':''}"><span class="td-slot-avatar">${p?(p.host?'👑':'👤'):'＋'}</span><b>${p?esc(p.name):'Waiting for player'}</b><small>${p?(p.host?'Host':p.ready?'Ready':'Not ready'):'Open slot'}</small></div>`;
+      const add=(!p&&canAdd)?'<button type="button" class="td-slot-add" data-add-player aria-label="Add player">＋</button>':'';
+      return `<div class="td-slot ${p?'td-filled':''}"><span class="td-slot-avatar">${p?(p.host?'👑':'👤'):'＋'}</span><b>${p?esc(p.name):'Waiting for player'}</b><small>${p?(p.host?'Host':p.ready?'Ready':'Not ready'):'Open slot'}</small>${add}</div>`;
     }).join("");
     overlay.innerHTML = `<div class="td-sheet td-lobby-sheet" role="dialog" aria-modal="true" aria-label="Truth or Dare live lobby">
       <button class="td-close" type="button" aria-label="Close">×</button>
@@ -87,6 +91,9 @@
       <p class="td-subtitle">${lobbyState.count} players · ${modeTitle}</p>
       <div class="td-lobby-status"><span class="td-status-dot ${lobbyState.status}"></span><span>${message}</span></div>
       <div class="td-room-preview"><div class="td-room-label">PLAYERS · ${list.length}/${lobbyState.count}</div><div class="td-slots">${slots}</div></div>
+      ${lobbyState.notice?`<div class="td-lobby-decline">${esc(lobbyState.notice)}</div>`:""}
+      ${lobbyState.addInviteOpen?`<div class="td-add-player-form"><input id="td-add-player-id" type="text" inputmode="numeric" maxlength="16" placeholder="Telegram User ID"><button class="td-primary" id="td-send-player-invite" type="button">Send Invitation</button></div>`:""}
+      ${lobbyState.isCustom&&["waiting","room"].includes(lobbyState.status)?`<div class="td-lobby-voice"><div class="td-label">VOICE CHAT · LOBBY</div><div class="td-voice-state">${voiceState.active?"Voice chat connected":voiceState.busy?"Connecting microphone…":"Join voice to talk before the game"}</div>${voiceState.error?`<p class="td-voice-error">${esc(voiceState.error)}</p>`:""}<div class="td-action-grid">${voiceState.active?`<button class="td-secondary" id="td-lobby-mic">${voiceState.muted?"🎙️ Unmute Microphone":"🔇 Mute Microphone"}</button><button class="td-secondary" id="td-lobby-sound">${voiceState.soundMuted?"🔊 Sound On":"🔈 Sound Off"}</button><button class="td-secondary" id="td-lobby-voice-leave">Leave Voice</button>`:`<button class="td-primary td-voice-start" id="td-lobby-voice-join" ${voiceState.busy?"disabled":""}>🎙️ Join Voice Chat</button><button class="td-secondary" id="td-lobby-sound">${voiceState.soundMuted?"🔊 Sound On":"🔈 Sound Off"}</button>`}</div></div>`:""}
       <div class="td-lobby-summary"><span>Mode</span><b>${esc(modeTitle)}</b><span>Win target</span><b>1000 Score</b><span>Room</span><b>${lobbyState.roomId?esc(lobbyState.roomId.slice(0,8)):'Searching…'}</b></div>
       ${lobbyState.status==="room" ? `<button class="td-primary td-ready-btn" type="button">${lobbyState.ready?'✓ Ready — Tap to Unready':'I’m Ready'}</button>` : ""}
       ${(lobbyState.status==="offline" || lobbyState.status==="closed") ? `<button class="td-primary td-retry-btn" type="button">Retry Matchmaking</button>` : ""}
@@ -94,6 +101,12 @@
       <p class="td-footnote">No bots · No wallet coins · Server-authoritative room</p></div>`;
     overlay.querySelector(".td-close").onclick = close;
     overlay.querySelector(".td-cancel-btn").onclick = () => { stopSocket(true); close(); open(); };
+    overlay.querySelectorAll("[data-add-player]").forEach(btn=>btn.addEventListener("click",()=>{lobbyState.addInviteOpen=true;renderLobby();}));
+    overlay.querySelector("#td-send-player-invite")?.addEventListener("click",()=>{const input=overlay.querySelector("#td-add-player-id");const id=(input?.value||"").trim();if(!/^\d{5,16}$/.test(id)){showToast("Enter a valid Telegram User ID");return;}if(!socket||socket.readyState!==WebSocket.OPEN){showToast("Room connection is unavailable");return;}socket.send(JSON.stringify({type:"host-add-invite",inviteeId:id}));lobbyState.addInviteOpen=false;renderLobby();});
+    overlay.querySelector("#td-lobby-voice-join")?.addEventListener("click",startVoice);
+    overlay.querySelector("#td-lobby-mic")?.addEventListener("click",toggleVoiceMute);
+    overlay.querySelector("#td-lobby-sound")?.addEventListener("click",toggleSoundMute);
+    overlay.querySelector("#td-lobby-voice-leave")?.addEventListener("click",stopVoice);
     overlay.querySelector(".td-ready-btn")?.addEventListener("click", () => {
       if (!socket || socket.readyState !== WebSocket.OPEN) return;
       lobbyState.ready = !lobbyState.ready;
@@ -106,73 +119,46 @@
   function createVoicePeer(peerId) {
     if(voiceState.peers.has(peerId)) return voiceState.peers.get(peerId);
     const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.google.com:19302"}]});
-    const state={pc,pendingIce:[]}; voiceState.peers.set(peerId,state);
-    if(voiceState.stream) voiceState.stream.getTracks().forEach(track=>pc.addTrack(track,voiceState.stream));
+    const state={pc,pendingIce:[]};voiceState.peers.set(peerId,state);
+    if(voiceState.stream)voiceState.stream.getTracks().forEach(track=>pc.addTrack(track,voiceState.stream));
     pc.onicecandidate=e=>{if(e.candidate)sendRtc(peerId,{candidate:e.candidate.toJSON?e.candidate.toJSON():e.candidate});};
-    pc.ontrack=e=>{
-      let audio=document.getElementById("td-remote-audio-"+peerId);
-      if(!audio){audio=document.createElement("audio");audio.id="td-remote-audio-"+peerId;audio.autoplay=true;audio.playsInline=true;audio.style.position="fixed";audio.style.width="1px";audio.style.height="1px";audio.style.opacity="0";audio.style.pointerEvents="none";document.body.appendChild(audio);}
-      audio.srcObject=e.streams[0];audio.play().catch(()=>{});
-    };
+    pc.ontrack=e=>{let audio=document.getElementById("td-remote-audio-"+peerId);if(!audio){audio=document.createElement("audio");audio.id="td-remote-audio-"+peerId;audio.autoplay=true;audio.playsInline=true;audio.style.position="fixed";audio.style.width="1px";audio.style.height="1px";audio.style.opacity="0";audio.style.pointerEvents="none";document.body.appendChild(audio);}audio.srcObject=e.streams[0];audio.volume=voiceState.soundMuted?0:1;audio.play().catch(()=>{});};
     pc.onconnectionstatechange=()=>{if(pc.connectionState==="failed"||pc.connectionState==="closed"){const a=document.getElementById("td-remote-audio-"+peerId);if(a)a.remove();}};
     return state;
   }
-  async function flushVoiceIce(peer) {
-    if(!peer.pc.remoteDescription) return;
-    for(const candidate of peer.pendingIce.splice(0)){try{await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));}catch(_){}}
-  }
-  async function handleRtcSignal(from, signal) {
-    if(!voiceState.active || !signal) { if(rtcPendingSignals.length<20)rtcPendingSignals.push({from,signal}); return; }
+  async function flushVoiceIce(peer) {if(!peer.pc.remoteDescription)return;for(const candidate of peer.pendingIce.splice(0)){try{await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));}catch(_){}}}
+  async function handleRtcSignal(from,signal) {
+    if(!voiceState.active||!signal){if(rtcPendingSignals.length<20)rtcPendingSignals.push({from,signal});return;}
     const peer=createVoicePeer(from);
-    if(signal.candidate){
-      if(peer.pc.remoteDescription){try{await peer.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));}catch(_){}}
-      else peer.pendingIce.push(signal.candidate);
-      return;
-    }
-    if(signal.type==="offer" && signal.description){
-      await peer.pc.setRemoteDescription(new RTCSessionDescription(signal.description));
-      await flushVoiceIce(peer);
-      const answer=await peer.pc.createAnswer();await peer.pc.setLocalDescription(answer);
-      sendRtc(from,{type:"answer",description:peer.pc.localDescription});
-    } else if(signal.type==="answer" && signal.description){
-      await peer.pc.setRemoteDescription(new RTCSessionDescription(signal.description));
-      await flushVoiceIce(peer);
-    }
+    if(signal.candidate){if(peer.pc.remoteDescription){try{await peer.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));}catch(_){}}else peer.pendingIce.push(signal.candidate);return;}
+    if(signal.type==="offer"&&signal.description){await peer.pc.setRemoteDescription(new RTCSessionDescription(signal.description));await flushVoiceIce(peer);const answer=await peer.pc.createAnswer();await peer.pc.setLocalDescription(answer);sendRtc(from,{type:"answer",description:peer.pc.localDescription});}
+    else if(signal.type==="answer"&&signal.description){await peer.pc.setRemoteDescription(new RTCSessionDescription(signal.description));await flushVoiceIce(peer);}
   }
   async function startVoice() {
-    if(voiceState.active||voiceState.busy) return;
-    if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){voiceState.error="Voice calling is not supported in this browser.";renderGame();return;}
-    voiceState.busy=true;voiceState.error=null;renderGame();
+    if(voiceState.active||voiceState.busy)return;
+    if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){voiceState.error="Voice calling is not supported in this browser.";gameState?renderGame():renderLobby();return;}
+    voiceState.busy=true;voiceState.error=null;gameState?renderGame():renderLobby();
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
       voiceState.stream=stream;voiceState.active=true;voiceState.muted=false;voiceState.busy=false;
-      const peers=(gameState?.players||[]).filter(p=>p.id!==gameState.userId);
-      for(const p of peers){
-        const peer=createVoicePeer(p.id);
-        if(String(gameState.userId)<String(p.id)){
-          const offer=await peer.pc.createOffer();await peer.pc.setLocalDescription(offer);
-          sendRtc(p.id,{type:"offer",description:peer.pc.localDescription});
-        }
-      }
-      const pending=rtcPendingSignals.splice(0);
-      for(const signal of pending) await handleRtcSignal(signal.from,signal.signal);
-      renderGame();
-    }catch(err){
-      voiceState.busy=false;voiceState.active=false;voiceState.error=err?.name==="NotAllowedError"?"Microphone permission was denied.":(err?.message||"Could not start voice.");
-      if(voiceState.stream)voiceState.stream.getTracks().forEach(t=>t.stop());voiceState.stream=null;renderGame();
-    }
+      if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type:"voice-status",active:true}));
+      const myId=String(gameState?.userId||window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"");
+      const peers=(gameState?.players||lobbyState.players||[]).filter(p=>String(p.id)!==myId&&p.voiceActive);
+      for(const p of peers){const peer=createVoicePeer(String(p.id));if(myId<String(p.id)){const offer=await peer.pc.createOffer();await peer.pc.setLocalDescription(offer);sendRtc(String(p.id),{type:"offer",description:peer.pc.localDescription});}}
+      const pending=rtcPendingSignals.splice(0);for(const signal of pending)await handleRtcSignal(signal.from,signal.signal);
+      gameState?renderGame():renderLobby();
+    }catch(err){voiceState.busy=false;voiceState.active=false;voiceState.error=err?.name==="NotAllowedError"?"Microphone permission was denied.":(err?.message||"Could not start voice.");if(voiceState.stream)voiceState.stream.getTracks().forEach(t=>t.stop());voiceState.stream=null;gameState?renderGame():renderLobby();}
   }
-  function toggleVoiceMute() {
-    if(!voiceState.active||!voiceState.stream)return;
-    voiceState.muted=!voiceState.muted;voiceState.stream.getAudioTracks().forEach(t=>t.enabled=!voiceState.muted);renderGame();
-  }
-  function stopVoice() {
+  function toggleVoiceMute(){if(!voiceState.active||!voiceState.stream)return;voiceState.muted=!voiceState.muted;voiceState.stream.getAudioTracks().forEach(t=>t.enabled=!voiceState.muted);gameState?renderGame():renderLobby();}
+  function toggleSoundMute(){voiceState.soundMuted=!voiceState.soundMuted;document.querySelectorAll("[id^=td-remote-audio-]").forEach(a=>a.volume=voiceState.soundMuted?0:1);gameState?renderGame():renderLobby();}
+  function stopVoice(){
+    if(voiceState.active&&socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type:"voice-status",active:false}));
     voiceState.peers.forEach(peer=>{try{peer.pc.close();}catch(_){}});
-    voiceState.peers.clear();
-    rtcPendingSignals=[];
+    voiceState.peers.clear();rtcPendingSignals=[];
     if(voiceState.stream)voiceState.stream.getTracks().forEach(t=>t.stop());
-    voiceState.stream=null;voiceState.active=false;voiceState.muted=false;voiceState.busy=false;
+    voiceState.stream=null;voiceState.active=false;voiceState.muted=false;voiceState.soundMuted=false;voiceState.busy=false;
     document.querySelectorAll('[id^="td-remote-audio-"]').forEach(a=>a.remove());
+    if(!gameState&&document.getElementById("td-setup-overlay"))renderLobby();
   }
 
   function sendGameAction(type, payload={}) {
@@ -266,7 +252,7 @@
       if(data.type==="player-left" && gameState){ gameState.players=data.players||[]; renderGame(); }
       if(data.type==="room-closed"){ gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="queue-cancelled"){ lobbyState.status="idle"; }
-      if(data.type==="error"){ if(gameState){gameState.resultText="Action failed: "+String(data.code||"error");renderGame();}else{lobbyState.status="offline";renderLobby();} }
+      if(data.type==="error"){if(["ALREADY_INVITED","ROOM_FULL","INVITEE_BUSY","HOST_ONLY_INVITE","INVALID_INVITE_ID"].includes(data.code)){showToast(({ALREADY_INVITED:"This user has already been invited.",ROOM_FULL:"The room is full.",INVITEE_BUSY:"This user is currently busy.",HOST_ONLY_INVITE:"Only the host can invite players.",INVALID_INVITE_ID:"Enter a valid Telegram User ID."})[data.code]);}else if(gameState){gameState.resultText="Action failed: "+String(data.code||"error");renderGame();}else{lobbyState.status="offline";renderLobby();}}
     };
     ws.onerror=()=>{ if(socket===ws){lobbyState.status="offline";renderLobby();} };
     ws.onclose=()=>{ if(socket===ws && !["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();} };
@@ -291,7 +277,10 @@
       if(data.type==="connected")return;
       if(data.type==="custom-room-created"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];renderLobby();}
       if(data.type==="custom-invites-sent"){lobbyState.inviteSent=data.sent||0;lobbyState.inviteFailed=data.failed||0;renderLobby();}
-      if(data.type==="invite-declined"){stopSocket(true);gameState=null;lobbyState={status:"idle",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal"};document.getElementById("td-setup-overlay")?.remove();currentOverlay=null;showToast("Your partner declined your request");}
+      if(data.type==="custom-room-updated"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
+      if(data.type==="custom-invite-sent"){if(data.sent)showToast("Invitation sent successfully!");else showToast("Invitation could not be delivered. Check the User ID.");}
+      if(data.type==="voice-joined"||data.type==="voice-left"){lobbyState.players=data.players||lobbyState.players;if(data.type==="voice-joined"&&voiceState.active&&String(data.playerId)!==String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"")){const me=String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||""),peerId=String(data.playerId);if(me<peerId){const peer=createVoicePeer(peerId);if(!peer.pc.localDescription){peer.pc.createOffer().then(o=>peer.pc.setLocalDescription(o)).then(()=>sendRtc(peerId,{type:"offer",description:peer.pc.localDescription})).catch(()=>{});}}}if(!gameState)renderLobby();}
+      if(data.type==="invite-declined"){if(data.closeRoom){stopVoice();stopSocket(true);gameState=null;lobbyState={status:"idle",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal"};document.getElementById("td-setup-overlay")?.remove();currentOverlay=null;showToast("Your partner declined your request");}else{lobbyState.players=data.players||lobbyState.players;lobbyState.notice=(data.inviteeName||("User "+data.inviteeId))+" declined your invitation. Tap + to enter another user’s ID and send a new invitation.";renderLobby();}}
       if(data.type==="room-formed"){lobbyState.status="room";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.ready=false;renderLobby();}
       if(data.type==="ready-update"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
       if(data.type==="game-start"){lobbyState.status="starting";lobbyState.players=data.players||lobbyState.players;renderLobby();}
