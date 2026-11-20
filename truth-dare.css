@@ -123,3 +123,12 @@
 #td-setup-overlay .td-custom-selection-count,#td-setup-overlay .td-custom-selection-mode{display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 12px;border:1px solid rgba(153,129,255,.24);background:linear-gradient(160deg,rgba(116,82,255,.14),rgba(255,255,255,.035));border-radius:14px;color:#e8e5ff;text-align:center;box-sizing:border-box;}
 #td-setup-overlay .td-custom-selection-mode{color:#b5a4ff;}
 #td-setup-overlay .td-custom-selection[hidden]{display:none}
+
+
+/* Custom Room: expand the purple-bordered sheet to match the full main Truth & Dare screen */
+#td-setup-overlay.td-custom-room-active{align-items:center;padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+#td-setup-overlay.td-custom-room-active .td-sheet{height:calc(100dvh - 20px - env(safe-area-inset-bottom));max-height:none;min-height:0;box-sizing:border-box;}
+#td-setup-overlay.td-custom-room-active .td-setup-content{padding-top:0;}
+#td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:8px;margin-bottom:12px;}
+#td-setup-overlay.td-custom-room-active .td-points{margin-top:10px;margin-bottom:10px;}
+@media(max-height:700px){#td-setup-overlay.td-custom-room-active .td-sheet{height:calc(100dvh - 12px - env(safe-area-inset-bottom));}}
