@@ -82,3 +82,6 @@
 
 /* Slightly raise the Truth & Dare sheet from the bottom; UI/text unchanged */
 #td-setup-overlay.td-overlay{padding-bottom:calc(26px + env(safe-area-inset-bottom))}
+
+/* Private custom room selection */
+.td-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.td-type{border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:12px 8px;background:rgba(255,255,255,.035);color:#e3e5f4;display:flex;flex-direction:column;gap:5px;text-align:left}.td-type b{font-size:12px}.td-type small{font-size:10px;color:#9fa8c8}.td-type.selected{border-color:#9b83ff;background:rgba(125,92,255,.17)}.td-custom-invites{margin-top:12px;padding:12px;border:1px solid rgba(153,129,255,.24);background:rgba(123,91,255,.05);border-radius:14px}.td-custom-invites[hidden]{display:none}.td-custom-invites textarea{width:100%;box-sizing:border-box;min-height:75px;resize:vertical;background:rgba(4,7,19,.5);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px;color:#f4f3ff;font-size:12px;outline:none}.td-custom-invites small{display:block;margin-top:7px;font-size:10px;line-height:1.4;color:#9ea7c6}

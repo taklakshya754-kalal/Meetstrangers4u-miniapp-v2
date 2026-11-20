@@ -44,6 +44,7 @@
       <p class="td-subtitle">Set up your game room</p>
       <section class="td-section"><div class="td-label">PLAYERS</div><div class="td-player-grid">${[2,3,4,5].map(n=>`<button class="td-player ${n===selectedPlayers?'selected':''}" data-players="${n}" type="button"><b>${n}</b><small>Players</small></button>`).join("")}</div></section>
       <section class="td-section"><div class="td-label">GAME MODE</div><div class="td-mode-list">${MODES.map(m=>`<button class="td-mode ${m.id===selectedMode?'selected':''}" data-mode="${m.id}" type="button"><span class="td-mode-icon">${m.icon}</span><span class="td-mode-copy"><b>${m.title}</b><small>${m.desc}</small></span><span class="td-check">✓</span></button>`).join("")}</div></section>
+      <section class="td-section td-play-type"><div class="td-label">MATCH TYPE</div><div class="td-type-grid"><button type="button" class="td-type selected" data-play-type="random"><b>🌍 Random</b><small>Match with players</small></button><button type="button" class="td-type" data-play-type="custom"><b>＋ Custom Room</b><small>Invite friends by Telegram ID</small></button></div><div class="td-custom-invites" hidden><label class="td-label" for="td-invite-ids">TELEGRAM USER IDs (1–4)</label><textarea id="td-invite-ids" maxlength="100" placeholder="Example: 123456789, 987654321"></textarea><small>Private room · Host + 1 to 4 friends · 2–5 players total</small></div></section>
       <section class="td-points"><div class="td-label">GAME SCORE · WALLET COINS NOT USED</div><div class="td-point-row"><span>Truth verified</span><b>+25 Score</b></div><div class="td-point-row"><span>Dare verified</span><b>+50 Score</b></div><div class="td-point-row"><span>Skip Truth</span><b class="minus">−25 Score</b></div><div class="td-point-row"><span>Skip Dare</span><b class="minus">−50 Score</b></div></section>
       <button class="td-primary" type="button" id="td-confirm-setup">Find Players <span>→</span></button>
       <p class="td-footnote">Real users only · Score stays inside the game</p></div></div>`;
@@ -52,7 +53,10 @@
     overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
     overlay.querySelectorAll("[data-players]").forEach(btn => btn.onclick = () => { selectedPlayers=Number(btn.dataset.players); overlay.querySelectorAll("[data-players]").forEach(x=>x.classList.toggle("selected",x===btn)); });
     overlay.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => { selectedMode=btn.dataset.mode; overlay.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===btn)); });
-    overlay.querySelector("#td-confirm-setup").onclick = () => startQueue(selectedPlayers, selectedMode);
+    let playType="random";
+    overlay.querySelectorAll("[data-play-type]").forEach(btn=>btn.onclick=()=>{playType=btn.dataset.playType;overlay.querySelectorAll("[data-play-type]").forEach(x=>x.classList.toggle("selected",x===btn));overlay.querySelector(".td-custom-invites").hidden=playType!=="custom";overlay.querySelector(".td-player-grid").style.opacity=playType==="custom"?"0.45":"1";overlay.querySelector(".td-player-grid").style.pointerEvents=playType==="custom"?"none":"auto";});
+    overlay.querySelector("#td-confirm-setup").onclick=()=>{if(playType==="random")startQueue(selectedPlayers,selectedMode);else startCustomRoom(selectedMode,overlay.querySelector("#td-invite-ids").value);};
+
   }
   function renderLobby() {
     const overlay = document.getElementById("td-setup-overlay");
@@ -260,5 +264,62 @@
     ws.onerror=()=>{ if(socket===ws){lobbyState.status="offline";renderLobby();} };
     ws.onclose=()=>{ if(socket===ws && !["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();} };
   }
+
+  function startCustomRoom(mode, inviteText) {
+    const ids=[...new Set((inviteText||"").split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean))];
+    if(ids.length<1||ids.length>4){alert("Please enter 1 to 4 Telegram numeric IDs.");return;}
+    if(ids.some(x=>!/^\d{5,16}$/.test(x))){alert("Telegram IDs must be numeric. Check the IDs.");return;}
+    const myId=String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"");
+    if(ids.includes(myId)){alert("You cannot invite yourself.");return;}
+    startCustomSocket(mode,ids);
+  }
+  function startCustomSocket(mode, inviteIds) {
+    stopSocket(true);const count=inviteIds.length+1;
+    lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count,mode};renderLobby();
+    if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}
+    let ws;try{ws=new WebSocket(WS_ENDPOINT+"?initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
+    connectTimer=setTimeout(()=>{if(socket===ws&&ws.readyState!==WebSocket.OPEN){lobbyState.status="offline";renderLobby();try{ws.close();}catch(_){}}},12000);
+    ws.onopen=()=>{if(socket!==ws)return;if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}ws.send(JSON.stringify({type:"create-custom-room",mode,inviteIds}));};
+    ws.onmessage=event=>{if(socket!==ws)return;let data;try{data=JSON.parse(event.data);}catch(_){return;}
+      if(data.type==="connected")return;
+      if(data.type==="custom-room-created"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];renderLobby();}
+      if(data.type==="custom-invites-sent"){lobbyState.inviteSent=data.sent||0;lobbyState.inviteFailed=data.failed||0;renderLobby();}
+      if(data.type==="room-formed"){lobbyState.status="room";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.ready=false;renderLobby();}
+      if(data.type==="ready-update"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
+      if(data.type==="game-start"){lobbyState.status="starting";lobbyState.players=data.players||lobbyState.players;renderLobby();}
+      if(data.type==="game-state"){gameState={...data,userId:String(window.Telegram.WebApp.initDataUnsafe?.user?.id||""),chat:[],resultText:null,selectedId:null,votes:{},yes:0,requiredVotes:0,phase:"spin"};renderGame();}
+      if(data.type==="bottle-spin"&&gameState){gameState.round=data.round;gameState.selectedId=data.selectedId;gameState.resultText=null;gameState.phase="spin-animation";const idx=(gameState.players||[]).findIndex(p=>p.id===data.selectedId);gameState.spinRotation=1440+Math.max(0,idx)*360/Math.max(1,(gameState.players||[]).length);renderGame(true);if(gameSpinTimer)clearTimeout(gameSpinTimer);gameSpinTimer=setTimeout(()=>{if(gameState){gameState.phase="choose";renderGame();}gameSpinTimer=null;},Math.max(1000,Number(data.spinMs||4200)));}
+      if(data.type==="challenge"&&gameState){gameState.challenge=data.challenge;gameState.phase="task";gameState.resultText="Selected player: choose and complete the task";renderGame();}
+      if(data.type==="task-submitted"&&gameState){gameState.challenge=data.challenge;gameState.phase="verify";gameState.votes={};gameState.requiredVotes=data.requiredVotes;gameState.yes=0;gameState.resultText="Others: verify whether the task was completed";renderGame();}
+      if(data.type==="verification-update"&&gameState){gameState.votes=data.votes||{};gameState.yes=data.yes||0;gameState.no=data.no||0;gameState.requiredVotes=data.required||gameState.requiredVotes;renderGame();}
+      if(data.type==="challenge-result"&&gameState){gameState.scores=data.scores||gameState.scores;gameState.phase=data.nextPhase||"spin";gameState.challenge=null;gameState.votes={};gameState.ranked=data.ranked;gameState.resultText=data.skipped?"Challenge skipped · "+data.delta+" Score":data.accepted?"Verified · +"+data.delta+" Score":"Verification failed · no score";renderGame();}
+      if(data.type==="game-over"&&gameState){gameState.phase="finished";gameState.ranked=data.ranked;gameState.resultText="🏆 "+data.winner.name+" wins!";renderGame();}
+      if(data.type==="chat-message"&&gameState){gameState.chat=(gameState.chat||[]).concat(data).slice(-40);renderGame();}
+      if(data.type==="rtc-signal"&&gameState){handleRtcSignal(String(data.from||""),data.signal).catch(()=>{});}
+      if(data.type==="player-left"&&gameState){gameState.players=data.players||[];renderGame();}
+      if(data.type==="room-closed"){gameState=null;lobbyState.status="closed";lobbyState.roomId=null;lobbyState.players=[];lobbyState.ready=false;renderLobby();}
+      if(data.type==="error"){const code=String(data.code||"error");if(gameState){gameState.resultText="Action failed: "+code;renderGame();}else{lobbyState.status="offline";renderLobby();alert("Custom room: "+code);}}
+    };
+    ws.onerror=()=>{if(socket===ws){lobbyState.status="offline";renderLobby();}};ws.onclose=()=>{if(socket===ws&&!["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();}};
+  }
+  function joinCustomRoom(token) {
+    if(!token)return;stopSocket(true);lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal"};renderLobby();
+    if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}let ws;try{ws=new WebSocket(WS_ENDPOINT+"?initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
+    connectTimer=setTimeout(()=>{if(socket===ws&&ws.readyState!==WebSocket.OPEN){lobbyState.status="offline";renderLobby();try{ws.close();}catch(_){}}},12000);
+    ws.onopen=()=>{if(socket!==ws)return;if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}ws.send(JSON.stringify({type:"join-custom-room",token}));};
+    ws.onmessage=event=>{if(socket!==ws)return;let data;try{data=JSON.parse(event.data);}catch(_){return;}
+      if(data.type==="connected")return;
+      if(data.type==="custom-joined"){lobbyState.status="waiting";lobbyState.count=data.playerCount;lobbyState.mode=data.mode;lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];renderLobby();}
+      if(data.type==="room-formed"){lobbyState.status="room";lobbyState.roomId=data.roomId;lobbyState.count=data.playerCount;lobbyState.mode=data.mode;lobbyState.players=data.players||[];lobbyState.ready=false;renderLobby();}
+      if(data.type==="ready-update"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
+      if(data.type==="game-start"){lobbyState.status="starting";lobbyState.players=data.players||lobbyState.players;renderLobby();}
+      if(data.type==="game-state"){gameState={...data,userId:String(window.Telegram.WebApp.initDataUnsafe?.user?.id||""),chat:[],resultText:null,selectedId:null,votes:{},yes:0,requiredVotes:0,phase:"spin"};renderGame();}
+      if(data.type==="error"){lobbyState.status="offline";renderLobby();alert("Invitation failed or expired: "+String(data.code||""));} 
+    };
+    ws.onerror=()=>{lobbyState.status="offline";renderLobby();};ws.onclose=()=>{if(socket===ws&&!["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();}};
+  }
+
   window.openTruthDareSetup=open;
+  const startParam=window.Telegram?.WebApp?.initDataUnsafe?.start_param||new URLSearchParams(location.search).get("tdjoin");
+  if(startParam&&startParam.startsWith("tdjoin_")){window.Telegram?.WebApp?.ready?.();joinCustomRoom(startParam.slice(7));}
 })();

@@ -20,7 +20,11 @@ const VALID_MODES = new Set(["normal", "advanced", "dark"]);
 const VALID_COUNTS = new Set([2, 3, 4, 5]);
 const queues = new Map(); // config key -> waiting player records
 const rooms = new Map();  // roomId -> room state
-const users = new Map();  // telegram userId -> socket\nconst playersByUser = new Map(); // active player session per telegram user
+const users = new Map();  // telegram userId -> socket
+const playersByUser = new Map(); // active player session per telegram user
+const privateInvites = new Map(); // one-time invite tokens
+const INVITE_TTL_MS = 15 * 60 * 1000;
+const BOT_USERNAME = process.env.TRUTH_DARE_BOT_USERNAME || "Meetstrangers4u_bot";
 if (!BOT_TOKEN) throw new Error("BOT_TOKEN is required for Truth or Dare authentication");
 
 const server = http.createServer((req, res) => {
@@ -32,6 +36,14 @@ const server = http.createServer((req, res) => {
     res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   }
   if (req.method === "OPTIONS") return res.writeHead(204).end();
+  const urlPath=new URL(req.url,"http://localhost").pathname;
+  if (req.method === "GET" && urlPath==="/invite/decline") {
+    const token=new URL(req.url,"http://localhost").searchParams.get("token")||"";
+    const inv=privateInvites.get(token);
+    if(inv&&inv.status==="pending"&&Date.now()<inv.expiresAt){inv.status="declined";privateInvites.delete(token);}
+    res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"});
+    return res.end("<!doctype html><html><meta name='viewport' content='width=device-width'><body style='font-family:system-ui;background:#10152b;color:#eef;padding:32px'><h2>Invitation declined</h2><p>You can close this page.</p></body></html>");
+  }
   if (req.method === "GET" && req.url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
     return res.end(JSON.stringify({ ok: true, service: "truth-dare-matchmaking" }));
@@ -54,6 +66,42 @@ server.on("upgrade", (req, socket, head) => {
   }
   wss.handleUpgrade(req, socket, head, ws => wss.emit("connection", ws, req));
 });
+
+
+async function sendPrivateInvite(invite) {
+  const startLink="https://t.me/"+BOT_USERNAME+"?startapp=tdjoin_"+invite.token;
+  const declineLink="https://truth-dare.lxreward.xyz/invite/decline?token="+encodeURIComponent(invite.token);
+  const payload={chat_id:invite.inviteeId,text:"🎲 You have been invited to a private Truth or Dare room!\n\nPlayers: "+invite.playerCount+" · Mode: "+invite.mode+"\nInvitation expires in 15 minutes.",reply_markup:{inline_keyboard:[[{text:"Accept & Join",url:startLink},{text:"Decline",url:declineLink}]]}};
+  const response=await fetch("https://api.telegram.org/bot"+BOT_TOKEN+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const data=await response.json().catch(()=>({ok:false}));
+  return !!data.ok;
+}
+function makePrivateRoom(host,inviteIds,mode) {
+  const roomId=crypto.randomBytes(12).toString("hex"),count=inviteIds.length+1;
+  const room={id:roomId,playerCount:count,mode,status:"inviting",createdAt:Date.now(),players:[host],isPrivate:true,inviteIds:new Set(inviteIds)};
+  rooms.set(roomId,room);host.roomId=roomId;host.queueKey=null;host.host=true;host.ready=false;
+  for(const inviteeId of inviteIds){
+    const token=crypto.randomBytes(24).toString("hex");
+    const inv={token,roomId,hostId:host.id,inviteeId,playerCount:count,mode,status:"pending",expiresAt:Date.now()+INVITE_TTL_MS};
+    privateInvites.set(token,inv);
+    const expiry=setTimeout(()=>{const current=privateInvites.get(token);if(current&&current.status==="pending")privateInvites.delete(token);},INVITE_TTL_MS);expiry.unref?.();
+  }
+  send(host.ws,"custom-room-created",{roomId,playerCount:count,mode,players:room.players.map(safePlayer)});
+  (async()=>{let sent=0,failed=0;for(const id of inviteIds){const inv=[...privateInvites.values()].find(v=>v.roomId===roomId&&v.inviteeId===id&&v.status==="pending");if(inv&&await sendPrivateInvite(inv))sent++;else failed++;}send(host.ws,"custom-invites-sent",{sent,failed});})();
+}
+function joinPrivateRoom(player,token) {
+  const invite=privateInvites.get(token);
+  if(!invite||invite.status!=="pending"||Date.now()>invite.expiresAt)return send(player.ws,"error",{code:"INVITE_EXPIRED"});
+  if(invite.inviteeId!==player.id)return send(player.ws,"error",{code:"INVITE_WRONG_USER"});
+  const room=rooms.get(invite.roomId);
+  if(!room||!room.isPrivate||room.status!=="inviting")return send(player.ws,"error",{code:"ROOM_UNAVAILABLE"});
+  if(player.roomId||player.queueKey)return send(player.ws,"error",{code:"PLAYER_BUSY"});
+  if(room.players.length>=room.playerCount)return send(player.ws,"error",{code:"ROOM_FULL"});
+  if(room.players.some(p=>p.id===player.id))return send(player.ws,"error",{code:"ALREADY_JOINED"});
+  privateInvites.delete(token);player.roomId=room.id;player.queueKey=null;player.host=false;player.ready=false;room.players.push(player);
+  send(player.ws,"custom-joined",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer)});
+  if(room.players.length===room.playerCount){room.status="lobby";broadcast(room,"room-formed",{roomId:room.id,playerCount:room.playerCount,mode:room.mode,players:room.players.map(safePlayer),hostId:room.players[0].id});}
+}
 
 function validateInitData(initData) {
   if (!initData || typeof initData !== "string" || initData.length > 4096) throw new Error("BAD_AUTH");
@@ -113,6 +161,7 @@ function detachPlayer(player, reason) {
     }
   }
   if (users.get(player.id) === player.ws) users.delete(player.id);
+  if (playersByUser.get(player.id) === player) playersByUser.delete(player.id);
   player.roomId = null;
   player.queueKey = null;
 }
@@ -295,12 +344,23 @@ wss.on("connection", (ws, req) => {
   if (previous && previous !== ws && previous.readyState === WebSocket.OPEN) previous.close(4001, "New connection");
   const player = { id: user.id, name: user.name, ws, host: false, ready: false, roomId: null, queueKey: null };
   users.set(user.id, ws);
+  playersByUser.set(user.id,player);
   send(ws, "connected", { userId: user.id });
 
   ws.on("message", raw => {
     let msg;
     try { msg = JSON.parse(raw.toString()); } catch (_) { return send(ws, "error", { code: "BAD_MESSAGE" }); }
     if (!msg || typeof msg.type !== "string") return send(ws, "error", { code: "BAD_MESSAGE" });
+    if(msg.type==="create-custom-room"){
+      const mode=String(msg.mode||""),raw=Array.isArray(msg.inviteIds)?msg.inviteIds:[];
+      if(!VALID_MODES.has(mode)||raw.length<1||raw.length>4)return send(ws,"error",{code:"INVALID_CUSTOM_SETTINGS"});
+      const inviteIds=[...new Set(raw.map(x=>String(x)))];
+      if(inviteIds.length!==raw.length||inviteIds.some(x=>!/^\d{5,16}$/.test(x)||x===player.id))return send(ws,"error",{code:"INVALID_INVITE_IDS"});
+      if(player.roomId||player.queueKey)return send(ws,"error",{code:"PLAYER_BUSY"});
+      if(inviteIds.some(id=>{const active=playersByUser.get(id);return active&&(active.roomId||active.queueKey);}))return send(ws,"error",{code:"INVITEE_BUSY"});
+      makePrivateRoom(player,inviteIds,mode);return;
+    }
+    if(msg.type==="join-custom-room")return joinPrivateRoom(player,String(msg.token||""));
     if (msg.type === "queue") {
       const count = Number(msg.playerCount), mode = String(msg.mode || "");
       if (!VALID_COUNTS.has(count) || !VALID_MODES.has(mode)) return send(ws, "error", { code: "INVALID_SETTINGS" });
