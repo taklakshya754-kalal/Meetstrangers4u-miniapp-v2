@@ -299,7 +299,7 @@
       if(data.type==="challenge-result"&&gameState){gameState.scores=data.scores||gameState.scores;gameState.phase=data.nextPhase||"spin";gameState.challenge=null;gameState.votes={};gameState.ranked=data.ranked;gameState.resultText=data.skipped?"Challenge skipped · "+data.delta+" Score":data.accepted?"Verified · +"+data.delta+" Score":"Verification failed · no score";renderGame();}
       if(data.type==="game-over"&&gameState){gameState.phase="finished";gameState.ranked=data.ranked;gameState.resultText="🏆 "+data.winner.name+" wins!";renderGame();}
       if(data.type==="chat-message"&&gameState){gameState.chat=(gameState.chat||[]).concat(data).slice(-40);renderGame();}
-      if(data.type==="rtc-signal"&&gameState){handleRtcSignal(String(data.from||""),data.signal).catch(()=>{});}
+      if(data.type==="rtc-signal"&&(gameState||lobbyState.isCustom)){handleRtcSignal(String(data.from||""),data.signal).catch(()=>{});}
       if(data.type==="player-left"&&gameState){gameState.players=data.players||[];renderGame();}
       if(data.type==="room-closed"){gameState=null;lobbyState.status="closed";lobbyState.roomId=null;lobbyState.players=[];lobbyState.ready=false;renderLobby();}
       if(data.type==="error"){const code=String(data.code||"error");if(gameState){gameState.resultText="Action failed: "+code;renderGame();}else{lobbyState.status="offline";renderLobby();alert("Custom room: "+code);}}
@@ -318,6 +318,8 @@
       if(data.type==="ready-update"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
       if(data.type==="game-start"){lobbyState.status="starting";lobbyState.players=data.players||lobbyState.players;renderLobby();}
       if(data.type==="game-state"){gameState={...data,userId:String(window.Telegram.WebApp.initDataUnsafe?.user?.id||""),chat:[],resultText:null,selectedId:null,votes:{},yes:0,requiredVotes:0,phase:"spin"};renderGame();}
+      if(data.type==="voice-joined"||data.type==="voice-left"){lobbyState.players=data.players||lobbyState.players;if(data.type==="voice-joined"&&voiceState.active&&String(data.playerId)!==String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"")){const me=String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||""),peerId=String(data.playerId);if(me<peerId){const peer=createVoicePeer(peerId);if(!peer.pc.localDescription){peer.pc.createOffer().then(o=>peer.pc.setLocalDescription(o)).then(()=>sendRtc(peerId,{type:"offer",description:peer.pc.localDescription})).catch(()=>{});}}}if(!gameState)renderLobby();}
+      if(data.type==="rtc-signal"&&(gameState||lobbyState.isCustom)){handleRtcSignal(String(data.from||""),data.signal).catch(()=>{});}
       if(data.type==="error"){lobbyState.status="offline";renderLobby();alert("Invitation failed or expired: "+String(data.code||""));} 
     };
     ws.onerror=()=>{lobbyState.status="offline";renderLobby();};ws.onclose=()=>{if(socket===ws&&!["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();}};
