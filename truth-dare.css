@@ -67,8 +67,8 @@
 }
 #td-setup-overlay .td-sheet{
   width:min(100%,480px);
-  height:calc(100dvh - 190px - env(safe-area-inset-bottom));
-  max-height:calc(100dvh - 190px - env(safe-area-inset-bottom));
+  height:calc(100dvh - env(safe-area-inset-bottom));
+  max-height:calc(100dvh - env(safe-area-inset-bottom));
   overflow:hidden;
   box-sizing:border-box;
   padding:8px 16px 8px;
