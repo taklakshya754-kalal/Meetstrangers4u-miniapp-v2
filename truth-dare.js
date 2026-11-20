@@ -10,7 +10,7 @@
   let selectedMode = "normal", selectedPlayers = 2, socket = null, currentOverlay = null;
   let lobbyState = { status: "idle", players: [], roomId: null, ready: false, target: 1000, count: 2, mode: "normal" };
   let gameState = null;
-  let voiceState = { active:false, muted:false, soundMuted:false, busy:false, stream:null, peers:new Map(), error:null };
+  let voiceState = { active:false, muted:false, soundMuted:false, busy:false, stream:null, peers:new Map(), iceServers:[], error:null };
   let rtcPendingSignals = [];
   let connectTimer = null, gameSpinTimer = null;
 
@@ -118,7 +118,7 @@
   function sendRtc(to, signal) { if(socket && socket.readyState===WebSocket.OPEN) socket.send(JSON.stringify({type:"rtc-signal",to,signal})); }
   function createVoicePeer(peerId) {
     if(voiceState.peers.has(peerId)) return voiceState.peers.get(peerId);
-    const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.google.com:19302"}]});
+    const pc=new RTCPeerConnection({iceServers:voiceState.iceServers.length?voiceState.iceServers:[{urls:"stun:stun.google.com:19302"}],iceTransportPolicy:"all"});
     const state={pc,pendingIce:[]};voiceState.peers.set(peerId,state);
     if(voiceState.stream)voiceState.stream.getTracks().forEach(track=>pc.addTrack(track,voiceState.stream));
     pc.onicecandidate=e=>{if(e.candidate)sendRtc(peerId,{candidate:e.candidate.toJSON?e.candidate.toJSON():e.candidate});};
@@ -139,6 +139,12 @@
     if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){voiceState.error="Voice calling is not supported in this browser.";gameState?renderGame():renderLobby();return;}
     voiceState.busy=true;voiceState.error=null;gameState?renderGame():renderLobby();
     try{
+      const tgWebApp=window.Telegram?.WebApp;
+      if(!tgWebApp?.initData)throw new Error("Please reopen the Mini App from Telegram.");
+      const turnResponse=await fetch("https://call.lxreward.xyz/api/turn-credentials",{headers:{"X-Telegram-Init-Data":tgWebApp.initData},cache:"no-store"});
+      const turnData=await turnResponse.json().catch(()=>({}));
+      if(!turnResponse.ok||!Array.isArray(turnData.iceServers)||!turnData.iceServers.length)throw new Error(turnData.message||"Unable to prepare secure voice chat.");
+      voiceState.iceServers=turnData.iceServers;
       const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
       voiceState.stream=stream;voiceState.active=true;voiceState.muted=false;voiceState.busy=false;
       if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type:"voice-status",active:true}));
@@ -156,7 +162,7 @@
     voiceState.peers.forEach(peer=>{try{peer.pc.close();}catch(_){}});
     voiceState.peers.clear();rtcPendingSignals=[];
     if(voiceState.stream)voiceState.stream.getTracks().forEach(t=>t.stop());
-    voiceState.stream=null;voiceState.active=false;voiceState.muted=false;voiceState.soundMuted=false;voiceState.busy=false;
+    voiceState.stream=null;voiceState.active=false;voiceState.muted=false;voiceState.soundMuted=false;voiceState.busy=false;voiceState.iceServers=[];
     document.querySelectorAll('[id^="td-remote-audio-"]').forEach(a=>a.remove());
     if(!gameState&&document.getElementById("td-setup-overlay"))renderLobby();
   }
