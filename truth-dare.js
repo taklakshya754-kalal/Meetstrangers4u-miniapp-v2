@@ -64,8 +64,9 @@
     const modeTitle = MODES.find(m=>m.id===lobbyState.mode)?.title || lobbyState.mode;
     let heading = "Finding Players";
     let message = "Connecting securely to matchmaking…";
-    if (lobbyState.status === "waiting") { heading = "Finding Players"; message = "Waiting for real players with the same settings. Keep this screen open."; }
+    if (lobbyState.status === "waiting") { heading = lobbyState.isCustom ? "Private Room" : "Finding Players"; message = lobbyState.isCustom ? "Waiting for your invited friends to accept and join. Keep this screen open." : "Waiting for real players with the same settings. Keep this screen open."; }
     if (lobbyState.status === "room") { heading = "Room Lobby"; message = "Players joined! Everyone must tap Ready to start."; }
+    if(lobbyState.isCustom&&lobbyState.status==="waiting"&&Number.isInteger(lobbyState.inviteSent)){message="Invite delivery: "+lobbyState.inviteSent+" sent"+(lobbyState.inviteFailed? ", "+lobbyState.inviteFailed+" failed":"")+". Waiting for acceptance.";}
     if (lobbyState.status === "starting") { heading = "Starting Game"; message = "All players are ready. Preparing the game…"; }
     if (lobbyState.status === "offline") { heading = "Matchmaking Offline"; message = "Game service is not reachable yet. Try again later."; }
     if (lobbyState.status === "closed") { heading = "Room Closed"; message = "A player left before the game began. You can search for a new room."; }
@@ -275,7 +276,7 @@
   }
   function startCustomSocket(mode, inviteIds) {
     stopSocket(true);const count=inviteIds.length+1;
-    lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count,mode};renderLobby();
+    lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count,mode,isCustom:true};renderLobby();
     if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}
     let ws;try{ws=new WebSocket(WS_ENDPOINT+"?initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
     connectTimer=setTimeout(()=>{if(socket===ws&&ws.readyState!==WebSocket.OPEN){lobbyState.status="offline";renderLobby();try{ws.close();}catch(_){}}},12000);
@@ -303,7 +304,7 @@
     ws.onerror=()=>{if(socket===ws){lobbyState.status="offline";renderLobby();}};ws.onclose=()=>{if(socket===ws&&!["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();}};
   }
   function joinCustomRoom(token) {
-    if(!token)return;stopSocket(true);lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal"};renderLobby();
+    if(!token)return;stopSocket(true);lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal",isCustom:true};renderLobby();
     if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}let ws;try{ws=new WebSocket(WS_ENDPOINT+"?initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
     connectTimer=setTimeout(()=>{if(socket===ws&&ws.readyState!==WebSocket.OPEN){lobbyState.status="offline";renderLobby();try{ws.close();}catch(_){}}},12000);
     ws.onopen=()=>{if(socket!==ws)return;if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}ws.send(JSON.stringify({type:"join-custom-room",token}));};
