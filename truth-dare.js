@@ -143,7 +143,7 @@
       voiceState.stream=stream;voiceState.active=true;voiceState.muted=false;voiceState.busy=false;
       if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type:"voice-status",active:true}));
       const myId=String(gameState?.userId||window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"");
-      const peers=(gameState?.players||lobbyState.players||[]).filter(p=>String(p.id)!==myId&&p.voiceActive);
+      const peers=(gameState?(gameState.players||[]):(lobbyState.players||[])).filter(p=>String(p.id)!==myId&&(gameState||p.voiceActive));
       for(const p of peers){const peer=createVoicePeer(String(p.id));if(myId<String(p.id)){const offer=await peer.pc.createOffer();await peer.pc.setLocalDescription(offer);sendRtc(String(p.id),{type:"offer",description:peer.pc.localDescription});}}
       const pending=rtcPendingSignals.splice(0);for(const signal of pending)await handleRtcSignal(signal.from,signal.signal);
       gameState?renderGame():renderLobby();
