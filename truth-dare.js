@@ -79,7 +79,7 @@
     const list = lobbyState.players || [];
     const myId=String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"");
     const isHost=list.some(p=>p.host&&String(p.id)===myId);
-    const canAdd=lobbyState.isCustom&&isHost&&["waiting","room"].includes(lobbyState.status)&&list.length<lobbyState.count;
+    const canAdd=lobbyState.isCustom&&isHost&&["waiting","room"].includes(lobbyState.status)&&list.length+Number(lobbyState.pendingInviteCount||0)<lobbyState.count;
     const slots = Array.from({length:lobbyState.count}, (_,i) => {
       const p=list[i];
       const add=(!p&&canAdd)?'<button type="button" class="td-slot-add" data-add-player aria-label="Add player">＋</button>':'';
@@ -275,14 +275,14 @@
     ws.onopen=()=>{if(socket!==ws)return;if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}ws.send(JSON.stringify({type:"create-custom-room",mode,inviteIds}));};
     ws.onmessage=event=>{if(socket!==ws)return;let data;try{data=JSON.parse(event.data);}catch(_){return;}
       if(data.type==="connected")return;
-      if(data.type==="custom-room-created"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];renderLobby();}
+      if(data.type==="custom-room-created"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.pendingInviteCount=Number(data.pendingInviteCount||0);renderLobby();}
       if(data.type==="custom-joined"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.isCustom=true;renderLobby();}
-      if(data.type==="custom-invites-sent"){lobbyState.inviteSent=data.sent||0;lobbyState.inviteFailed=data.failed||0;renderLobby();}
-      if(data.type==="custom-room-updated"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
-      if(data.type==="custom-invite-sent"){if(data.sent)showToast("Invitation sent successfully!");else showToast("Invitation could not be delivered. Check the User ID.");}
+      if(data.type==="custom-invites-sent"){lobbyState.inviteSent=data.sent||0;lobbyState.inviteFailed=data.failed||0;lobbyState.pendingInviteCount=Number(data.pendingInviteCount??data.sent??0);renderLobby();}
+      if(data.type==="custom-room-updated"){lobbyState.players=data.players||lobbyState.players;lobbyState.pendingInviteCount=Number(data.pendingInviteCount||0);lobbyState.notice=null;renderLobby();}
+      if(data.type==="custom-invite-sent"){if(data.sent){lobbyState.pendingInviteCount=Number(lobbyState.pendingInviteCount||0)+1;lobbyState.notice=null;showToast("Invitation sent successfully!");}else showToast("Invitation could not be delivered. Check the User ID.");renderLobby();}
       if(data.type==="voice-joined"||data.type==="voice-left"){lobbyState.players=data.players||lobbyState.players;if(data.type==="voice-joined"&&voiceState.active&&String(data.playerId)!==String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"")){const me=String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||""),peerId=String(data.playerId);if(me<peerId){const peer=createVoicePeer(peerId);if(!peer.pc.localDescription){peer.pc.createOffer().then(o=>peer.pc.setLocalDescription(o)).then(()=>sendRtc(peerId,{type:"offer",description:peer.pc.localDescription})).catch(()=>{});}}}if(!gameState)renderLobby();}
-      if(data.type==="invite-declined"){if(data.closeRoom){stopVoice();stopSocket(true);gameState=null;lobbyState={status:"idle",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal"};document.getElementById("td-setup-overlay")?.remove();currentOverlay=null;showToast("Your partner declined your request");}else{lobbyState.players=data.players||lobbyState.players;lobbyState.notice=(data.inviteeName||("User "+data.inviteeId))+" declined your invitation. Tap + to enter another user’s ID and send a new invitation.";renderLobby();}}
-      if(data.type==="room-formed"){lobbyState.status="room";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.ready=false;renderLobby();}
+      if(data.type==="invite-declined"){if(data.closeRoom){stopVoice();stopSocket(true);gameState=null;lobbyState={status:"idle",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal"};document.getElementById("td-setup-overlay")?.remove();currentOverlay=null;showToast("Your partner declined your request");}else{lobbyState.players=data.players||lobbyState.players;lobbyState.pendingInviteCount=Number(data.pendingInviteCount||0);lobbyState.notice=(data.inviteeName||("User "+data.inviteeId))+" declined your invitation. Tap + to enter another user’s ID and send a new invitation.";renderLobby();}}
+      if(data.type==="room-formed"){lobbyState.status="room";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.pendingInviteCount=0;lobbyState.notice=null;lobbyState.ready=false;renderLobby();}
       if(data.type==="ready-update"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
       if(data.type==="game-start"){lobbyState.status="starting";lobbyState.players=data.players||lobbyState.players;renderLobby();}
       if(data.type==="game-state"){gameState={...data,userId:String(window.Telegram.WebApp.initDataUnsafe?.user?.id||""),chat:[],resultText:null,selectedId:null,votes:{},yes:0,requiredVotes:0,phase:"spin"};renderGame();}
