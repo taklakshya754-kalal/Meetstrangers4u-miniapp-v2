@@ -40,9 +40,24 @@ const server = http.createServer((req, res) => {
   if (req.method === "GET" && urlPath==="/invite/decline") {
     const token=new URL(req.url,"http://localhost").searchParams.get("token")||"";
     const inv=privateInvites.get(token);
-    if(inv&&inv.status==="pending"&&Date.now()<inv.expiresAt){inv.status="declined";privateInvites.delete(token);}
+    if(inv&&inv.status==="pending"&&Date.now()<inv.expiresAt){
+      inv.status="declined";
+      privateInvites.delete(token);
+      const room=rooms.get(inv.roomId);
+      if(room&&room.status==="inviting"){
+        const host=room.players.find(p=>p.id===inv.hostId);
+        if(host)send(host.ws,"invite-declined",{inviteeId:inv.inviteeId});
+        for(const p of room.players){
+          p.roomId=null;p.ready=false;
+          if(p.id!==inv.hostId)send(p.ws,"room-closed",{reason:"invite-declined"});
+        }
+        room.status="closed";
+        rooms.delete(room.id);
+        for(const [pendingToken,pending] of privateInvites)if(pending.roomId===room.id)privateInvites.delete(pendingToken);
+      }
+    }
     res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"});
-    return res.end("<!doctype html><html><meta name='viewport' content='width=device-width'><body style='font-family:system-ui;background:#10152b;color:#eef;padding:32px'><h2>Invitation declined</h2><p>You can close this page.</p></body></html>");
+    return res.end("<!doctype html><html><meta name='viewport' content='width=device-width'><body style='font-family:system-ui;background:#10152b;color:#eef;padding:32px'><h2>Invitation declined</h2><p>Return to your Telegram chat.</p></body></html>");
   }
   if (req.method === "GET" && req.url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
@@ -70,9 +85,9 @@ server.on("upgrade", (req, socket, head) => {
 
 async function sendPrivateInvite(invite) {
   if(process.env.TRUTH_DARE_TEST_MODE==="1")return false;
-  const startLink="https://t.me/"+BOT_USERNAME+"?startapp=tdjoin_"+invite.token;
+  const startLink="https://meetstrangers4u-miniapp-v2.vercel.app/?tdjoin=tdjoin_"+invite.token;
   const declineLink="https://truth-dare.lxreward.xyz/invite/decline?token="+encodeURIComponent(invite.token);
-  const payload={chat_id:invite.inviteeId,text:"🎲 You have been invited to a private Truth or Dare room!\n\nPlayers: "+invite.playerCount+" · Mode: "+invite.mode+"\nInvitation expires in 15 minutes.",reply_markup:{inline_keyboard:[[{text:"Accept & Join",url:startLink},{text:"Decline",url:declineLink}]]}};
+  const payload={chat_id:invite.inviteeId,text:"🎲 You have been invited to a private Truth or Dare room!\n\nPlayers: "+invite.playerCount+" · Mode: "+invite.mode+"\nInvitation expires in 15 minutes.",reply_markup:{inline_keyboard:[[{text:"Accept & Join",web_app:{url:startLink}},{text:"Decline",url:declineLink}]]}};
   const response=await fetch("https://api.telegram.org/bot"+BOT_TOKEN+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const data=await response.json().catch(()=>({ok:false}));
   return !!data.ok;
