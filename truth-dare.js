@@ -278,7 +278,7 @@
     stopSocket(true);const count=inviteIds.length+1;
     lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count,mode,isCustom:true};renderLobby();
     if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}
-    let ws;try{ws=new WebSocket(WS_ENDPOINT+"?initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
+    let ws;try{ws=new WebSocket(WS_ENDPOINT+"?customRoom=1&initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
     connectTimer=setTimeout(()=>{if(socket===ws&&ws.readyState!==WebSocket.OPEN){lobbyState.status="offline";renderLobby();try{ws.close();}catch(_){}}},12000);
     ws.onopen=()=>{if(socket!==ws)return;if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}ws.send(JSON.stringify({type:"create-custom-room",mode,inviteIds}));};
     ws.onmessage=event=>{if(socket!==ws)return;let data;try{data=JSON.parse(event.data);}catch(_){return;}
@@ -305,7 +305,7 @@
   }
   function joinCustomRoom(token) {
     if(!token)return;stopSocket(true);lobbyState={status:"connecting",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal",isCustom:true};renderLobby();
-    if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}let ws;try{ws=new WebSocket(WS_ENDPOINT+"?initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
+    if(!window.Telegram?.WebApp?.initData){lobbyState.status="offline";renderLobby();return;}let ws;try{ws=new WebSocket(WS_ENDPOINT+"?inviteToken="+encodeURIComponent(token)+"&initData="+encodeURIComponent(window.Telegram.WebApp.initData));}catch(_){lobbyState.status="offline";renderLobby();return;}socket=ws;
     connectTimer=setTimeout(()=>{if(socket===ws&&ws.readyState!==WebSocket.OPEN){lobbyState.status="offline";renderLobby();try{ws.close();}catch(_){}}},12000);
     ws.onopen=()=>{if(socket!==ws)return;if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}ws.send(JSON.stringify({type:"join-custom-room",token}));};
     ws.onmessage=event=>{if(socket!==ws)return;let data;try{data=JSON.parse(event.data);}catch(_){return;}

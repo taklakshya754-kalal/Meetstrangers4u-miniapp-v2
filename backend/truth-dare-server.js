@@ -343,6 +343,14 @@ wss.on("connection", (ws, req) => {
   catch (_) { ws.close(1008, "Unauthorized"); return; }
 
   const previous = users.get(user.id);
+  const existingPlayer=playersByUser.get(user.id);
+  const connectionUrl=new URL(req.url,"http://localhost");
+  const customIntent=connectionUrl.searchParams.has("customRoom")||connectionUrl.searchParams.has("inviteToken");
+  if(customIntent&&existingPlayer&&(existingPlayer.roomId||existingPlayer.queueKey)){
+    send(ws,"error",{code:"PLAYER_BUSY"});
+    ws.close(4003,"Player busy");
+    return;
+  }
   if (previous && previous !== ws && previous.readyState === WebSocket.OPEN) previous.close(4001, "New connection");
   const player = { id: user.id, name: user.name, ws, host: false, ready: false, roomId: null, queueKey: null };
   users.set(user.id, ws);
