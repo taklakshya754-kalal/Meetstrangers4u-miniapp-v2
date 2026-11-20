@@ -140,3 +140,8 @@
 #td-setup-overlay.td-custom-room-active .td-points{margin-top:10px;margin-bottom:14px;}
 #td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:auto;margin-bottom:10px;}
 #td-setup-overlay.td-custom-room-active .td-footnote{margin-bottom:2px;}
+
+
+/* Custom Room: align User ID spacing with the selection-to-score gap; keep footer anchored */
+#td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:10px;margin-bottom:10px;}
+#td-setup-overlay.td-custom-room-active .td-footnote{margin-top:auto;margin-bottom:2px;}
