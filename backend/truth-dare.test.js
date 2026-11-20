@@ -130,7 +130,7 @@ test("multi-player private-room decline keeps room open and host can replace inv
   send(host,{type:"rtc-signal",to:"51004",signal:{type:"offer",description:{type:"offer",sdp:"lobby-voice-test"}}});
   const rtc=await waitEvent(replacement,"rtc-signal");
   assert.equal(rtc.from,"51001");assert.equal(rtc.signal.type,"offer");
-  send(host,{type:"host-add-invite",inviteeId:"51005"});
+  send(guest,{type:"host-add-invite",inviteeId:"51005"});
   const nonHostErr=await waitEvent(guest,"error",e=>e.code==="HOST_ONLY_INVITE");
   assert.equal(nonHostErr.code,"HOST_ONLY_INVITE");
 });
