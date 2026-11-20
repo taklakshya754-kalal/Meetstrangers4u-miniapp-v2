@@ -203,6 +203,6 @@ test("random-room lobby voice signaling and smart game leave threshold", {timeou
   const [leftA,leftB,gameA,gameB]=await Promise.all([waitEvent(a,"player-left"),waitEvent(b,"player-left"),waitEvent(a,"game-state"),waitEvent(b,"game-state")]);
   assert.equal(leftA.players.length,2);assert.equal(leftB.players.length,2);assert.equal(gameA.players.length,2);assert.equal(gameB.players.length,2);assert.equal(gameA.phase,"spin");
   b.ws.close();
-  const [closedA,closedA2]=await Promise.all([waitEvent(a,"room-closed"),waitEvent(a,"room-closed")]).catch(e=>[null,null]);
-  assert.ok(a.events.some(e=>e.type==="room-closed")||closedA||closedA2,"room should close when fewer than two remain");
+  const closedA=await waitEvent(a,"room-closed");
+  assert.equal(closedA.reason,"insufficient-players");
 });
