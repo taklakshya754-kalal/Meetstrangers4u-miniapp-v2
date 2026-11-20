@@ -4,7 +4,7 @@ on:
   push:
     branches: [custom-truth-dare-rooms]
   pull_request:
-    branches: [custom-truth-dare-rooms]
+    branches: [main]
 
 jobs:
   syntax-and-tests:
