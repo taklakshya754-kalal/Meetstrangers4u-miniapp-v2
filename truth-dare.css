@@ -152,3 +152,10 @@
 #td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:15px;margin-bottom:21px;}
 #td-setup-overlay.td-custom-room-active .td-points{margin-top:15px;margin-bottom:21px;}
 #td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:15px;margin-bottom:15px;}
+
+
+/* Custom Room: restore previous section spacing values */
+#td-setup-overlay.td-custom-room-active .td-subtitle{margin-bottom:15px;}
+#td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:10px;margin-bottom:14px;}
+#td-setup-overlay.td-custom-room-active .td-points{margin-top:10px;margin-bottom:14px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:10px;margin-bottom:10px;}
