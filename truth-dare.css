@@ -78,3 +78,7 @@
 #td-setup-overlay .td-points{margin:13px 0}
 #td-setup-overlay .td-primary{padding:13px}
 #td-setup-overlay .td-footnote{margin-top:9px}
+
+
+/* Slightly raise the Truth & Dare sheet from the bottom; UI/text unchanged */
+#td-setup-overlay.td-overlay{padding-bottom:calc(20px + env(safe-area-inset-bottom))}
