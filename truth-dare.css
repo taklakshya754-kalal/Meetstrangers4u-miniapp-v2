@@ -159,3 +159,11 @@
 #td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:10px;margin-bottom:14px;}
 #td-setup-overlay.td-custom-room-active .td-points{margin-top:10px;margin-bottom:14px;}
 #td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:10px;margin-bottom:10px;}
+
+/* Winner rewards card between player selection and live score */
+.td-winner-rewards{border:1px solid rgba(255,207,112,.28);background:linear-gradient(145deg,rgba(255,203,95,.09),rgba(124,91,255,.055));border-radius:15px;padding:11px 12px;margin:12px 0;box-shadow:inset 0 0 18px rgba(255,198,92,.025)}
+.td-winner-rewards-title{font-size:10px;font-weight:900;letter-spacing:1.4px;color:#f3d58b;margin-bottom:8px;text-align:center}
+.td-reward-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 3px;border-bottom:1px solid rgba(255,255,255,.055);font-size:12px;color:#d9dcef}
+.td-reward-row:last-of-type{border-bottom:0}
+.td-reward-row strong{color:#f5d98f;font-size:12px;white-space:nowrap}
+.td-winner-rewards p{font-size:10px;color:#aeb5d0;text-align:center;margin:7px 0 0}
