@@ -171,3 +171,12 @@
 
 /* Reward card note for two-player games */
 .td-reward-selection-note{font-size:10px;line-height:1.4;color:#c8baff;text-align:center;margin:8px 0 6px;padding:7px 8px;border-radius:10px;background:rgba(124,91,255,.08);border:1px solid rgba(153,129,255,.14)}
+
+
+/* Custom Room prize preview */
+#td-setup-overlay .td-custom-rewards-preview{border:1px solid rgba(255,207,112,.28);background:linear-gradient(145deg,rgba(255,203,95,.09),rgba(124,91,255,.055));border-radius:15px;padding:10px 11px;margin:10px 0;box-shadow:inset 0 0 18px rgba(255,198,92,.025)}
+#td-setup-overlay .td-custom-rewards-preview[hidden]{display:none}
+#td-setup-overlay .td-custom-rewards-preview .td-winner-rewards-title{margin-bottom:6px}
+#td-setup-overlay .td-custom-rewards-preview .td-reward-row{padding:6px 3px}
+#td-setup-overlay .td-custom-rewards-preview p:not(.td-reward-selection-note){font-size:10px;color:#aeb5d0;text-align:center;margin:6px 0 0}
+#td-setup-overlay.td-custom-room-active .td-custom-rewards-preview{margin:0 0 10px}
