@@ -1,0 +1,30 @@
+name: Custom Truth Dare rooms checks
+
+on:
+  push:
+    branches: [custom-truth-dare-rooms]
+  pull_request:
+    branches: [custom-truth-dare-rooms]
+
+jobs:
+  syntax-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install backend dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: backend
+      - name: Check custom Truth Dare client
+        run: node --check truth-dare.js
+      - name: Check Truth dare backend
+        run: node --check truth-dare-server.js
+        working-directory: backend
+      - name: Check integration test syntax
+        run: node --check truth-dare.test.js
+        working-directory: backend
+      - name: Run integration tests
+        run: npm run test-truth-dare
+        working-directory: backend
