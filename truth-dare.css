@@ -220,3 +220,12 @@
 #td-setup-overlay.td-custom-room-active #td-custom-invites{margin:0;}
 #td-setup-overlay.td-custom-room-active #td-confirm-setup{margin:0;}
 #td-setup-overlay.td-custom-room-active .td-footnote{margin:0;}
+
+/* Custom Room ID entry focus: blur background and show only IDs + Create Room */
+#td-setup-overlay.td-id-entry-focus{backdrop-filter:blur(12px);background:rgba(6,8,20,.68);}
+#td-setup-overlay.td-id-entry-focus .td-sheet{background:rgba(17,21,43,.94);border-color:rgba(143,112,255,.4);box-shadow:0 24px 80px rgba(0,0,0,.58);}
+#td-setup-overlay.td-id-entry-focus .td-setup-content>*:not(#td-custom-invites):not(#td-confirm-setup){display:none!important;}
+#td-setup-overlay.td-id-entry-focus #td-custom-invites{display:block!important;margin:0;padding:16px;border-radius:16px;}
+#td-setup-overlay.td-id-entry-focus #td-custom-invites .td-label{display:block;margin-bottom:10px;}
+#td-setup-overlay.td-id-entry-focus #td-invite-ids{min-height:64px;font-size:16px;letter-spacing:.4px;}
+#td-setup-overlay.td-id-entry-focus #td-confirm-setup{display:block!important;margin-top:10px;}
