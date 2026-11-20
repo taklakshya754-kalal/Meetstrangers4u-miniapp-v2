@@ -1578,3 +1578,117 @@ body.call-matching-screen-active .call-flow-panel>.secondary-button{margin-top:0
 }
 
 /* Restore the decorative wave lines on Voice and Video home cards */
+
+
+/* Profile flow color refresh — match Truth & Dare's vibrant purple/blue styling.
+   Visual-only overrides: layout, navigation, text, and profile behavior stay intact. */
+#app .profile-page .profile-avatar{
+  border-color:rgba(196,165,255,.55);
+  background:linear-gradient(145deg,#A078FF 0%,#6E53FF 55%,#326DFF 100%);
+  box-shadow:0 10px 30px rgba(113,83,255,.28),0 0 22px rgba(91,125,255,.16),inset 0 1px 0 rgba(255,255,255,.18);
+}
+#app .profile-page .profile-member-tag{
+  border-color:rgba(161,128,255,.36);
+  color:#D2BFFF;
+  background:linear-gradient(100deg,rgba(115,83,255,.16),rgba(54,119,255,.12));
+}
+#app .profile-page .profile-balance{
+  border-color:rgba(143,112,255,.42);
+  background:radial-gradient(ellipse at 12% 0%,rgba(114,83,255,.24),transparent 60%),linear-gradient(145deg,#1A2145,#111A36 62%,#181431);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 20px rgba(113,83,255,.10);
+}
+#app .profile-page .wallet-button{
+  border-color:rgba(173,133,255,.42);
+  color:#E0D1FF;
+  background:linear-gradient(110deg,rgba(111,77,255,.26),rgba(48,104,255,.20));
+}
+#app .profile-page .profile-menu-row{
+  border-color:rgba(137,112,255,.32);
+  background:linear-gradient(145deg,rgba(29,36,75,.96),rgba(18,24,52,.97));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+#app .profile-page .profile-menu-row.earn-row{
+  border-color:rgba(173,118,255,.52);
+  background:radial-gradient(ellipse at 10% 45%,rgba(150,80,255,.23),transparent 58%),linear-gradient(110deg,#38236F,#24215B 62%,#17214D);
+  box-shadow:0 0 17px rgba(130,74,255,.11),inset 0 1px 0 rgba(255,255,255,.08);
+}
+#app .profile-page .profile-menu-icon{
+  border:1px solid rgba(153,126,255,.30);
+  background:linear-gradient(145deg,#5740A8,#293B8C);
+  color:#E2D5FF;
+}
+#app .profile-page .earn-icon{
+  border-color:rgba(201,146,255,.46);
+  background:linear-gradient(145deg,#8C52E9,#5437B5);
+  color:#FFF0FF;
+}
+#app .profile-page .privacy-icon{
+  border-color:rgba(92,188,255,.42);
+  background:linear-gradient(145deg,#287BD2,#2253AC);
+  color:#E0F4FF;
+}
+#app .profile-page .about-icon{
+  border-color:rgba(155,134,255,.38);
+  background:linear-gradient(145deg,#6552D4,#3C58B8);
+  color:#E7DFFF;
+}
+#app .profile-page .profile-menu-arrow{color:#B7A4FF}
+#app .profile-page .profile-section-label{color:#A99AFF}
+
+/* Profile subpages: richer game-like gradients, scoped only to profile routes */
+#app .profile-subpage.panel{
+  border-color:rgba(143,112,255,.36);
+  background:radial-gradient(ellipse at 50% 0%,rgba(112,83,255,.18),transparent 45%),linear-gradient(150deg,#171C39,#10152B 62%,#17142F);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 12px 30px rgba(0,0,0,.16);
+}
+#app .profile-subpage .profile-back{color:#B8A3FF}
+#app .profile-subpage .earn-illustration{
+  background:linear-gradient(145deg,#A078FF,#6E53FF 58%,#326DFF);
+  border:1px solid rgba(205,174,255,.42);
+  box-shadow:0 10px 30px rgba(113,83,255,.30),0 0 22px rgba(91,125,255,.18);
+}
+#app .profile-subpage .earn-reward-card{
+  border-color:rgba(143,112,255,.30);
+  background:linear-gradient(145deg,rgba(39,35,83,.88),rgba(20,29,66,.92));
+}
+#app .profile-subpage .wallet-total{
+  border:1px solid rgba(143,112,255,.36);
+  background:radial-gradient(ellipse at 50% 0%,rgba(122,83,255,.22),transparent 60%),linear-gradient(130deg,#1D2750,#171938);
+}
+#app .profile-subpage .primary-button{
+  background:linear-gradient(100deg,#6E53FF,#A078FF 52%,#326DFF);
+  box-shadow:0 7px 24px rgba(113,83,255,.22);
+}
+#app .profile-subpage .secondary-button{
+  border:1px solid rgba(143,112,255,.30);
+  background:linear-gradient(100deg,#262B54,#1C2850);
+}
+
+/* Privacy/About pages: use a subtle purple-blue ambient glow without changing layout */
+#app .profile-info-page{
+  background:radial-gradient(ellipse at 8% 0%,rgba(114,83,255,.20),transparent 42%),radial-gradient(ellipse at 100% 65%,rgba(45,133,255,.14),transparent 45%),linear-gradient(155deg,#171C39 0%,#10152B 60%,#17142F 100%);
+  border-color:rgba(143,112,255,.34);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 12px 30px rgba(0,0,0,.16);
+}
+#app .profile-info-symbol{
+  border-color:rgba(180,143,255,.42);
+  color:#E1D2FF;
+  background:linear-gradient(145deg,#6747C8,#3158C8);
+  box-shadow:0 0 22px rgba(113,83,255,.18),inset 0 1px 0 rgba(255,255,255,.16);
+}
+#app .profile-info-kicker{color:#B9A3FF}
+#app .profile-info-section{
+  border-color:rgba(143,112,255,.30);
+  background:linear-gradient(145deg,rgba(29,36,75,.94),rgba(17,24,53,.96));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+#app .profile-info-section-icon{
+  border-color:rgba(147,129,255,.42);
+  color:#E1D5FF;
+  background:linear-gradient(145deg,#6045C7,#3156B8);
+}
+#app .profile-info-signoff{
+  border-color:rgba(151,120,255,.34);
+  background:linear-gradient(120deg,rgba(48,35,105,.58),rgba(24,46,102,.56));
+}
+#app .profile-info-signoff strong{color:#D9CBFF}
