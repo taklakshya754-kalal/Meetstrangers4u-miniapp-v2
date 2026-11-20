@@ -33,6 +33,13 @@
   function esc(value) {
     return String(value || "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
   }
+  function showToast(message) {
+    document.getElementById("td-toast")?.remove();
+    const toast=document.createElement("div");
+    toast.id="td-toast";toast.className="td-toast";toast.textContent=message;
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(),2800);
+  }
   function open() {
     if (document.getElementById("td-setup-overlay")) return;
     const overlay = document.createElement("div");
@@ -284,6 +291,7 @@
       if(data.type==="connected")return;
       if(data.type==="custom-room-created"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];renderLobby();}
       if(data.type==="custom-invites-sent"){lobbyState.inviteSent=data.sent||0;lobbyState.inviteFailed=data.failed||0;renderLobby();}
+      if(data.type==="invite-declined"){stopSocket(true);gameState=null;lobbyState={status:"idle",players:[],roomId:null,ready:false,target:1000,count:2,mode:"normal"};document.getElementById("td-setup-overlay")?.remove();currentOverlay=null;showToast("Your partner declined your request");}
       if(data.type==="room-formed"){lobbyState.status="room";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.ready=false;renderLobby();}
       if(data.type==="ready-update"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
       if(data.type==="game-start"){lobbyState.status="starting";lobbyState.players=data.players||lobbyState.players;renderLobby();}
