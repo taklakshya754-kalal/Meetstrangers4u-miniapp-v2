@@ -107,13 +107,13 @@ test("private-room host can create an invite-only room and invalid invitations a
   t.after(async()=>{for(const c of t.clients||[]){try{c.ws.close();}catch{}}if(server.exitCode===null){server.kill("SIGTERM");await new Promise(resolve=>server.once("exit",resolve));}});
   let ok=false;for(let i=0;i<80&&!ok;i++){await new Promise(r=>setTimeout(r,125));try{ok=await health();}catch{}}
   assert.ok(ok,"private test server health failed: "+logs);
-  const host=await client("501","RoomHost");t.clients=[host];await waitEvent(host,"connected");
-  send(host,{type:"create-custom-room",mode:"normal",inviteIds:["502"]});
+  const host=await client("50001","RoomHost");t.clients=[host];await waitEvent(host,"connected");
+  send(host,{type:"create-custom-room",mode:"normal",inviteIds:["50002"]});
   const created=await waitEvent(host,"custom-room-created");
-  assert.equal(created.playerCount,2);assert.equal(created.players.length,1);assert.equal(created.players[0].id,"501");
+  assert.equal(created.playerCount,2);assert.equal(created.players.length,1);assert.equal(created.players[0].id,"50001");
   const sent=await waitEvent(host,"custom-invites-sent");
   assert.equal(sent.sent,0);assert.equal(sent.failed,1,"test mode simulates unavailable Telegram delivery");
-  send(host,{type:"create-custom-room",mode:"normal",inviteIds:["501"]});
+  send(host,{type:"create-custom-room",mode:"normal",inviteIds:["50001"]});
   const err=await waitEvent(host,"error",e=>e.code==="INVALID_INVITE_IDS");
   assert.equal(err.code,"INVALID_INVITE_IDS");
   send(host,{type:"join-custom-room",token:"invalid-token"});
