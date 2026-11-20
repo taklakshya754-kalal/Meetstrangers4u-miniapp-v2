@@ -64,9 +64,28 @@
     overlay.querySelector("#td-random-match").onclick=()=>startQueue(selectedPlayers,selectedMode);
     overlay.querySelector("#td-custom-match").onclick=()=>{overlay.classList.add("td-custom-room-active");overlay.querySelector(".td-custom-selection-count").textContent=selectedPlayers+" Players";overlay.querySelector(".td-custom-selection-mode").textContent=MODES.find(m=>m.id===selectedMode)?.title||selectedMode;overlay.querySelector("#td-custom-selection").hidden=false;overlay.querySelector(".td-player-section").hidden=true;overlay.querySelector(".td-mode-section").hidden=true;const rewardBox=overlay.querySelector("#td-custom-rewards-preview");const secondPrize=selectedPlayers>2?50:10;rewardBox.innerHTML='<div class="td-winner-rewards-title">🏆 WINNER REWARDS</div><div class="td-reward-row"><span>🥇 <b>1st Prize</b></span><strong>100 Coins 💰</strong></div><div class="td-reward-row"><span>🥈 <b>2nd Prize</b></span><strong>'+secondPrize+' Coins 💰</strong></div>'+(selectedPlayers>2?'':'<p class="td-reward-selection-note">Want a higher 2nd prize? Please select more than 2 players.</p>')+'<p>Winning coins will be added to your wallet.</p>';rewardBox.hidden=false;overlay.querySelector("#td-custom-invites").hidden=false;overlay.querySelector("#td-match-actions").hidden=true;overlay.querySelector("#td-confirm-setup").hidden=false;};
     overlay.querySelector("#td-confirm-setup").onclick=()=>startCustomRoom(selectedMode,overlay.querySelector("#td-invite-ids").value);
+    const inviteContainer=overlay.querySelector("#td-custom-invites");
     const inviteInput=overlay.querySelector("#td-invite-ids");
-    inviteInput.addEventListener("focus",()=>overlay.classList.add("td-id-entry-focus"));
-    inviteInput.addEventListener("blur",()=>overlay.classList.remove("td-id-entry-focus"));
+    inviteContainer.addEventListener("focusin",()=>{
+      if(overlay.classList.contains("td-id-entry-focus"))return;
+      overlay.classList.add("td-id-entry-focus");
+      const boxCount=Math.max(1,selectedPlayers-1);
+      const existing=(inviteInput.value||"").split(/[\\s,;]+/).map(x=>x.trim()).filter(Boolean);
+      inviteContainer.querySelector("#td-invite-id-boxes")?.remove();
+      const boxes=document.createElement("div");
+      boxes.id="td-invite-id-boxes";
+      boxes.className="td-invite-id-boxes";
+      boxes.innerHTML=Array.from({length:boxCount},(_,i)=>'<label class="td-invite-player-field"><span>PLAYER '+(i+1)+'</span><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="16" autocomplete="off" placeholder="Enter Telegram User ID" value="'+esc(existing[i]||'')+'"></label>').join("");
+      inviteInput.insertAdjacentElement("afterend",boxes);
+      boxes.querySelectorAll("input").forEach(input=>input.addEventListener("input",()=>{
+        inviteInput.value=[...boxes.querySelectorAll("input")].map(x=>x.value.trim()).filter(Boolean).join(", ");
+      }));
+      inviteInput.style.display="none";
+    });
+    inviteContainer.addEventListener("focusout",e=>{
+      if(inviteContainer.contains(e.relatedTarget))return;
+      overlay.classList.remove("td-id-entry-focus");
+    });
 
   }
   function renderLobby() {
