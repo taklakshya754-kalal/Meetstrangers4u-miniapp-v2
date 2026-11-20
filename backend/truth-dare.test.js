@@ -148,7 +148,9 @@ test("two-player private-room decline closes the room and notifies host", {timeo
   const response=await fetch(url);assert.equal(response.status,200);
   const notice=await waitEvent(host,"invite-declined");
   assert.equal(notice.inviteeId,"52002");assert.equal(notice.closeRoom,true);
-  assert.equal(roomsNotRelevant,undefined);
+  send(host,{type:"host-add-invite",inviteeId:"52003"});
+  const closedErr=await waitEvent(host,"error",e=>e.code==="HOST_ONLY_INVITE");
+  assert.equal(closedErr.code,"HOST_ONLY_INVITE");
 });
 
 test("private-room host can create an invite-only room and invalid invitations are rejected", {timeout:15000}, async t=>{
