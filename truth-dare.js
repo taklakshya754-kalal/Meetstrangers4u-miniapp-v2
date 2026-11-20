@@ -20,6 +20,27 @@
     document.getElementById("td-setup-overlay")?.remove();
     currentOverlay = null;
   }
+  function backFromSetup(overlay) {
+    if (!overlay) return;
+    if (overlay.classList.contains("td-id-entry-focus")) {
+      overlay.classList.remove("td-id-entry-focus");
+      overlay.querySelector("#td-invite-id-boxes")?.remove();
+      return;
+    }
+    if (overlay.classList.contains("td-custom-room-active")) {
+      overlay.classList.remove("td-custom-room-active");
+      overlay.querySelector("#td-custom-selection").hidden = true;
+      overlay.querySelector(".td-player-section").hidden = false;
+      overlay.querySelector(".td-mode-section").hidden = false;
+      overlay.querySelector("#td-custom-rewards-preview").hidden = true;
+      overlay.querySelector("#td-custom-invites").hidden = true;
+      overlay.querySelector("#td-match-actions").hidden = false;
+      overlay.querySelector("#td-confirm-setup").hidden = true;
+      overlay.querySelector("#td-invite-id-boxes")?.remove();
+      return;
+    }
+    close();
+  }
   function stopSocket(sendCancel) {
     if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
     if (gameSpinTimer) { clearTimeout(gameSpinTimer); gameSpinTimer = null; }
@@ -57,7 +78,7 @@
       <div class="td-custom-invites" id="td-custom-invites" hidden><label class="td-label" for="td-invite-ids">TELEGRAM USER IDs (1–4)</label><textarea id="td-invite-ids" inputmode="numeric" pattern="[0-9, ]*" maxlength="100" placeholder="Example: 123456789, 987654321"></textarea><small>Private room · Host + 1 to 4 friends · 2–5 players total</small></div><div class="td-match-actions" id="td-match-actions"><button class="td-primary td-match-btn" type="button" id="td-random-match"><span class="td-match-icon">🎲</span> Random</button><button class="td-primary td-match-btn" type="button" id="td-custom-match"><span class="td-match-icon">👥</span> Custom</button></div><button class="td-primary" type="button" id="td-confirm-setup" hidden>Create Room <span>→</span></button>
       <p class="td-footnote">Real users only · Score stays inside the game</p></div></div>`;
     document.body.appendChild(overlay);
-    overlay.querySelector(".td-close").onclick = close;
+    overlay.querySelector(".td-close").onclick = () => backFromSetup(overlay);
     overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
     overlay.querySelectorAll("[data-players]").forEach(btn => btn.onclick = () => { selectedPlayers=Number(btn.dataset.players); overlay.querySelectorAll("[data-players]").forEach(x=>x.classList.toggle("selected",x===btn)); });
     overlay.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => { selectedMode=btn.dataset.mode; overlay.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===btn)); });
@@ -122,7 +143,14 @@
       ${(lobbyState.status==="offline" || lobbyState.status==="closed") ? `<button class="td-primary td-retry-btn" type="button">Retry Matchmaking</button>` : ""}
       <button class="td-secondary td-cancel-btn" type="button">${lobbyState.status==="room"?"Leave Room":"Cancel Search"}</button>
       <p class="td-footnote">No bots · No wallet coins · Server-authoritative room</p></div>`;
-    overlay.querySelector(".td-close").onclick = close;
+    overlay.querySelector(".td-close").onclick = () => {
+      const wasCustom = !!lobbyState.isCustom;
+      stopSocket(true);
+      gameState = null;
+      close();
+      open();
+      if (wasCustom) document.getElementById("td-custom-match")?.click();
+    };
     overlay.querySelector(".td-cancel-btn").onclick = () => { stopSocket(true); close(); open(); };
     overlay.querySelectorAll("[data-add-player]").forEach(btn=>btn.addEventListener("click",()=>{lobbyState.addInviteOpen=true;renderLobby();}));
     overlay.querySelector("#td-send-player-invite")?.addEventListener("click",()=>{const input=overlay.querySelector("#td-add-player-id");const id=(input?.value||"").trim();if(!/^\d{5,16}$/.test(id)){showToast("Enter a valid Telegram User ID");return;}if(!socket||socket.readyState!==WebSocket.OPEN){showToast("Room connection is unavailable");return;}socket.send(JSON.stringify({type:"host-add-invite",inviteeId:id}));lobbyState.addInviteOpen=false;renderLobby();});
@@ -248,8 +276,8 @@
     overlay.querySelector("#td-chat-input")?.addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
     const log=overlay.querySelector("#td-chat-log");if(log)log.scrollTop=log.scrollHeight;
     overlay.querySelector("#td-game-leave")?.addEventListener("click",close);
-    overlay.querySelector("#td-game-exit")?.addEventListener("click",close);
-    overlay.querySelector("#td-game-close")?.addEventListener("click",close);
+    overlay.querySelector("#td-game-exit")?.addEventListener("click",()=>{gameState=null;renderLobby();});
+    overlay.querySelector("#td-game-close")?.addEventListener("click",()=>{gameState=null;renderLobby();});
   }
 
   function startQueue(count, mode) {
