@@ -199,6 +199,7 @@
       '<div class="td-game-status">'+esc(gameState.resultText||((phase==="spin")?"Ready for the next spin":phase==="choose"?"Choose your challenge":phase==="task"?"Challenge time!":phase==="verify"?"Players are verifying": "Game finished"))+'</div>'+
       '<div class="td-bottle-wrap"><div class="td-bottle '+(spinning?"td-spin-anim":"")+'" style="--td-rotation:'+Number(gameState.spinRotation||0)+'deg">🍾</div></div>'+
       '<div class="td-selected">'+(active?'Selected: <b>'+esc(active.name)+'</b>':(phase==="choose"?'Choose Truth or Dare':'Spin to select a player'))+'</div>'+
+      '<div class="td-winner-rewards"><div class="td-winner-rewards-title">🏆 WINNER REWARDS</div><div class="td-reward-row"><span>🥇 <b>1st Prize</b></span><strong>100 Coins 💰</strong></div><div class="td-reward-row"><span>🥈 <b>2nd Prize</b></span><strong>50 Coins 💰</strong></div><p>Winning coins will be added to your wallet.</p></div>'+
       '<div class="td-score-panel"><div class="td-label">SCORES · TARGET 1000</div>'+scoreRows+'</div>'+
       (challenge?'<div class="td-challenge-card"><div class="td-challenge-type">'+(challenge.type==="truth"?"💭 TRUTH":"🔥 DARE")+'</div><div class="td-challenge-text">'+esc(challenge.text)+'</div><small>For '+esc(challenge.playerName||"player")+'</small></div>':'')+
       (phase==="verify"?'<div class="td-vote-summary">Verified: '+Number(gameState.yes||0)+' / '+Number(gameState.requiredVotes||0)+' approvals needed</div>':'')+
