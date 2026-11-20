@@ -174,11 +174,28 @@ function detachPlayer(player, reason) {
     if (room) {
       room.players = room.players.filter(p => p.id !== player.id);
       broadcast(room, "player-left", { playerId: player.id, reason, players: room.players.map(safePlayer) });
-      if (room.players.length < room.playerCount) {
+      if (room.status === "game" && room.players.length >= 2) {
+        room.playerCount = room.players.length;
+        if (room.game) {
+          delete room.game.scores[player.id];
+          room.game.votes = {};
+          room.game.challenge = null;
+          room.game.turnId = null;
+          room.game.phase = "spin";
+        }
+        broadcast(room, "game-state", { roomId: room.id, mode: room.mode, round: room.game?.round || 0, phase: "spin", scores: room.game?.scores || {}, targetScore: 1000, players: room.players.map(safePlayer) });
+      } else if (room.status === "game" && room.players.length < 2) {
+        broadcast(room, "room-closed", { reason: "insufficient-players" });
+        for (const p of room.players) { p.roomId = null; p.ready = false; }
+        room.status = "closed";
+        rooms.delete(room.id);
+      } else if (room.status !== "game" && room.players.length < room.playerCount) {
         broadcast(room, "room-closed", { reason: "player-left-before-start" });
         for (const p of room.players) { p.roomId = null; p.ready = false; }
+        room.status = "closed";
         rooms.delete(room.id);
       } else if (room.players.length === 0) {
+        room.status = "closed";
         rooms.delete(room.id);
       }
     }
@@ -330,7 +347,7 @@ function castVote(room, player, vote) {
   if (vote !== "yes" && vote !== "no") return send(player.ws, "error", { code: "INVALID_VOTE" });
   if (Object.prototype.hasOwnProperty.call(game.votes, player.id)) return send(player.ws, "error", { code: "VOTE_ALREADY_CAST" });
   game.votes[player.id] = vote;
-  const voters = room.players.length - 1, required = room.playerCount === 2 ? 1 : 2;
+  const voters = room.players.length - 1, required = Math.min(2, Math.max(1, voters));
   const yes = Object.values(game.votes).filter(v => v === "yes").length, no = Object.values(game.votes).filter(v => v === "no").length;
   broadcast(room, "verification-update", { votes: game.votes, yes, no, required });
   if (yes >= required) return finishRound(room, true, false, "verified");

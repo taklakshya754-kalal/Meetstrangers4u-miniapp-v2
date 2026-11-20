@@ -93,7 +93,7 @@
       <div class="td-room-preview"><div class="td-room-label">PLAYERS · ${list.length}/${lobbyState.count}</div><div class="td-slots">${slots}</div></div>
       ${lobbyState.notice?`<div class="td-lobby-decline">${esc(lobbyState.notice)}</div>`:""}
       ${lobbyState.addInviteOpen?`<div class="td-add-player-form"><input id="td-add-player-id" type="text" inputmode="numeric" maxlength="16" placeholder="Telegram User ID"><button class="td-primary" id="td-send-player-invite" type="button">Send Invitation</button></div>`:""}
-      ${lobbyState.isCustom&&["waiting","room"].includes(lobbyState.status)?`<div class="td-lobby-voice"><div class="td-label">VOICE CHAT · LOBBY</div><div class="td-voice-state">${voiceState.active?"Voice chat connected":voiceState.busy?"Connecting microphone…":"Join voice to talk before the game"}</div>${voiceState.error?`<p class="td-voice-error">${esc(voiceState.error)}</p>`:""}<div class="td-action-grid">${voiceState.active?`<button class="td-secondary" id="td-lobby-mic">${voiceState.muted?"🎙️ Unmute Microphone":"🔇 Mute Microphone"}</button><button class="td-secondary" id="td-lobby-sound">${voiceState.soundMuted?"🔊 Sound On":"🔈 Sound Off"}</button><button class="td-secondary" id="td-lobby-voice-leave">Leave Voice</button>`:`<button class="td-primary td-voice-start" id="td-lobby-voice-join" ${voiceState.busy?"disabled":""}>🎙️ Join Voice Chat</button><button class="td-secondary" id="td-lobby-sound">${voiceState.soundMuted?"🔊 Sound On":"🔈 Sound Off"}</button>`}</div></div>`:""}
+      ${((lobbyState.isCustom&&["waiting","room"].includes(lobbyState.status))||(!lobbyState.isCustom&&["room","starting"].includes(lobbyState.status)))?`<div class="td-lobby-voice"><div class="td-label">VOICE CHAT · LOBBY</div><div class="td-voice-state">${voiceState.active?"Voice chat connected":voiceState.busy?"Connecting microphone…":"Join voice to talk before the game"}</div>${voiceState.error?`<p class="td-voice-error">${esc(voiceState.error)}</p>`:""}<div class="td-action-grid">${voiceState.active?`<button class="td-secondary" id="td-lobby-mic">${voiceState.muted?"🎙️ Unmute Microphone":"🔇 Mute Microphone"}</button><button class="td-secondary" id="td-lobby-sound">${voiceState.soundMuted?"🔊 Sound On":"🔈 Sound Off"}</button><button class="td-secondary" id="td-lobby-voice-leave">Leave Voice</button>`:`<button class="td-primary td-voice-start" id="td-lobby-voice-join" ${voiceState.busy?"disabled":""}>🎙️ Join Voice Chat</button><button class="td-secondary" id="td-lobby-sound">${voiceState.soundMuted?"🔊 Sound On":"🔈 Sound Off"}</button>`}</div></div>`:""}
       <div class="td-lobby-summary"><span>Mode</span><b>${esc(modeTitle)}</b><span>Win target</span><b>1000 Score</b><span>Room</span><b>${lobbyState.roomId?esc(lobbyState.roomId.slice(0,8)):'Searching…'}</b></div>
       ${lobbyState.status==="room" ? `<button class="td-primary td-ready-btn" type="button">${lobbyState.ready?'✓ Ready — Tap to Unready':'I’m Ready'}</button>` : ""}
       ${(lobbyState.status==="offline" || lobbyState.status==="closed") ? `<button class="td-primary td-retry-btn" type="button">Retry Matchmaking</button>` : ""}
@@ -115,6 +115,7 @@
     });
     overlay.querySelector(".td-retry-btn")?.addEventListener("click", () => startQueue(lobbyState.count, lobbyState.mode));
   }
+  function closeVoicePeerFor(peerId){const peer=voiceState.peers.get(String(peerId));if(peer){try{peer.pc.close();}catch(_){}voiceState.peers.delete(String(peerId));}document.getElementById("td-remote-audio-"+String(peerId))?.remove();}
   function sendRtc(to, signal) { if(socket && socket.readyState===WebSocket.OPEN) socket.send(JSON.stringify({type:"rtc-signal",to,signal})); }
   function createVoicePeer(peerId) {
     if(voiceState.peers.has(peerId)) return voiceState.peers.get(peerId);
@@ -245,6 +246,8 @@
       if(data.type==="queue-joined"){ lobbyState.status="waiting"; renderLobby(); }
       if(data.type==="room-formed"){ lobbyState.status="room"; lobbyState.roomId=data.roomId; lobbyState.players=data.players||[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="ready-update"){ lobbyState.players=data.players||lobbyState.players; renderLobby(); }
+      if(data.type==="voice-joined"||data.type==="voice-left"){lobbyState.players=data.players||lobbyState.players;if(data.type==="voice-joined"&&voiceState.active&&String(data.playerId)!==String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||"")){const me=String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||""),peerId=String(data.playerId);if(me<peerId){const peer=createVoicePeer(peerId);if(!peer.pc.localDescription){peer.pc.createOffer().then(o=>peer.pc.setLocalDescription(o)).then(()=>sendRtc(peerId,{type:"offer",description:peer.pc.localDescription})).catch(()=>{});}}}if(!gameState)renderLobby();}
+      if(data.type==="player-left"&&!gameState){closeVoicePeerFor(data.playerId);lobbyState.players=data.players||[];renderLobby();}
       if(data.type==="game-start"){ lobbyState.status="starting"; lobbyState.players=data.players||lobbyState.players; renderLobby(); }
       if(data.type==="game-state"){ gameState={...data, userId:window.Telegram.WebApp.initDataUnsafe?.user?.id?String(window.Telegram.WebApp.initDataUnsafe.user.id):null, chat:[], resultText:null, selectedId:null, votes:{}, yes:0, requiredVotes:0, phase:"spin"}; renderGame(); }
       if(data.type==="bottle-spin" && gameState){ gameState.round=data.round; gameState.selectedId=data.selectedId; gameState.resultText=null; gameState.phase="spin-animation"; const idx=(gameState.players||[]).findIndex(p=>p.id===data.selectedId); gameState.spinRotation=1440+Math.max(0,idx)*360/Math.max(1,(gameState.players||[]).length); renderGame(true); if(gameSpinTimer)clearTimeout(gameSpinTimer); gameSpinTimer=setTimeout(()=>{if(gameState){gameState.phase="choose";renderGame();}gameSpinTimer=null;},Math.max(1000,Number(data.spinMs||4200))); }
@@ -254,9 +257,9 @@
       if(data.type==="challenge-result" && gameState){ gameState.scores=data.scores||gameState.scores; gameState.phase=data.nextPhase||"spin"; gameState.challenge=null; gameState.votes={}; gameState.ranked=data.ranked; gameState.resultText=data.skipped?"Challenge skipped · "+data.delta+" Score":data.accepted?"Verified · +"+data.delta+" Score":"Verification failed · no score"; renderGame(); }
       if(data.type==="game-over" && gameState){ gameState.phase="finished"; gameState.ranked=data.ranked; gameState.resultText="🏆 "+data.winner.name+" wins!"; renderGame(); }
       if(data.type==="chat-message" && gameState){ gameState.chat=(gameState.chat||[]).concat(data).slice(-40); renderGame(); }
-      if(data.type==="rtc-signal" && (gameState||lobbyState.isCustom)){ handleRtcSignal(String(data.from||""),data.signal).catch(()=>{}); }
-      if(data.type==="player-left" && gameState){ gameState.players=data.players||[]; renderGame(); }
-      if(data.type==="room-closed"){ gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
+      if(data.type==="rtc-signal" && (gameState||lobbyState.isCustom||["room","starting"].includes(lobbyState.status))){ handleRtcSignal(String(data.from||""),data.signal).catch(()=>{}); }
+      if(data.type==="player-left" && gameState){ closeVoicePeerFor(data.playerId); gameState.players=data.players||[]; renderGame(); }
+      if(data.type==="room-closed"){ stopVoice(); gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="queue-cancelled"){ lobbyState.status="idle"; }
       if(data.type==="error"){if(["ALREADY_INVITED","ROOM_FULL","INVITEE_BUSY","HOST_ONLY_INVITE","INVALID_INVITE_ID"].includes(data.code)){showToast(({ALREADY_INVITED:"This user has already been invited.",ROOM_FULL:"The room is full.",INVITEE_BUSY:"This user is currently busy.",HOST_ONLY_INVITE:"Only the host can invite players.",INVALID_INVITE_ID:"Enter a valid Telegram User ID."})[data.code]);}else if(gameState){gameState.resultText="Action failed: "+String(data.code||"error");renderGame();}else{lobbyState.status="offline";renderLobby();}}
     };
@@ -300,8 +303,8 @@
       if(data.type==="game-over"&&gameState){gameState.phase="finished";gameState.ranked=data.ranked;gameState.resultText="🏆 "+data.winner.name+" wins!";renderGame();}
       if(data.type==="chat-message"&&gameState){gameState.chat=(gameState.chat||[]).concat(data).slice(-40);renderGame();}
       if(data.type==="rtc-signal"&&(gameState||lobbyState.isCustom)){handleRtcSignal(String(data.from||""),data.signal).catch(()=>{});}
-      if(data.type==="player-left"&&gameState){gameState.players=data.players||[];renderGame();}
-      if(data.type==="room-closed"){gameState=null;lobbyState.status="closed";lobbyState.roomId=null;lobbyState.players=[];lobbyState.ready=false;renderLobby();}
+      if(data.type==="player-left"&&gameState){closeVoicePeerFor(data.playerId);gameState.players=data.players||[];renderGame();}
+      if(data.type==="room-closed"){stopVoice();gameState=null;lobbyState.status="closed";lobbyState.roomId=null;lobbyState.players=[];lobbyState.ready=false;renderLobby();}
       if(data.type==="error"){const code=String(data.code||"error");if(gameState){gameState.resultText="Action failed: "+code;renderGame();}else{lobbyState.status="offline";renderLobby();alert("Custom room: "+code);}}
     };
     ws.onerror=()=>{if(socket===ws){lobbyState.status="offline";renderLobby();}};ws.onclose=()=>{if(socket===ws&&!["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();}};

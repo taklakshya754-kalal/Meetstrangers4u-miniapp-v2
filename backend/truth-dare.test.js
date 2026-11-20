@@ -181,3 +181,28 @@ test("private-room host can create an invite-only room and invalid invitations a
   const joinErr=await waitEvent(host,"error",e=>e.code==="INVITE_EXPIRED");
   assert.equal(joinErr.code,"INVITE_EXPIRED");
 });
+
+
+test("random-room lobby voice signaling and smart game leave threshold", {timeout:30000}, async t=>{
+  const server=spawn(process.execPath,[SERVER_PATH],{cwd:__dirname,env:{...process.env,BOT_TOKEN:TOKEN,TRUTH_DARE_HOST:HOST,TRUTH_DARE_PORT:String(PORT),ALLOWED_ORIGINS:"https://meetstrangers4u-miniapp-v2.vercel.app"},stdio:["ignore","pipe","pipe"]});
+  let logs="";server.stdout.on("data",b=>logs+=b.toString());server.stderr.on("data",b=>logs+=b.toString());
+  t.after(async()=>{for(const c of t.clients||[]){try{c.ws.close();}catch{}}if(server.exitCode===null){server.kill("SIGTERM");await new Promise(resolve=>server.once("exit",resolve));}});
+  let ok=false;for(let i=0;i<80&&!ok;i++){await new Promise(r=>setTimeout(r,125));try{ok=await health();}catch{}}
+  assert.ok(ok,"random leave test server health failed: "+logs);
+  const a=await client("53001","PlayerA"),b=await client("53002","PlayerB"),c=await client("53003","PlayerC");t.clients=[a,b,c];
+  await Promise.all([waitEvent(a,"connected"),waitEvent(b,"connected"),waitEvent(c,"connected")]);
+  send(a,{type:"queue",playerCount:3,mode:"normal"});send(b,{type:"queue",playerCount:3,mode:"normal"});send(c,{type:"queue",playerCount:3,mode:"normal"});
+  await Promise.all([waitEvent(a,"room-formed"),waitEvent(b,"room-formed"),waitEvent(c,"room-formed")]);
+  send(a,{type:"voice-status",active:true});
+  await Promise.all([waitEvent(a,"voice-joined"),waitEvent(b,"voice-joined"),waitEvent(c,"voice-joined")]);
+  send(a,{type:"rtc-signal",to:"53002",signal:{type:"offer",description:{type:"offer",sdp:"random-lobby-voice"}}});
+  const relayed=await waitEvent(b,"rtc-signal");assert.equal(relayed.from,"53001");assert.equal(relayed.signal.type,"offer");
+  for(const player of [a,b,c])send(player,{type:"ready",ready:true});
+  await Promise.all([waitEvent(a,"game-start"),waitEvent(b,"game-start"),waitEvent(c,"game-start"),waitEvent(a,"game-state"),waitEvent(b,"game-state"),waitEvent(c,"game-state")]);
+  c.ws.close();
+  const [leftA,leftB,gameA,gameB]=await Promise.all([waitEvent(a,"player-left"),waitEvent(b,"player-left"),waitEvent(a,"game-state"),waitEvent(b,"game-state")]);
+  assert.equal(leftA.players.length,2);assert.equal(leftB.players.length,2);assert.equal(gameA.players.length,2);assert.equal(gameB.players.length,2);assert.equal(gameA.phase,"spin");
+  b.ws.close();
+  const closedA=await waitEvent(a,"room-closed");
+  assert.equal(closedA.reason,"insufficient-players");
+});
