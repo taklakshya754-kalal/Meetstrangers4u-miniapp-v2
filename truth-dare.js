@@ -185,6 +185,8 @@
     const phase=gameState.phase||"spin";
     const rank=(gameState.ranked||players.map(p=>({id:p.id,name:p.name,score:scores[p.id]||0}))).sort((a,b)=>b.score-a.score);
     const scoreRows=rank.map(p=>'<div class="td-score-row '+(p.id===gameState.selectedId?'active':'')+'"><span>'+esc(p.name)+(p.id===gameState.userId?' (You)':'')+'</span><b>'+Number(p.score||scores[p.id]||0)+' Score</b></div>').join("");
+    const secondPrize=players.length>2?50:10;
+    const rewardNote=players.length>2?"":"<p class=\"td-reward-selection-note\">Want a higher 2nd prize? Please select more than 2 players.</p>";
     const chatRows=(gameState.chat||[]).slice(-18).map(m=>'<div class="td-chat-line"><b>'+esc(m.playerName)+'</b> '+esc(m.text)+'</div>').join("");
     let action="";
     if(phase==="spin") action='<button class="td-primary" id="td-spin">🎯 Spin the Bottle</button><p class="td-footnote">Anyone in the room can spin to choose the next player.</p>';
@@ -199,7 +201,7 @@
       '<div class="td-game-status">'+esc(gameState.resultText||((phase==="spin")?"Ready for the next spin":phase==="choose"?"Choose your challenge":phase==="task"?"Challenge time!":phase==="verify"?"Players are verifying": "Game finished"))+'</div>'+
       '<div class="td-bottle-wrap"><div class="td-bottle '+(spinning?"td-spin-anim":"")+'" style="--td-rotation:'+Number(gameState.spinRotation||0)+'deg">🍾</div></div>'+
       '<div class="td-selected">'+(active?'Selected: <b>'+esc(active.name)+'</b>':(phase==="choose"?'Choose Truth or Dare':'Spin to select a player'))+'</div>'+
-      '<div class="td-winner-rewards"><div class="td-winner-rewards-title">🏆 WINNER REWARDS</div><div class="td-reward-row"><span>🥇 <b>1st Prize</b></span><strong>100 Coins 💰</strong></div><div class="td-reward-row"><span>🥈 <b>2nd Prize</b></span><strong>50 Coins 💰</strong></div><p>Winning coins will be added to your wallet.</p></div>'+
+      '<div class="td-winner-rewards"><div class="td-winner-rewards-title">🏆 WINNER REWARDS</div><div class="td-reward-row"><span>🥇 <b>1st Prize</b></span><strong>100 Coins 💰</strong></div><div class="td-reward-row"><span>🥈 <b>2nd Prize</b></span><strong>'+secondPrize+' Coins 💰</strong></div>'+rewardNote+'<p>Winning coins will be added to your wallet.</p></div>'+
       '<div class="td-score-panel"><div class="td-label">SCORES · TARGET 1000</div>'+scoreRows+'</div>'+
       (challenge?'<div class="td-challenge-card"><div class="td-challenge-type">'+(challenge.type==="truth"?"💭 TRUTH":"🔥 DARE")+'</div><div class="td-challenge-text">'+esc(challenge.text)+'</div><small>For '+esc(challenge.playerName||"player")+'</small></div>':'')+
       (phase==="verify"?'<div class="td-vote-summary">Verified: '+Number(gameState.yes||0)+' / '+Number(gameState.requiredVotes||0)+' approvals needed</div>':'')+
