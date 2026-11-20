@@ -66,11 +66,11 @@
     overlay.querySelector("#td-confirm-setup").onclick=()=>startCustomRoom(selectedMode,overlay.querySelector("#td-invite-ids").value);
     const inviteContainer=overlay.querySelector("#td-custom-invites");
     const inviteInput=overlay.querySelector("#td-invite-ids");
-    inviteContainer.addEventListener("focusin",()=>{
+    const activateIdEntry=()=>{
       if(overlay.classList.contains("td-id-entry-focus"))return;
       overlay.classList.add("td-id-entry-focus");
       const boxCount=Math.max(1,selectedPlayers-1);
-      const existing=(inviteInput.value||"").split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean);
+      const existing=(inviteInput.value||"").split(/[\\s,;]+/).map(x=>x.trim()).filter(Boolean);
       inviteContainer.querySelector("#td-invite-id-boxes")?.remove();
       const boxes=document.createElement("div");
       boxes.id="td-invite-id-boxes";
@@ -80,7 +80,9 @@
       boxes.querySelectorAll("input").forEach(input=>input.addEventListener("input",()=>{
         inviteInput.value=[...boxes.querySelectorAll("input")].map(x=>x.value.trim()).filter(Boolean).join(", ");
       }));
-    });
+    };
+    inviteContainer.addEventListener("click",activateIdEntry);
+    inviteContainer.addEventListener("focusin",activateIdEntry);
     inviteContainer.addEventListener("focusout",e=>{
       if(inviteContainer.contains(e.relatedTarget))return;
       overlay.classList.remove("td-id-entry-focus");
