@@ -82,7 +82,6 @@
       }));
     };
     inviteContainer.addEventListener("click",activateIdEntry);
-    inviteContainer.addEventListener("focusin",activateIdEntry);
     inviteContainer.addEventListener("focusout",e=>{
       if(inviteContainer.contains(e.relatedTarget))return;
       overlay.classList.remove("td-id-entry-focus");
