@@ -111,8 +111,16 @@ test("private-room host can create an invite-only room and invalid invitations a
   send(host,{type:"create-custom-room",mode:"normal",inviteIds:["50002"]});
   const created=await waitEvent(host,"custom-room-created");
   assert.equal(created.playerCount,2);assert.equal(created.players.length,1);assert.equal(created.players[0].id,"50001");
+  assert.equal(created.testInviteTokens.length,1,"test server exposes invite token only in test mode");
   const sent=await waitEvent(host,"custom-invites-sent");
   assert.equal(sent.sent,0);assert.equal(sent.failed,1,"test mode simulates unavailable Telegram delivery");
+  const guest=await client("50002","InvitedGuest");t.clients.push(guest);await waitEvent(guest,"connected");
+  send(guest,{type:"join-custom-room",token:created.testInviteTokens[0]});
+  const [joined,hostForm,guestForm]=await Promise.all([waitEvent(guest,"custom-joined"),waitEvent(host,"room-formed"),waitEvent(guest,"room-formed")]);
+  assert.equal(joined.playerCount,2);assert.equal(hostForm.players.length,2);assert.equal(guestForm.roomId,hostForm.roomId);
+  send(host,{type:"ready",ready:true});await Promise.all([waitEvent(host,"ready-update"),waitEvent(guest,"ready-update")]);
+  send(guest,{type:"ready",ready:true});
+  await Promise.all([waitEvent(host,"game-start"),waitEvent(guest,"game-start"),waitEvent(host,"game-state"),waitEvent(guest,"game-state")]);
   send(host,{type:"create-custom-room",mode:"normal",inviteIds:["50001"]});
   const err=await waitEvent(host,"error",e=>e.code==="INVALID_INVITE_IDS");
   assert.equal(err.code,"INVALID_INVITE_IDS");
