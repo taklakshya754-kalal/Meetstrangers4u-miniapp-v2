@@ -145,3 +145,10 @@
 /* Custom Room: align User ID spacing with the selection-to-score gap; keep footer anchored */
 #td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:10px;margin-bottom:10px;}
 #td-setup-overlay.td-custom-room-active .td-footnote{margin-top:auto;margin-bottom:2px;}
+
+
+/* Custom Room: increase vertical gaps between setup sections by 50% */
+#td-setup-overlay.td-custom-room-active .td-subtitle{margin-bottom:22.5px;}
+#td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:15px;margin-bottom:21px;}
+#td-setup-overlay.td-custom-room-active .td-points{margin-top:15px;margin-bottom:21px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites{margin-top:15px;margin-bottom:15px;}
