@@ -70,7 +70,7 @@
       if(overlay.classList.contains("td-id-entry-focus"))return;
       overlay.classList.add("td-id-entry-focus");
       const boxCount=Math.max(1,selectedPlayers-1);
-      const existing=(inviteInput.value||"").split(/[\\s,;]+/).map(x=>x.trim()).filter(Boolean);
+      const existing=(inviteInput.value||"").split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean);
       inviteContainer.querySelector("#td-invite-id-boxes")?.remove();
       const boxes=document.createElement("div");
       boxes.id="td-invite-id-boxes";
@@ -80,11 +80,11 @@
       boxes.querySelectorAll("input").forEach(input=>input.addEventListener("input",()=>{
         inviteInput.value=[...boxes.querySelectorAll("input")].map(x=>x.value.trim()).filter(Boolean).join(", ");
       }));
-      inviteInput.style.display="none";
     });
     inviteContainer.addEventListener("focusout",e=>{
       if(inviteContainer.contains(e.relatedTarget))return;
       overlay.classList.remove("td-id-entry-focus");
+      inviteContainer.querySelector("#td-invite-id-boxes")?.remove();
     });
 
   }
