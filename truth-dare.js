@@ -259,7 +259,7 @@
       if(data.type==="chat-message" && gameState){ gameState.chat=(gameState.chat||[]).concat(data).slice(-40); renderGame(); }
       if(data.type==="rtc-signal" && (gameState||lobbyState.isCustom||["room","starting"].includes(lobbyState.status))){ handleRtcSignal(String(data.from||""),data.signal).catch(()=>{}); }
       if(data.type==="player-left" && gameState){ closeVoicePeerFor(data.playerId); gameState.players=data.players||[]; renderGame(); }
-      if(data.type==="room-closed"){ gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
+      if(data.type==="room-closed"){ stopVoice(); gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="queue-cancelled"){ lobbyState.status="idle"; }
       if(data.type==="error"){if(["ALREADY_INVITED","ROOM_FULL","INVITEE_BUSY","HOST_ONLY_INVITE","INVALID_INVITE_ID"].includes(data.code)){showToast(({ALREADY_INVITED:"This user has already been invited.",ROOM_FULL:"The room is full.",INVITEE_BUSY:"This user is currently busy.",HOST_ONLY_INVITE:"Only the host can invite players.",INVALID_INVITE_ID:"Enter a valid Telegram User ID."})[data.code]);}else if(gameState){gameState.resultText="Action failed: "+String(data.code||"error");renderGame();}else{lobbyState.status="offline";renderLobby();}}
     };
@@ -304,7 +304,7 @@
       if(data.type==="chat-message"&&gameState){gameState.chat=(gameState.chat||[]).concat(data).slice(-40);renderGame();}
       if(data.type==="rtc-signal"&&(gameState||lobbyState.isCustom)){handleRtcSignal(String(data.from||""),data.signal).catch(()=>{});}
       if(data.type==="player-left"&&gameState){closeVoicePeerFor(data.playerId);gameState.players=data.players||[];renderGame();}
-      if(data.type==="room-closed"){gameState=null;lobbyState.status="closed";lobbyState.roomId=null;lobbyState.players=[];lobbyState.ready=false;renderLobby();}
+      if(data.type==="room-closed"){stopVoice();gameState=null;lobbyState.status="closed";lobbyState.roomId=null;lobbyState.players=[];lobbyState.ready=false;renderLobby();}
       if(data.type==="error"){const code=String(data.code||"error");if(gameState){gameState.resultText="Action failed: "+code;renderGame();}else{lobbyState.status="offline";renderLobby();alert("Custom room: "+code);}}
     };
     ws.onerror=()=>{if(socket===ws){lobbyState.status="offline";renderLobby();}};ws.onclose=()=>{if(socket===ws&&!["starting"].includes(lobbyState.status)){lobbyState.status="offline";renderLobby();}};
