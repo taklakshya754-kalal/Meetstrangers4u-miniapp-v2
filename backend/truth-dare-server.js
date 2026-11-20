@@ -109,7 +109,7 @@ function makePrivateRoom(host,inviteIds,mode) {
   for(const inviteeId of inviteIds)registerPrivateInvite(room,host,inviteeId);
   send(host.ws,"custom-room-created",{roomId,playerCount:count,mode,players:room.players.map(safePlayer),...(process.env.TRUTH_DARE_TEST_MODE==="1"?{testInviteTokens:[...privateInvites.values()].filter(v=>v.roomId===roomId).map(v=>v.token)}:{})});
   const expireRoom=setTimeout(()=>{const active=rooms.get(roomId);if(!active||active.status!=="inviting")return;for(const p of active.players){p.roomId=null;p.ready=false;send(p.ws,"room-closed",{reason:"invite-expired"});}for(const [token,inv] of privateInvites)if(inv.roomId===roomId)privateInvites.delete(token);rooms.delete(roomId);},INVITE_TTL_MS);expireRoom.unref?.();
-  (async()=>{let sent=0,failed=0;for(const id of inviteIds){const inv=[...privateInvites.values()].find(v=>v.roomId===roomId&&v.inviteeId===id&&v.status==="pending");if(inv&&await sendPrivateInvite(inv))sent++;else failed++;}send(host.ws,"custom-invites-sent",{sent,failed});})();
+  (async()=>{let sent=0,failed=0;for(const id of inviteIds){const inv=[...privateInvites.values()].find(v=>v.roomId===roomId&&v.inviteeId===id&&v.status==="pending");if(inv&&await sendPrivateInvite(inv))sent++;else{failed++;if(inv){privateInvites.delete(inv.token);room.inviteIds.delete(id);}}}send(host.ws,"custom-invites-sent",{sent,failed,pendingInviteCount:sent});})();
 }
 function joinPrivateRoom(player,token) {
   const invite=privateInvites.get(token);
