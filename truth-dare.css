@@ -116,3 +116,10 @@
 #td-setup-overlay .td-custom-selection-count{color:#e8e5ff}
 #td-setup-overlay .td-custom-selection-mode{color:#b5a4ff;text-align:right}
 #td-setup-overlay .td-player-section[hidden],#td-setup-overlay .td-mode-section[hidden]{display:none}
+
+
+/* Custom room summary: two full-size side-by-side selection cards, matching setup choices */
+#td-setup-overlay .td-custom-selection{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0 17px;padding:0;border:0;background:none;border-radius:0;color:#f3f0ff;font-size:13px;font-weight:800;}
+#td-setup-overlay .td-custom-selection-count,#td-setup-overlay .td-custom-selection-mode{display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 12px;border:1px solid rgba(153,129,255,.24);background:linear-gradient(160deg,rgba(116,82,255,.14),rgba(255,255,255,.035));border-radius:14px;color:#e8e5ff;text-align:center;box-sizing:border-box;}
+#td-setup-overlay .td-custom-selection-mode{color:#b5a4ff;}
+#td-setup-overlay .td-custom-selection[hidden]{display:none}
