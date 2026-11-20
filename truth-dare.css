@@ -180,3 +180,31 @@
 #td-setup-overlay .td-custom-rewards-preview .td-reward-row{padding:6px 3px}
 #td-setup-overlay .td-custom-rewards-preview p:not(.td-reward-selection-note){font-size:10px;color:#aeb5d0;text-align:center;margin:6px 0 0}
 #td-setup-overlay.td-custom-room-active .td-custom-rewards-preview{margin:0 0 10px}
+
+/* Custom Room: compact sheet; rewards above score and everything visible without scrolling */
+#td-setup-overlay.td-custom-room-active{align-items:center;padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom));}
+#td-setup-overlay.td-custom-room-active .td-sheet{height:auto;max-height:calc(100dvh - 24px - env(safe-area-inset-bottom));min-height:0;overflow:hidden;}
+#td-setup-overlay.td-custom-room-active .td-setup-content{display:block;min-height:0;padding-top:0;}
+#td-setup-overlay.td-custom-room-active .td-subtitle{margin-bottom:7px;}
+#td-setup-overlay.td-custom-room-active .td-custom-selection{margin-top:6px;margin-bottom:8px;}
+#td-setup-overlay.td-custom-room-active .td-custom-rewards-preview{padding:7px 9px;margin:0 0 7px;border-radius:12px;}
+#td-setup-overlay.td-custom-room-active .td-custom-rewards-preview .td-winner-rewards-title{margin-bottom:4px;}
+#td-setup-overlay.td-custom-room-active .td-custom-rewards-preview .td-reward-row{padding:4px 2px;font-size:11px;}
+#td-setup-overlay.td-custom-room-active .td-custom-rewards-preview .td-reward-row strong{font-size:11px;}
+#td-setup-overlay.td-custom-room-active .td-custom-rewards-preview p:not(.td-reward-selection-note){margin-top:4px;font-size:9px;}
+#td-setup-overlay.td-custom-room-active .td-reward-selection-note{margin:4px 0;padding:5px 6px;font-size:9px;}
+#td-setup-overlay.td-custom-room-active .td-points{padding:8px 10px;margin:0 0 7px;border-radius:12px;}
+#td-setup-overlay.td-custom-room-active .td-points .td-label{margin-bottom:3px;}
+#td-setup-overlay.td-custom-room-active .td-points .td-point-row{padding:4px 0;font-size:11px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites{margin:7px 0;padding:8px;border-radius:12px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites textarea{min-height:48px;padding:8px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites small{margin-top:4px;font-size:9px;}
+#td-setup-overlay.td-custom-room-active #td-confirm-setup{padding:11px;margin-top:4px;}
+#td-setup-overlay.td-custom-room-active .td-footnote{margin:7px 0 0;}
+@media(max-height:680px){
+#td-setup-overlay.td-custom-room-active .td-sheet{padding:14px 13px 12px;}
+#td-setup-overlay.td-custom-room-active .td-custom-rewards-preview{padding:6px 8px;margin-bottom:5px;}
+#td-setup-overlay.td-custom-room-active .td-points{padding:7px 9px;margin-bottom:5px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites{margin:5px 0;padding:7px;}
+#td-setup-overlay.td-custom-room-active #td-custom-invites textarea{min-height:42px;}
+}
