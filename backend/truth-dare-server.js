@@ -395,7 +395,7 @@ wss.on("connection", (ws, req) => {
     if(msg.type==="host-add-invite"){
       const inviteeId=String(msg.inviteeId||""),room=rooms.get(player.roomId);
       if(!room||!room.isPrivate||room.status!=="inviting"||!player.host)return send(ws,"error",{code:"HOST_ONLY_INVITE"});
-      if(!/^\\d{5,16}$/.test(inviteeId)||inviteeId===player.id)return send(ws,"error",{code:"INVALID_INVITE_ID"});
+      if(!/^\d{5,16}$/.test(inviteeId)||inviteeId===player.id)return send(ws,"error",{code:"INVALID_INVITE_ID"});
       if(room.players.some(p=>p.id===inviteeId)||room.inviteIds.has(inviteeId))return send(ws,"error",{code:"ALREADY_INVITED"});
       const pendingCount=[...privateInvites.values()].filter(v=>v.roomId===room.id&&v.status==="pending").length;
       if(room.players.length+pendingCount>=room.playerCount)return send(ws,"error",{code:"ROOM_FULL"});
