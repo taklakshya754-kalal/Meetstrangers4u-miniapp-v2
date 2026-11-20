@@ -91,3 +91,5 @@
 .td-custom-invites[hidden]{display:none}
 .td-custom-invites textarea{width:100%;box-sizing:border-box;min-height:75px;resize:vertical;background:rgba(4,7,19,.5);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px;color:#f4f3ff;font-size:12px;outline:none}
 .td-custom-invites small{display:block;margin-top:7px;font-size:10px;line-height:1.4;color:#9ea7c6}
+
+.td-match-actions[hidden]{display:none}
