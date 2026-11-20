@@ -59,3 +59,29 @@
 .td-voice-start{background:linear-gradient(100deg,#169b72,#48d2a1);box-shadow:0 6px 20px rgba(22,169,122,.16)}
 .td-voice-start:disabled{opacity:.65}
 .td-voice-error{font-size:11px;color:#ff9eaa;line-height:1.4;margin:6px 0}
+
+/* Fit setup sheet on-screen by reducing vertical gaps only; preserve typography and palette */
+#td-setup-overlay.td-overlay{
+  align-items:center;
+  padding:0 10px env(safe-area-inset-bottom);
+}
+#td-setup-overlay .td-sheet{
+  width:min(100%,480px);
+  height:calc(100dvh - 190px - env(safe-area-inset-bottom));
+  max-height:calc(100dvh - 190px - env(safe-area-inset-bottom));
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:8px 16px 8px;
+}
+#td-setup-overlay .td-close{top:8px;right:10px}
+#td-setup-overlay .td-kicker{margin:0 0 3px}
+#td-setup-overlay .td-subtitle{margin:2px 0 8px}
+#td-setup-overlay .td-section{margin:8px 0}
+#td-setup-overlay .td-label{margin-bottom:6px}
+#td-setup-overlay .td-player{padding:7px 3px 6px}
+#td-setup-overlay .td-mode-list{gap:6px}
+#td-setup-overlay .td-mode{padding:8px 10px;gap:9px}
+#td-setup-overlay .td-points{padding:8px 10px;margin:8px 0}
+#td-setup-overlay .td-point-row{padding:4px 0}
+#td-setup-overlay .td-primary{padding:12px}
+#td-setup-overlay .td-footnote{margin:5px 0 0}
