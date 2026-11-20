@@ -248,7 +248,7 @@
       if(data.type==="challenge-result" && gameState){ gameState.scores=data.scores||gameState.scores; gameState.phase=data.nextPhase||"spin"; gameState.challenge=null; gameState.votes={}; gameState.ranked=data.ranked; gameState.resultText=data.skipped?"Challenge skipped · "+data.delta+" Score":data.accepted?"Verified · +"+data.delta+" Score":"Verification failed · no score"; renderGame(); }
       if(data.type==="game-over" && gameState){ gameState.phase="finished"; gameState.ranked=data.ranked; gameState.resultText="🏆 "+data.winner.name+" wins!"; renderGame(); }
       if(data.type==="chat-message" && gameState){ gameState.chat=(gameState.chat||[]).concat(data).slice(-40); renderGame(); }
-      if(data.type==="rtc-signal" && gameState){ handleRtcSignal(String(data.from||""),data.signal).catch(()=>{}); }
+      if(data.type==="rtc-signal" && (gameState||lobbyState.isCustom)){ handleRtcSignal(String(data.from||""),data.signal).catch(()=>{}); }
       if(data.type==="player-left" && gameState){ gameState.players=data.players||[]; renderGame(); }
       if(data.type==="room-closed"){ gameState=null; lobbyState.status="closed"; lobbyState.roomId=null; lobbyState.players=[]; lobbyState.ready=false; renderLobby(); }
       if(data.type==="queue-cancelled"){ lobbyState.status="idle"; }
@@ -276,6 +276,7 @@
     ws.onmessage=event=>{if(socket!==ws)return;let data;try{data=JSON.parse(event.data);}catch(_){return;}
       if(data.type==="connected")return;
       if(data.type==="custom-room-created"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];renderLobby();}
+      if(data.type==="custom-joined"){lobbyState.status="waiting";lobbyState.roomId=data.roomId;lobbyState.players=data.players||[];lobbyState.isCustom=true;renderLobby();}
       if(data.type==="custom-invites-sent"){lobbyState.inviteSent=data.sent||0;lobbyState.inviteFailed=data.failed||0;renderLobby();}
       if(data.type==="custom-room-updated"){lobbyState.players=data.players||lobbyState.players;renderLobby();}
       if(data.type==="custom-invite-sent"){if(data.sent)showToast("Invitation sent successfully!");else showToast("Invitation could not be delivered. Check the User ID.");}
