@@ -81,11 +81,9 @@
         inviteInput.value=[...boxes.querySelectorAll("input")].map(x=>x.value.trim()).filter(Boolean).join(", ");
       }));
     };
-    inviteContainer.addEventListener("click",activateIdEntry);
-    inviteContainer.addEventListener("focusout",e=>{
-      if(inviteContainer.contains(e.relatedTarget))return;
-      overlay.classList.remove("td-id-entry-focus");
-      inviteContainer.querySelector("#td-invite-id-boxes")?.remove();
+    inviteContainer.addEventListener("click",e=>{
+      if(e.target.closest("#td-invite-id-boxes"))return;
+      activateIdEntry();
     });
 
   }
