@@ -44,18 +44,17 @@
       <p class="td-subtitle">Set up your game room</p>
       <section class="td-section"><div class="td-label">PLAYERS</div><div class="td-player-grid">${[2,3,4,5].map(n=>`<button class="td-player ${n===selectedPlayers?'selected':''}" data-players="${n}" type="button"><b>${n}</b><small>Players</small></button>`).join("")}</div></section>
       <section class="td-section"><div class="td-label">GAME MODE</div><div class="td-mode-list">${MODES.map(m=>`<button class="td-mode ${m.id===selectedMode?'selected':''}" data-mode="${m.id}" type="button"><span class="td-mode-icon">${m.icon}</span><span class="td-mode-copy"><b>${m.title}</b><small>${m.desc}</small></span><span class="td-check">✓</span></button>`).join("")}</div></section>
-      <section class="td-section td-play-type"><div class="td-label">MATCH TYPE</div><div class="td-type-grid"><button type="button" class="td-type selected" data-play-type="random"><b>🌍 Random</b><small>Match with players</small></button><button type="button" class="td-type" data-play-type="custom"><b>＋ Custom Room</b><small>Invite friends by Telegram ID</small></button></div><div class="td-custom-invites" hidden><label class="td-label" for="td-invite-ids">TELEGRAM USER IDs (1–4)</label><textarea id="td-invite-ids" maxlength="100" placeholder="Example: 123456789, 987654321"></textarea><small>Private room · Host + 1 to 4 friends · 2–5 players total</small></div></section>
       <section class="td-points"><div class="td-label">GAME SCORE · WALLET COINS NOT USED</div><div class="td-point-row"><span>Truth verified</span><b>+25 Score</b></div><div class="td-point-row"><span>Dare verified</span><b>+50 Score</b></div><div class="td-point-row"><span>Skip Truth</span><b class="minus">−25 Score</b></div><div class="td-point-row"><span>Skip Dare</span><b class="minus">−50 Score</b></div></section>
-      <button class="td-primary" type="button" id="td-confirm-setup">Find Players <span>→</span></button>
+      <div class="td-custom-invites" id="td-custom-invites" hidden><label class="td-label" for="td-invite-ids">TELEGRAM USER IDs (1–4)</label><textarea id="td-invite-ids" maxlength="100" placeholder="Example: 123456789, 987654321"></textarea><small>Private room · Host + 1 to 4 friends · 2–5 players total</small></div><div class="td-match-actions" id="td-match-actions"><button class="td-primary td-match-btn" type="button" id="td-random-match"><span class="td-match-icon">🎲</span> Random</button><button class="td-primary td-match-btn" type="button" id="td-custom-match"><span class="td-match-icon">👥</span> Custom</button></div><button class="td-primary" type="button" id="td-confirm-setup" hidden>Create Room <span>→</span></button>
       <p class="td-footnote">Real users only · Score stays inside the game</p></div></div>`;
     document.body.appendChild(overlay);
     overlay.querySelector(".td-close").onclick = close;
     overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
     overlay.querySelectorAll("[data-players]").forEach(btn => btn.onclick = () => { selectedPlayers=Number(btn.dataset.players); overlay.querySelectorAll("[data-players]").forEach(x=>x.classList.toggle("selected",x===btn)); });
     overlay.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => { selectedMode=btn.dataset.mode; overlay.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===btn)); });
-    let playType="random";
-    overlay.querySelectorAll("[data-play-type]").forEach(btn=>btn.onclick=()=>{playType=btn.dataset.playType;overlay.querySelectorAll("[data-play-type]").forEach(x=>x.classList.toggle("selected",x===btn));overlay.querySelector(".td-custom-invites").hidden=playType!=="custom";overlay.querySelector(".td-player-grid").style.display=playType==="custom"?"none":"grid";});
-    overlay.querySelector("#td-confirm-setup").onclick=()=>{if(playType==="random")startQueue(selectedPlayers,selectedMode);else startCustomRoom(selectedMode,overlay.querySelector("#td-invite-ids").value);};
+    overlay.querySelector("#td-random-match").onclick=()=>startQueue(selectedPlayers,selectedMode);
+    overlay.querySelector("#td-custom-match").onclick=()=>{overlay.querySelector("#td-custom-invites").hidden=false;overlay.querySelector("#td-match-actions").hidden=true;overlay.querySelector("#td-confirm-setup").hidden=false;overlay.querySelector(".td-player-grid").style.display="none";};
+    overlay.querySelector("#td-confirm-setup").onclick=()=>startCustomRoom(selectedMode,overlay.querySelector("#td-invite-ids").value);
 
   }
   function renderLobby() {
