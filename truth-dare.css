@@ -67,3 +67,14 @@
 }
 #td-setup-overlay .td-points .td-label{margin-bottom:6px}
 #td-setup-overlay .td-point-row{padding:5px 0}
+
+
+/* Subtle setup-screen compacting: preserve design, reduce vertical spacing only */
+#td-setup-overlay .td-sheet{padding:20px 17px 15px}
+#td-setup-overlay .td-subtitle{margin-bottom:15px}
+#td-setup-overlay .td-section{margin:13px 0}
+#td-setup-overlay .td-player{padding:9px 3px 8px}
+#td-setup-overlay .td-mode{padding:10px}
+#td-setup-overlay .td-points{margin:13px 0}
+#td-setup-overlay .td-primary{padding:13px}
+#td-setup-overlay .td-footnote{margin-top:9px}
