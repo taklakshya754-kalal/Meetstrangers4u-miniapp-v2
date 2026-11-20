@@ -99,8 +99,8 @@
 #td-setup-overlay .td-setup-content{
   --td-setup-scale:clamp(.72, calc(100dvh / 860), .96);
   zoom:var(--td-setup-scale);
-  width:calc(100% / var(--td-setup-scale));
-  height:calc(100% / var(--td-setup-scale));
+  width:115%;
+  height:115%;
   box-sizing:border-box;
   display:flex;
   flex-direction:column;
