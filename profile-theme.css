@@ -1,0 +1,116 @@
+/* Profile flow — Truth & Dare midnight navy / royal purple theme.
+   Scoped to Profile and its subpages; Truth & Dare and Calling remain untouched. */
+#app.compact-view .profile-page .profile-hero{
+  border:1px solid rgba(143,112,255,.24);
+  border-radius:20px;
+  background:linear-gradient(160deg,rgba(23,28,57,.92),rgba(16,21,43,.88) 62%,rgba(21,19,41,.92));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+}
+#app.compact-view .profile-page .profile-avatar{
+  border-color:rgba(169,154,255,.48);
+  background:linear-gradient(145deg,#7652E8 0%,#5634B4 58%,#25205A 100%);
+  box-shadow:0 10px 28px rgba(103,75,220,.27),inset 0 1px 0 rgba(255,255,255,.16);
+}
+#app.compact-view .profile-page .profile-name{color:#F6F6FF}
+#app.compact-view .profile-page .profile-handle{color:#AEB5D0}
+#app.compact-view .profile-page .profile-country{color:#D5CEFF}
+#app.compact-view .profile-page .profile-member-tag{
+  border-color:rgba(169,154,255,.30);
+  color:#B5A4FF;
+  background:rgba(116,82,255,.13);
+}
+#app.compact-view .profile-page .profile-member-tag span{
+  background:#72DDB2;
+  box-shadow:0 0 8px rgba(114,221,178,.45);
+}
+#app.compact-view .profile-page .profile-balance{
+  border-color:rgba(153,129,255,.34);
+  background:radial-gradient(ellipse at 10% 0%,rgba(123,91,255,.22),transparent 58%),linear-gradient(115deg,#211B50 0%,#171B3B 58%,#10152B 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 8px 22px rgba(0,0,0,.16);
+}
+#app.compact-view .profile-page .profile-eyebrow{color:#AEB5D0}
+#app.compact-view .profile-page .profile-balance-value{color:#F6F2FF}
+#app.compact-view .profile-page .wallet-button{
+  border-color:rgba(169,154,255,.34);
+  color:#D5CEFF;
+  background:rgba(116,82,255,.18);
+}
+#app.compact-view .profile-page .profile-section-label{color:#A99AFF}
+#app.compact-view .profile-page .profile-menu-row{
+  border-color:rgba(143,112,255,.22);
+  background:linear-gradient(145deg,rgba(27,31,65,.96),rgba(16,21,43,.96));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+#app.compact-view .profile-page .profile-menu-row.earn-row{
+  border-color:rgba(153,129,255,.42);
+  background:radial-gradient(ellipse at 8% 50%,rgba(123,91,255,.20),transparent 62%),linear-gradient(110deg,#29205F 0%,#201A4B 60%,#151936 100%);
+}
+#app.compact-view .profile-page .profile-menu-icon{
+  background:rgba(116,82,255,.16);
+  color:#B5A4FF;
+}
+#app.compact-view .profile-page .earn-icon{
+  color:#E0D7FF;
+  background:rgba(123,91,255,.24);
+}
+#app.compact-view .profile-page .privacy-icon{color:#8DE6BF}
+#app.compact-view .profile-page .about-icon{color:#B5A4FF}
+#app.compact-view .profile-page .profile-menu-copy strong{color:#F6F6FF}
+#app.compact-view .profile-page .profile-menu-copy small{color:#AEB5D0}
+#app.compact-view .profile-page .profile-menu-arrow{color:#A99AFF}
+#app.compact-view .profile-page .profile-footer{color:#858EAD}
+
+/* Profile subpages: Earn Coins, Wallet, Privacy & Safety, About */
+#app .profile-subpage,
+#app .profile-info-page{
+  color:#F6F6FF;
+  border:1px solid rgba(143,112,255,.30);
+  border-radius:24px;
+  background:linear-gradient(160deg,#171C39 0%,#10152B 60%,#151329 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 16px 36px rgba(0,0,0,.18);
+}
+#app .profile-subpage .profile-back{color:#B5A4FF}
+#app .profile-subpage .profile-eyebrow{color:#A99AFF}
+#app .profile-subpage .page-title{color:#F6F6FF}
+#app .profile-subpage .page-subtitle{color:#AEB5D0}
+#app .profile-subpage .earn-illustration{
+  color:#F0E9FF;
+  background:linear-gradient(145deg,#7652E8,#5634B4 62%,#25205A);
+  box-shadow:0 10px 28px rgba(103,75,220,.28);
+}
+#app .profile-subpage .earn-reward-card{
+  border-color:rgba(143,112,255,.24);
+  background:linear-gradient(145deg,rgba(123,91,255,.13),rgba(255,255,255,.025));
+}
+#app .profile-subpage .earn-reward-card span{color:#AEB5D0}
+#app .profile-subpage .earn-reward-card strong{color:#F3D58B}
+#app .profile-subpage .primary-button{
+  background:linear-gradient(100deg,#6E53FF,#A078FF);
+  box-shadow:0 7px 24px rgba(113,83,255,.22);
+}
+#app .profile-subpage .earn-note{color:#AEB5D0}
+#app .profile-subpage .wallet-total{
+  border:1px solid rgba(153,129,255,.28);
+  background:linear-gradient(120deg,#211B50,#171B3B 65%,#151329);
+  color:#F3D58B;
+}
+#app .profile-subpage .wallet-total small{color:#AEB5D0}
+
+/* Privacy and About information cards */
+#app .profile-info-page .profile-info-symbol{color:#B5A4FF}
+#app .profile-info-page .profile-info-kicker{color:#A99AFF}
+#app .profile-info-page .page-title{color:#F6F6FF}
+#app .profile-info-page .profile-info-lead{color:#AEB5D0}
+#app .profile-info-page .profile-info-section{
+  border:1px solid rgba(143,112,255,.20);
+  border-radius:15px;
+  background:linear-gradient(145deg,rgba(123,91,255,.10),rgba(255,255,255,.025));
+}
+#app .profile-info-page .profile-info-section-icon{color:#B5A4FF}
+#app .profile-info-page .profile-info-section-copy h2{color:#F0EDFF}
+#app .profile-info-page .profile-info-section-copy p{color:#AEB5D0}
+#app .profile-info-page .profile-info-signoff{
+  border-color:rgba(255,208,112,.24);
+  background:rgba(255,208,112,.07);
+  color:#F3D58B;
+}
