@@ -509,14 +509,21 @@ function funZoneScreen() {
 
       <div style="height:22px"></div>
 
-      <button class="call-card"
+      <button class="call-card funzone-truth-card"
         onclick="window.openTruthDareSetup && window.openTruthDareSetup()">
 
-        🎯
+        <span class="funzone-truth-copy">
+          <span class="funzone-truth-icon">🎯</span>
+          <h3>Truth or Dare</h3>
+          <p>Play with other people.</p>
+          <span class="funzone-win-hint">Play &amp; win coins!</span>
+        </span>
 
-        <h3>Truth or Dare</h3>
-
-        <p>Play with other people.</p>
+        <span class="funzone-reward-preview" aria-label="Winner rewards: First prize 100 coins, second prize 50 coins">
+          <span class="funzone-reward-heading">🏆 WIN REWARDS</span>
+          <span class="funzone-reward-row"><span>🥇 1st Prize</span><strong>100 💰</strong></span>
+          <span class="funzone-reward-row"><span>🥈 2nd Prize</span><strong>50 💰</strong></span>
+        </span>
 
       </button>
 

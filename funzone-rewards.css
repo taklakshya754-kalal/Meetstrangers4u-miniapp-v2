@@ -1,0 +1,41 @@
+/* Truth or Dare winner rewards preview — scoped to the Fun Zone game card only */
+#app .funzone-truth-card{
+  position:relative;
+  display:block;
+  min-height:122px;
+  padding:17px 158px 17px 17px;
+  overflow:hidden;
+  background:linear-gradient(145deg,#202F50,#1B2545);
+  border-color:rgba(143,112,255,.34);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+}
+#app .funzone-truth-copy{display:block;position:relative;z-index:1}
+#app .funzone-truth-icon{display:block;font-size:23px;line-height:1.2}
+#app .funzone-truth-card h3{margin-top:10px;font-size:clamp(16px,4.5vw,19px);line-height:1.2}
+#app .funzone-truth-card p{margin-top:6px;font-size:12px;line-height:1.4}
+#app .funzone-win-hint{
+  display:inline-block;margin-top:9px;color:#F3D58B;font-size:10px;font-weight:800;letter-spacing:.2px;
+}
+#app .funzone-reward-preview{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  width:137px;box-sizing:border-box;padding:9px 8px;
+  border:1px solid rgba(255,207,112,.32);border-radius:13px;
+  background:linear-gradient(150deg,rgba(255,203,95,.10),rgba(124,91,255,.09));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 5px 16px rgba(0,0,0,.12);
+}
+#app .funzone-reward-heading{
+  display:block;margin-bottom:5px;text-align:center;
+  color:#F3D58B;font-size:8px;font-weight:900;letter-spacing:1px;white-space:nowrap;
+}
+#app .funzone-reward-row{
+  display:flex;align-items:center;justify-content:space-between;gap:3px;
+  padding:5px 0;color:#D9DCEF;font-size:9px;white-space:nowrap;
+}
+#app .funzone-reward-row+ .funzone-reward-row{border-top:1px solid rgba(255,255,255,.07)}
+#app .funzone-reward-row strong{color:#F5D98F;font-size:10px;font-weight:850;white-space:nowrap}
+@media(max-width:360px){
+  #app .funzone-truth-card{padding-right:143px;padding-left:14px}
+  #app .funzone-reward-preview{right:9px;width:126px;padding:8px 6px}
+  #app .funzone-reward-row{font-size:8px}
+  #app .funzone-reward-row strong{font-size:9px}
+}
