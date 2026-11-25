@@ -535,3 +535,40 @@
   position:relative;
   z-index:1;
 }
+
+/* Real positioned star elements: visible celestial decoration across Explore gutters */
+#app.explore-view .explore-page{position:relative;isolation:isolate;overflow:hidden}
+#app.explore-view .explore-starfield{
+  position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+}
+#app.explore-view .explore-starfield .star{
+  position:absolute;display:block;line-height:1;
+  color:#e4d8ff;font-family:Georgia,serif;
+  text-shadow:0 0 7px currentColor,0 0 15px rgba(173,145,255,.55);
+  opacity:.88;transform:translate(-50%,-50%);
+}
+#app.explore-view .explore-starfield .s1{left:5%;top:13%;font-size:15px}
+#app.explore-view .explore-starfield .s2{left:14%;top:23%;font-size:19px;color:#cdbaff}
+#app.explore-view .explore-starfield .s3{left:7%;top:39%;font-size:17px;color:#f2dcae}
+#app.explore-view .explore-starfield .s4{left:17%;top:53%;font-size:12px}
+#app.explore-view .explore-starfield .s5{left:4%;top:68%;font-size:18px;color:#f2dcae}
+#app.explore-view .explore-starfield .s6{left:13%;top:83%;font-size:14px}
+#app.explore-view .explore-starfield .s7{left:95%;top:17%;font-size:17px;color:#f2dcae}
+#app.explore-view .explore-starfield .s8{left:87%;top:29%;font-size:18px}
+#app.explore-view .explore-starfield .s9{left:96%;top:44%;font-size:13px}
+#app.explore-view .explore-starfield .s10{left:86%;top:57%;font-size:16px;color:#f2dcae}
+#app.explore-view .explore-starfield .s11{left:96%;top:73%;font-size:19px}
+#app.explore-view .explore-starfield .s12{left:88%;top:88%;font-size:16px}
+#app.explore-view .explore-starfield .s13{left:28%;top:8%;font-size:12px}
+#app.explore-view .explore-starfield .s14{left:72%;top:11%;font-size:13px;color:#f2dcae}
+#app.explore-view .explore-starfield .s15{left:35%;top:94%;font-size:17px}
+#app.explore-view .explore-starfield .s16{left:68%;top:92%;font-size:15px;color:#f2dcae}
+#app.explore-view .explore-starfield .s17{left:23%;top:37%;font-size:11px}
+#app.explore-view .explore-starfield .s18{left:77%;top:39%;font-size:12px}
+#app.explore-view .explore-starfield .s19{left:25%;top:72%;font-size:14px;color:#f2dcae}
+#app.explore-view .explore-starfield .s20{left:75%;top:68%;font-size:17px}
+#app.explore-view .explore-starfield .s21{left:42%;top:5%;font-size:14px}
+#app.explore-view .explore-starfield .s22{left:58%;top:96%;font-size:12px;color:#f2dcae}
+#app.explore-view .explore-starfield .s23{left:9%;top:94%;font-size:11px}
+#app.explore-view .explore-starfield .s24{left:92%;top:5%;font-size:12px}
+#app.explore-view .explore-page > :not(.explore-starfield){position:relative;z-index:1}
