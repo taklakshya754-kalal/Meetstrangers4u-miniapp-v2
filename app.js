@@ -465,33 +465,48 @@ function callFlowScreen() {
 // EXPLORE SCREEN
 
 function exploreScreen() {
+  const account = state.account || {};
+  const profilePhoto = state.user?.photo_url || account.profile_photo_url || account.photo_url || account.telegram_photo_url || "";
+  const hasProfilePhoto = Boolean(String(profilePhoto).trim());
   return `
     ${header()}
-
-    <section class="panel" style="text-align:center;padding:28px 18px">
-
-      <h1 class="page-title">Explore</h1>
-
-      <div style="height:28px"></div>
-
-      <h3>Something Exciting is Coming!</h3>
-
-      <p class="page-subtitle">
-        We're preparing something special for you.
-      </p>
-
-      <div style="height:18px"></div>
-
-      <p class="call-card-label">
-        COMING SOON
-      </p>
-
-    </section>
-
+    <main class="explore-page">
+      <section class="explore-heading">
+        <div><p class="explore-eyebrow">MEET NEW PEOPLE</p><h1 class="explore-title">Explore</h1><p class="explore-subtitle">Discover interesting people and make new connections.</p></div>
+        <div class="explore-heading-orb" aria-hidden="true"><span>✦</span><i></i></div>
+      </section>
+      <section class="explore-stats" aria-label="Your Explore statistics">
+        <div class="explore-stat-icon">♡</div><div class="explore-stat-copy"><span>YOUR COMMUNITY STATS</span><strong>Likes received</strong></div><div class="explore-stat-value">0</div>
+      </section>
+      ${hasProfilePhoto ? `
+        <section class="explore-discovery-card">
+          <div class="explore-card-topline"><span><i></i> DISCOVER</span><span class="explore-card-counter">GETTING READY</span></div>
+          <div class="explore-profile-art" aria-hidden="true"><div class="explore-art-glow"></div><div class="explore-art-ring explore-art-ring-one"></div><div class="explore-art-ring explore-art-ring-two"></div><div class="explore-art-avatar"><span>✦</span></div><span class="explore-art-spark explore-spark-one">✧</span><span class="explore-art-spark explore-spark-two">✦</span><span class="explore-art-spark explore-spark-three">·</span></div>
+          <div class="explore-discovery-copy"><span class="explore-discovery-kicker">YOUR NEXT CONNECTION</span><h2>Someone interesting is out there.</h2><p>We’re getting your discovery experience ready. New profiles will appear here.</p></div>
+          <div class="explore-card-bottom"><span>✦</span> Discover people beyond boundaries</div>
+        </section>
+      ` : `
+        <section class="explore-photo-required">
+          <div class="explore-photo-art" aria-hidden="true"><div class="explore-photo-halo"></div><div class="explore-photo-frame"><span class="explore-photo-head"></span><span class="explore-photo-body"></span><span class="explore-photo-plus">＋</span></div><span class="explore-photo-spark spark-a">✦</span><span class="explore-photo-spark spark-b">✧</span></div>
+          <span class="explore-required-tag"><i></i> ONE QUICK STEP</span>
+          <h2>Let people see you.</h2>
+          <p>Set a profile photo through our Telegram bot to start exploring other members.</p>
+          <div class="explore-photo-note"><span>ⓘ</span><span>A profile photo is required to use Explore.</span></div>
+        </section>
+      `}
+      <section class="explore-actions" aria-label="Profile actions">
+        <button class="explore-action explore-dislike" type="button" onclick="explorePreviewNotice()" aria-label="Dislike" ${hasProfilePhoto ? "" : "disabled"}><span>👎</span><small>Dislike</small></button>
+        <button class="explore-action explore-like" type="button" onclick="explorePreviewNotice()" aria-label="Like" ${hasProfilePhoto ? "" : "disabled"}><span>♥</span><small>Like</small></button>
+        <button class="explore-action explore-skip" type="button" onclick="explorePreviewNotice()" aria-label="Skip" ${hasProfilePhoto ? "" : "disabled"}><span>⏩</span><small>Skip</small></button>
+      </section>
+      <p class="explore-action-caption">Be kind. Every connection starts with a positive gesture.</p>
+    </main>
     ${bottomNav()}
   `;
 }
-
+function explorePreviewNotice() {
+  alert("Profile discovery and reactions will be enabled after the Telegram bot integration.");
+}
 
 // FUN ZONE SCREEN
 
@@ -1587,6 +1602,7 @@ function render() {
   const isCallOptionsPage = ["voice", "video"].includes(state.screen);
   app.classList.toggle("home-view", isHome);
   app.classList.toggle("compact-view", isCompactPage);
+  app.classList.toggle("explore-view", state.screen === "explore");
   app.classList.toggle("call-options-view", isCallOptionsPage);
   document.body.classList.toggle("home-screen-active", isHome || isCompactPage);
   document.body.classList.toggle("call-options-screen-active", isCallOptionsPage);
