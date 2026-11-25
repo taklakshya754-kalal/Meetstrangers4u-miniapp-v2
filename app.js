@@ -529,7 +529,7 @@ const EXPLORE_QUICK_MESSAGES = [
   "Hey! I'd love to get to know you. 👋",
   "Hi! How's your day going?",
   "You seem interesting. Want to connect?",
-  "Hello! Which country are you from? 🌍",
+  "What's something that always makes you smile? 😊",
   "I'd love to learn about your culture.",
   "Hey! What do you enjoy doing in your free time?",
   "Hi! Always happy to make new friends.",
