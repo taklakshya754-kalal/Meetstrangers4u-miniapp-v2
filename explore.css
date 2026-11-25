@@ -64,54 +64,87 @@
 @media(max-width:360px){#app.explore-view .explore-heading{padding:16px 14px}#app.explore-view .explore-heading-orb{flex-basis:56px;width:56px;height:56px}#app.explore-view .explore-title{font-size:25px}#app.explore-view .explore-photo-required,#app.explore-view .explore-discovery-card{min-height:330px;padding-left:14px;padding-right:14px}#app.explore-view .explore-actions{gap:7px;padding-left:2px;padding-right:2px}#app.explore-view .explore-action{gap:5px}}
 
 
-/* Explore layout refinement: keep the screen scrollable above the fixed nav */
+
+/* Explore compact fit — match the no-scroll Truth or Dare screen layout */
 #app.explore-view{
-  height:100vh;
-  height:100dvh;
-  min-height:0;
-  max-height:100dvh;
-  overflow-x:hidden;
-  overflow-y:auto;
-  overscroll-behavior-y:contain;
-  -webkit-overflow-scrolling:touch;
-  padding: max(10px,env(safe-area-inset-top)) 16px
-    calc(118px + env(safe-area-inset-bottom));
-  display:flex;
-  flex-direction:column;
+  height:100vh;height:100dvh;min-height:0;max-height:100dvh;
+  overflow:hidden;
+  padding:max(8px,env(safe-area-inset-top)) 16px
+    max(88px,calc(env(safe-area-inset-bottom) + 78px));
+  display:flex;flex-direction:column;
 }
-#app.explore-view .app-header{flex:0 0 auto;margin-bottom:clamp(9px,1.5svh,14px)}
-#app.explore-view .explore-page{flex:0 0 auto;min-height:0;gap:clamp(10px,1.6svh,15px)}
-#app.explore-view .explore-heading{padding:clamp(13px,2svh,18px) 16px;border-radius:20px}
-#app.explore-view .explore-title{font-size:clamp(24px,3.6svh,28px)}
-#app.explore-view .explore-subtitle{font-size:11px;line-height:1.45;max-width:235px}
-#app.explore-view .explore-heading-orb{flex-basis:56px;width:56px;height:56px}
-#app.explore-view .explore-stats{padding:11px 13px}
-#app.explore-view .explore-stat-icon{width:35px;height:35px;flex-basis:35px}
+#app.explore-view .app-header{
+  flex:0 0 auto;min-height:42px;margin-bottom:clamp(5px,1svh,9px);
+}
+#app.explore-view .explore-page{
+  flex:1 1 auto;min-height:0;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-evenly;
+  gap:clamp(5px,1svh,9px);
+}
+#app.explore-view .explore-heading{
+  flex:0 0 auto;padding:clamp(9px,1.5svh,13px) 13px;
+  border-radius:17px;gap:8px;
+}
+#app.explore-view .explore-eyebrow{font-size:8px;letter-spacing:1.2px}
+#app.explore-view .explore-title{margin-top:3px;font-size:clamp(21px,3.1svh,25px)}
+#app.explore-view .explore-subtitle{margin-top:5px;font-size:10px;line-height:1.35;max-width:220px}
+#app.explore-view .explore-heading-orb{flex-basis:48px;width:48px;height:48px;font-size:20px}
+#app.explore-view .explore-stats{flex:0 0 auto;padding:8px 11px;gap:9px;border-radius:14px}
+#app.explore-view .explore-stat-icon{width:31px;height:31px;flex-basis:31px;border-radius:10px;font-size:21px}
+#app.explore-view .explore-stat-copy{gap:2px}
+#app.explore-view .explore-stat-copy span{font-size:7px}
+#app.explore-view .explore-stat-copy strong{font-size:11px}
+#app.explore-view .explore-stat-value{font-size:21px}
 #app.explore-view .explore-photo-required,
 #app.explore-view .explore-discovery-card{
-  min-height:0;
-  padding:clamp(14px,2svh,18px) 16px;
-  border-radius:21px;
+  flex:1 1 auto;min-height:0;max-height:100%;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(8px,1.5svh,13px) 14px;border-radius:19px;
 }
-#app.explore-view .explore-photo-art{height:clamp(105px,16svh,132px);margin-bottom:6px}
-#app.explore-view .explore-photo-halo{width:122px;height:122px}
-#app.explore-view .explore-photo-frame{width:82px;height:98px;border-radius:23px}
-#app.explore-view .explore-photo-head{top:16px;left:29px;width:24px;height:24px}
-#app.explore-view .explore-photo-body{left:13px;width:56px;height:51px}
-#app.explore-view .explore-photo-required h2{margin-top:9px;font-size:clamp(19px,2.8svh,22px)}
-#app.explore-view .explore-photo-required>p{font-size:11px;line-height:1.5;margin-top:7px}
-#app.explore-view .explore-photo-note{margin-top:12px;padding:9px 10px}
-#app.explore-view .explore-actions{gap:9px;padding:2px 2px 0}
-#app.explore-view .explore-action{min-height:52px;border-radius:14px}
-#app.explore-view .explore-action-caption{padding-bottom:4px}
+#app.explore-view .explore-photo-art{flex:0 0 auto;height:clamp(72px,11svh,94px);margin:0 auto 3px}
+#app.explore-view .explore-photo-halo{width:96px;height:96px}
+#app.explore-view .explore-photo-frame{width:67px;height:79px;border-radius:19px}
+#app.explore-view .explore-photo-head{top:12px;left:24px;width:20px;height:20px}
+#app.explore-view .explore-photo-body{left:10px;width:47px;height:43px}
+#app.explore-view .explore-photo-plus{right:4px;bottom:5px;width:21px;height:21px;font-size:15px}
+#app.explore-view .explore-photo-spark{font-size:14px}
+#app.explore-view .spark-a{top:10px;right:calc(50% - 70px)}
+#app.explore-view .spark-b{bottom:7px;left:calc(50% - 75px)}
+#app.explore-view .explore-required-tag{font-size:7px;letter-spacing:1.1px}
+#app.explore-view .explore-photo-required h2{margin-top:6px;font-size:clamp(17px,2.5svh,20px)}
+#app.explore-view .explore-photo-required>p{margin-top:5px;font-size:10px;line-height:1.4;max-width:275px}
+#app.explore-view .explore-photo-note{margin-top:9px;padding:7px 8px;font-size:9px}
+#app.explore-view .explore-actions{flex:0 0 auto;gap:8px;padding:0 3px}
+#app.explore-view .explore-action{min-height:46px;padding:6px;border-radius:13px;gap:5px}
+#app.explore-view .explore-action span{font-size:17px}
+#app.explore-view .explore-action small{font-size:9px}
+#app.explore-view .explore-like{min-height:50px}
+#app.explore-view .explore-like span{font-size:20px}
+#app.explore-view .explore-action-caption{flex:0 0 auto;padding:0 8px;font-size:8px;line-height:1.25}
+#app.explore-view .explore-card-topline{font-size:7px}
+#app.explore-view .explore-profile-art{height:clamp(72px,11svh,94px);flex:0 0 auto}
+#app.explore-view .explore-art-ring-one{width:95px;height:95px}
+#app.explore-view .explore-art-ring-two{width:74px;height:74px}
+#app.explore-view .explore-art-avatar{width:58px;height:58px;border-radius:20px;font-size:20px}
+#app.explore-view .explore-discovery-copy h2{margin-top:5px;font-size:17px}
+#app.explore-view .explore-discovery-copy p{margin-top:5px;font-size:9px;line-height:1.35}
+#app.explore-view .explore-card-bottom{margin-top:8px;padding-top:7px;font-size:8px}
 #app.explore-view .bottom-nav{z-index:30}
 @media(max-height:700px){
-  #app.explore-view .explore-heading{padding-top:11px;padding-bottom:11px}
-  #app.explore-view .explore-photo-art{height:94px}
-  #app.explore-view .explore-photo-frame{transform:scale(.86)}
-  #app.explore-view .explore-photo-required h2{margin-top:6px}
+  #app.explore-view{padding-top:max(5px,env(safe-area-inset-top));padding-bottom:max(82px,calc(env(safe-area-inset-bottom) + 72px))}
+  #app.explore-view .app-header{min-height:38px;margin-bottom:4px}
+  #app.explore-view .explore-page{gap:4px}
+  #app.explore-view .explore-heading{padding:7px 11px}
+  #app.explore-view .explore-stats{padding:6px 9px}
+  #app.explore-view .explore-photo-art{height:66px}
+  #app.explore-view .explore-photo-frame{transform:scale(.84)}
+  #app.explore-view .explore-photo-required,
+  #app.explore-view .explore-discovery-card{padding:6px 11px}
+  #app.explore-view .explore-photo-note{margin-top:6px;padding:6px}
+  #app.explore-view .explore-action{min-height:40px}
+  #app.explore-view .explore-like{min-height:44px}
 }
 @media(max-width:360px){
   #app.explore-view{padding-left:12px;padding-right:12px}
-  #app.explore-view .explore-page{gap:10px}
+  #app.explore-view .explore-heading{padding-left:10px;padding-right:10px}
 }
