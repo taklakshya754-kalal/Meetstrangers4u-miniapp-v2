@@ -472,14 +472,18 @@ function exploreScreen() {
     ${header()}
     <main class="explore-page">
       <div class="explore-starfield" aria-hidden="true">
-        <span class="star s1">✦</span><span class="star s2">✧</span><span class="star s3">✨</span>
-        <span class="star s4">✦</span><span class="star s5">✧</span><span class="star s6">✦</span>
-        <span class="star s7">✨</span><span class="star s8">✧</span><span class="star s9">✦</span>
-        <span class="star s10">✧</span><span class="star s11">✦</span><span class="star s12">✨</span>
-        <span class="star s13">✧</span><span class="star s14">✦</span><span class="star s15">✧</span>
-        <span class="star s16">✨</span><span class="star s17">✦</span><span class="star s18">✧</span>
-        <span class="star s19">✦</span><span class="star s20">✨</span><span class="star s21">✧</span>
-        <span class="star s22">✦</span><span class="star s23">✧</span><span class="star s24">✦</span>
+        <span class="star s1">✦</span><span class="star s2">✧</span>
+        <span class="star s3">✧</span><span class="star s4">✦</span>
+        <span class="star s5">✧</span><span class="star s6">✦</span>
+        <span class="star s7">✦</span><span class="star s8">✧</span>
+        <span class="star s9">✦</span><span class="star s10">✧</span>
+        <span class="star s11">✧</span><span class="star s12">✦</span>
+        <span class="star s13">✦</span><span class="star s14">✧</span>
+        <span class="star s15">✧</span><span class="star s16">✦</span>
+        <span class="star s17">✦</span><span class="star s18">✧</span>
+        <span class="star s19">✧</span><span class="star s20">✦</span>
+        <span class="star s21">✦</span><span class="star s22">✧</span>
+        <span class="star s23">✧</span><span class="star s24">✦</span>
       </div>
       <section class="explore-heading">
         <div class="explore-heading-copy"><p class="explore-eyebrow">MEET NEW PEOPLE</p><h1 class="explore-title">Explore</h1><p class="explore-subtitle">Discover interesting people and make new connections.</p></div>
