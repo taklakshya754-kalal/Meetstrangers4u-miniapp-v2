@@ -221,3 +221,59 @@
   #app.explore-view .explore-actions{gap:4px}
   #app.explore-view .explore-action small{font-size:7px}
 }
+
+
+/* Portrait discovery panel narrowed to create intentional midnight-blue side gutters */
+#app.explore-view .explore-page{
+  isolation:isolate;
+}
+#app.explore-view .explore-page::before,
+#app.explore-view .explore-page::after{
+  content:"";
+  position:absolute;
+  z-index:0;
+  pointer-events:none;
+  width:3px;
+  height:clamp(70px,12svh,112px);
+  border-radius:99px;
+  opacity:.48;
+  background:linear-gradient(180deg,transparent,rgba(151,126,255,.42),rgba(241,213,143,.28),transparent);
+  filter:drop-shadow(0 0 7px rgba(137,105,255,.22));
+}
+#app.explore-view .explore-page::before{left:7%;top:37%}
+#app.explore-view .explore-page::after{right:7%;top:55%;height:clamp(48px,8svh,76px);opacity:.34}
+#app.explore-view .explore-heading,
+#app.explore-view .explore-stats,
+#app.explore-view .explore-actions,
+#app.explore-view .explore-action-caption{position:relative;z-index:1}
+#app.explore-view .explore-discovery-card,
+#app.explore-view .explore-photo-required{
+  position:relative;
+  z-index:1;
+  width:74%;
+  max-width:460px;
+  align-self:center;
+}
+#app.explore-view .explore-discovery-card::after,
+#app.explore-view .explore-photo-required::after{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:10px;
+  border:1px solid rgba(191,174,255,.075);
+  border-radius:15px;
+  pointer-events:none;
+}
+#app.explore-view .explore-discovery-card > *,
+#app.explore-view .explore-photo-required > *{z-index:1}
+#app.explore-view .explore-card-topline,
+#app.explore-view .explore-profile-art,
+#app.explore-view .explore-discovery-copy,
+#app.explore-view .explore-card-bottom{position:relative}
+#app.explore-view .explore-art-glow{opacity:.78}
+#app.explore-view .explore-art-ring-one{border-color:rgba(175,151,255,.19)}
+#app.explore-view .explore-art-ring-two{border-color:rgba(241,213,143,.16)}
+@media(max-width:390px){
+  #app.explore-view .explore-discovery-card,
+  #app.explore-view .explore-photo-required{width:78%}
+}
