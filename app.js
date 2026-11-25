@@ -494,12 +494,14 @@ function exploreScreen() {
           <div class="explore-photo-note"><span>ⓘ</span><span>A profile photo is required to use Explore.</span></div>
         </section>
       `}
-      <section class="explore-actions" aria-label="Profile actions">
-        <button class="explore-action explore-dislike" type="button" onclick="explorePreviewNotice()" aria-label="Dislike" ${hasProfilePhoto ? "" : "disabled"}><span>👎</span><small>Dislike</small></button>
-        <button class="explore-action explore-like" type="button" onclick="explorePreviewNotice()" aria-label="Like" ${hasProfilePhoto ? "" : "disabled"}><span>♥</span><small>Like</small></button>
-        <button class="explore-action explore-skip" type="button" onclick="explorePreviewNotice()" aria-label="Skip" ${hasProfilePhoto ? "" : "disabled"}><span>⏩</span><small>Skip</small></button>
-      </section>
-      <p class="explore-action-caption">Be kind. Every connection starts with a positive gesture.</p>
+      ${hasProfilePhoto ? `
+        <section class="explore-actions" aria-label="Profile actions">
+          <button class="explore-action explore-dislike" type="button" onclick="explorePreviewNotice()" aria-label="Dislike"><span>👎</span><small>Dislike</small></button>
+          <button class="explore-action explore-like" type="button" onclick="explorePreviewNotice()" aria-label="Like"><span>♥</span><small>Like</small></button>
+          <button class="explore-action explore-skip" type="button" onclick="explorePreviewNotice()" aria-label="Skip"><span>⏩</span><small>Skip</small></button>
+        </section>
+        <p class="explore-action-caption">Be kind. Every connection starts with a positive gesture.</p>
+      ` : ""}
     </main>
     ${bottomNav()}
   `;
