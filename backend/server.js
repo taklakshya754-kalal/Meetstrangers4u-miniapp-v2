@@ -95,7 +95,7 @@ const server = http.createServer(async (req, res) => {
       const initData = req.headers["x-telegram-init-data"] || "";
       const user = validateTelegramInitData(initData);
       const result = await pool.query(
-        "SELECT user_id, custom_name, country, coins FROM public.users WHERE user_id = $1 LIMIT 1",
+        "SELECT user_id, custom_name, country, age, coins FROM public.users WHERE user_id = $1 LIMIT 1",
         [String(user.id)]
       );
       if (!result.rowCount) {
