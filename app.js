@@ -1673,11 +1673,11 @@ async function acceptBotPartnerInvitation(code, role, requestedType) {
 
 function render() {
   const isHome = state.screen === "home";
-  const isCompactPage = ["funzone", "explore", "profile"].includes(state.screen);
+  const isCompactPage = ["funzone", "explore", "explore-message-picker", "profile"].includes(state.screen);
   const isCallOptionsPage = ["voice", "video"].includes(state.screen);
   app.classList.toggle("home-view", isHome);
   app.classList.toggle("compact-view", isCompactPage);
-  app.classList.toggle("explore-view", state.screen === "explore");
+  app.classList.toggle("explore-view", ["explore", "explore-message-picker"].includes(state.screen));
   app.classList.toggle("call-options-view", isCallOptionsPage);
   document.body.classList.toggle("home-screen-active", isHome || isCompactPage);
   document.body.classList.toggle("call-options-screen-active", isCallOptionsPage);
