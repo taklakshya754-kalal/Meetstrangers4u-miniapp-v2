@@ -511,7 +511,7 @@ function exploreScreen() {
         <section class="explore-actions" aria-label="Profile actions">
           <button class="explore-action explore-like" type="button" onclick="explorePreviewNotice()" aria-label="Like"><span>❤️</span><small>Like</small></button>
           <button class="explore-action explore-dislike" type="button" onclick="explorePreviewNotice()" aria-label="Dislike"><span>👎</span><small>Dislike</small></button>
-          <button class="explore-action explore-message" type="button" onclick="explorePreviewNotice()" aria-label="Message"><span>💌</span><small>Message</small></button>
+          <button class="explore-action explore-message" type="button" onclick="openExploreMessagePicker()" aria-label="Choose a message"><span>💌</span><small>Message</small></button>
           <button class="explore-action explore-skip" type="button" onclick="explorePreviewNotice()" aria-label="Skip"><span>⏩</span><small>Skip</small></button>
         </section>
         <p class="explore-action-caption">Be kind. Every connection starts with a positive gesture.</p>
@@ -522,6 +522,65 @@ function exploreScreen() {
 }
 function explorePreviewNotice() {
   alert("Profile discovery and reactions will be enabled after the Telegram bot integration.");
+}
+
+
+const EXPLORE_QUICK_MESSAGES = [
+  "Hey! I'd love to get to know you. 👋",
+  "Hi! How's your day going?",
+  "You seem interesting. Want to connect?",
+  "Hello! Which country are you from? 🌍",
+  "I'd love to learn about your culture.",
+  "Hey! What do you enjoy doing in your free time?",
+  "Hi! Always happy to make new friends.",
+  "Your profile caught my attention. 😊",
+  "Would you like to have a friendly chat?",
+  "Hello! Sending positive vibes your way. ✨"
+];
+
+function openExploreMessagePicker() {
+  state.selectedExploreMessage = null;
+  navigate("explore-message-picker");
+}
+
+function chooseExploreQuickMessage(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= EXPLORE_QUICK_MESSAGES.length) return;
+  state.selectedExploreMessage = index;
+  render();
+}
+
+function confirmExploreQuickMessage() {
+  if (state.selectedExploreMessage === null) return;
+  alert("Messaging will be activated after the Explore backend and Telegram bot integration are connected. No message has been sent.");
+}
+
+function exploreMessagePickerScreen() {
+  const selected = state.selectedExploreMessage;
+  return `
+    ${header()}
+    <main class="explore-message-picker">
+      <div class="explore-picker-heading">
+        <span class="explore-picker-icon">💌</span>
+        <p class="explore-eyebrow">START A CONVERSATION</p>
+        <h1>Choose a message</h1>
+        <p>Select one of our friendly messages to send. Custom text isn't available.</p>
+      </div>
+      <section class="explore-quick-message-list" aria-label="Predefined messages">
+        ${EXPLORE_QUICK_MESSAGES.map((message, index) => `
+          <button type="button" class="explore-quick-message ${selected === index ? "selected" : ""}" onclick="chooseExploreQuickMessage(${index})">
+            <span class="explore-quick-message-number">${String(index + 1).padStart(2, "0")}</span>
+            <span class="explore-quick-message-text">${message}</span>
+            <span class="explore-quick-message-check">${selected === index ? "✓" : "○"}</span>
+          </button>
+        `).join("")}
+      </section>
+      <div class="explore-picker-footer">
+        <p>Choose one message only. Keep it kind and respectful. ❤️</p>
+        <button class="primary-button explore-send-selected" type="button" onclick="confirmExploreQuickMessage()" ${selected === null ? "disabled" : ""}>Send selected message</button>
+      </div>
+    </main>
+    ${bottomNav()}
+  `;
 }
 
 // FUN ZONE SCREEN
@@ -1629,7 +1688,7 @@ function render() {
     voice: voiceScreen,
     video: videoScreen,
     call: callFlowScreen,
-    explore: exploreScreen,
+    explore: exploreScreen,\n    "explore-message-picker": exploreMessagePickerScreen,
     random: randomScreen,
     matchmaking: matchmakingScreen,
     partner: partnerScreen,
