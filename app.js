@@ -19,6 +19,8 @@ const state = {
   account: null,
   coins: 0,
   partnerInvite: null,
+  exploreMessages: [],
+  selectedExploreMessage: null,
   call: { type: partnerLaunch ? launchCallType : null, mode: null, status: "idle", sessionId: null, startedAt: null, message: "" }
 };
 
@@ -487,7 +489,7 @@ function exploreScreen() {
       </div>
       <section class="explore-heading">
         <div class="explore-heading-copy"><p class="explore-eyebrow">MEET NEW PEOPLE</p><h1 class="explore-title">Explore</h1><p class="explore-subtitle">Discover interesting people and make new connections.</p></div>
-        <div class="explore-heading-likes" aria-label="0 likes received"><span>♡</span><strong>0</strong><small>LIKES</small></div>
+        <div class="explore-heading-stats"><div class="explore-heading-likes" aria-label="0 likes received"><span>♡</span><strong>0</strong><small>LIKES</small></div><button class="explore-heading-messages" type="button" onclick="openExploreInbox()" aria-label="Open messages, 0 received"><span>✉</span><strong>0</strong><small>MESSAGES</small></button></div>
       </section>
       ${hasProfilePhoto ? `
         <section class="explore-discovery-card">
