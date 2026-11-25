@@ -640,3 +640,8 @@
  #app.explore-view .explore-heading-messages strong{font-size:17px}
  .explore-inbox-page{padding-left:13px;padding-right:13px}
 }
+
+
+/* Like action: match the Message button surface with a red heart */
+#app.explore-view .explore-like{border-color:rgba(190,158,255,.32);background:linear-gradient(145deg,rgba(73,55,126,.82),rgba(34,39,75,.96));color:#F7F3FF;box-shadow:0 6px 16px rgba(0,0,0,.12)}
+#app.explore-view .explore-like span{font-size:19px;color:#FF3B55;text-shadow:0 0 10px rgba(255,59,85,.24)}
