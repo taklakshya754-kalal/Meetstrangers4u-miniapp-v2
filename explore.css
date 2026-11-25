@@ -645,3 +645,22 @@
 /* Like action: match the Message button surface with a red heart */
 #app.explore-view .explore-like{border-color:rgba(190,158,255,.32);background:linear-gradient(145deg,rgba(73,55,126,.82),rgba(34,39,75,.96));color:#F7F3FF;box-shadow:0 6px 16px rgba(0,0,0,.12)}
 #app.explore-view .explore-like span{font-size:19px;color:#FF3B55;text-shadow:0 0 10px rgba(255,59,85,.24)}
+
+
+/* Explore predefined message selection */
+#app.explore-view .explore-message-picker{height:calc(100% - var(--header-height,60px));overflow-y:auto;padding:14px 15px 92px;box-sizing:border-box}
+#app .explore-picker-heading{text-align:center;padding:8px 8px 16px}
+#app .explore-picker-icon{display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:16px;background:linear-gradient(145deg,rgba(73,55,126,.82),rgba(34,39,75,.96));font-size:24px;margin-bottom:10px}
+#app .explore-picker-heading .explore-eyebrow{margin:0 0 5px;color:#BDA7F6;font-size:9px;font-weight:800;letter-spacing:1.5px}
+#app .explore-picker-heading h1{margin:0;color:#F4F0FF;font-size:23px}
+#app .explore-picker-heading p:last-child{max-width:290px;margin:7px auto 0;color:#9DA8C5;font-size:12px;line-height:1.5}
+#app .explore-quick-message-list{display:flex;flex-direction:column;gap:8px}
+#app .explore-quick-message{width:100%;min-height:54px;display:grid;grid-template-columns:28px 1fr 20px;align-items:center;gap:10px;text-align:left;padding:10px 12px;border:1px solid rgba(155,139,211,.18);border-radius:13px;background:linear-gradient(145deg,rgba(26,34,65,.96),rgba(22,26,52,.98));color:#EDEAFF}
+#app .explore-quick-message.selected{border-color:rgba(177,143,255,.78);background:linear-gradient(145deg,rgba(73,55,126,.82),rgba(34,39,75,.96));box-shadow:0 0 0 1px rgba(177,143,255,.16)}
+#app .explore-quick-message-number{color:#9C8BC9;font-size:10px;font-weight:800}
+#app .explore-quick-message-text{font-size:12px;line-height:1.4}
+#app .explore-quick-message-check{color:#BDA7F6;text-align:center;font-size:16px}
+#app .explore-picker-footer{position:sticky;bottom:0;padding:13px 0 4px;background:linear-gradient(180deg,rgba(12,18,43,0),#0C122B 22%)}
+#app .explore-picker-footer p{text-align:center;color:#8793B1;font-size:10px;margin:0 0 9px}
+#app .explore-send-selected{width:100%;min-height:46px}
+#app .explore-send-selected:disabled{opacity:.42;cursor:not-allowed}
