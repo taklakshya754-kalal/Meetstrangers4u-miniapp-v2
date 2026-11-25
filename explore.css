@@ -464,24 +464,74 @@
 }
 
 
-/* Dense, delicate star field across the full Explore canvas */
+/* Explore background: visible tiny four-point celestial sparkles, not dot texture */
 #app.explore-view .explore-page{
-  background-color:#080e27;
-  background-image:
-    radial-gradient(ellipse at 8% 18%,rgba(119,94,205,.15),transparent 34%),
-    radial-gradient(ellipse at 92% 27%,rgba(75,96,177,.14),transparent 36%),
-    radial-gradient(ellipse at 4% 76%,rgba(132,100,198,.11),transparent 32%),
-    radial-gradient(ellipse at 96% 82%,rgba(91,91,177,.12),transparent 34%),
-    radial-gradient(circle,rgba(225,218,255,.52) 0 .7px,transparent 1.35px),
-    radial-gradient(circle,rgba(239,213,160,.48) 0 .8px,transparent 1.5px),
-    radial-gradient(circle,rgba(177,165,255,.38) 0 .65px,transparent 1.3px),
-    radial-gradient(circle,rgba(220,226,255,.26) 0 .6px,transparent 1.25px),
-    radial-gradient(circle,rgba(227,207,255,.55) 0 1.1px,transparent 2px);
-  background-size:
-    100% 100%,100% 100%,100% 100%,100% 100%,
-    37px 43px,53px 59px,71px 67px,89px 83px,127px 139px;
-  background-position:
-    center,center,center,center,
-    3px 7px,19px 23px,31px 11px,7px 41px,43px 61px;
-  background-repeat:repeat;
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 8% 18%,rgba(119,94,205,.17),transparent 34%),
+    radial-gradient(ellipse at 92% 27%,rgba(75,96,177,.16),transparent 36%),
+    radial-gradient(ellipse at 4% 76%,rgba(132,100,198,.13),transparent 32%),
+    radial-gradient(ellipse at 96% 82%,rgba(91,91,177,.14),transparent 34%),
+    linear-gradient(145deg,#080e27 0%,#0b1230 48%,#090f29 100%);
+}
+#app.explore-view .explore-page::before,
+#app.explore-view .explore-page::after{
+  content:"✦";
+  position:absolute;
+  inset:0;
+  width:auto;
+  height:auto;
+  display:block;
+  pointer-events:none;
+  z-index:0;
+  border:0;
+  border-radius:0;
+  padding:0;
+  background:none;
+  box-shadow:none;
+  opacity:.72;
+  font-family:Georgia,serif;
+  font-size:13px;
+  line-height:1;
+  color:#d9caff;
+  text-shadow:
+    32px 42px 0 rgba(217,202,255,.8),
+    76px 116px 0 rgba(241,213,151,.8),
+    128px 63px 0 rgba(198,184,255,.72),
+    174px 164px 0 rgba(226,216,255,.8),
+    224px 91px 0 rgba(241,213,151,.7),
+    276px 207px 0 rgba(205,190,255,.75),
+    326px 48px 0 rgba(226,216,255,.78),
+    372px 139px 0 rgba(241,213,151,.75),
+    421px 75px 0 rgba(205,190,255,.75),
+    468px 190px 0 rgba(226,216,255,.75),
+    518px 35px 0 rgba(241,213,151,.7),
+    568px 128px 0 rgba(205,190,255,.8),
+    618px 72px 0 rgba(226,216,255,.75),
+    668px 178px 0 rgba(241,213,151,.7);
+}
+#app.explore-view .explore-page::after{
+  content:"✧";
+  font-size:19px;
+  color:#f0dcae;
+  opacity:.52;
+  text-shadow:
+    54px 88px 0 rgba(240,220,174,.7),
+    112px 188px 0 rgba(211,194,255,.72),
+    190px 35px 0 rgba(240,220,174,.65),
+    252px 132px 0 rgba(211,194,255,.7),
+    310px 82px 0 rgba(240,220,174,.72),
+    390px 202px 0 rgba(211,194,255,.65),
+    450px 30px 0 rgba(240,220,174,.72),
+    530px 166px 0 rgba(211,194,255,.68),
+    600px 108px 0 rgba(240,220,174,.65);
+}
+#app.explore-view .explore-discovery-card,
+#app.explore-view .explore-photo-required,
+#app.explore-view .explore-actions,
+#app.explore-view .explore-action-caption{
+  position:relative;
+  z-index:1;
 }
