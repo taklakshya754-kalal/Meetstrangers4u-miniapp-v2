@@ -472,11 +472,8 @@ function exploreScreen() {
     ${header()}
     <main class="explore-page">
       <section class="explore-heading">
-        <div><p class="explore-eyebrow">MEET NEW PEOPLE</p><h1 class="explore-title">Explore</h1><p class="explore-subtitle">Discover interesting people and make new connections.</p></div>
-        <div class="explore-heading-orb" aria-hidden="true"><span>✦</span><i></i></div>
-      </section>
-      <section class="explore-stats" aria-label="Your Explore statistics">
-        <div class="explore-stat-icon">♡</div><div class="explore-stat-copy"><span>YOUR COMMUNITY STATS</span><strong>Likes received</strong></div><div class="explore-stat-value">0</div>
+        <div class="explore-heading-copy"><p class="explore-eyebrow">MEET NEW PEOPLE</p><h1 class="explore-title">Explore</h1><p class="explore-subtitle">Discover interesting people and make new connections.</p></div>
+        <div class="explore-heading-likes" aria-label="0 likes received"><span>♡</span><strong>0</strong><small>LIKES</small></div>
       </section>
       ${hasProfilePhoto ? `
         <section class="explore-discovery-card">
@@ -496,8 +493,9 @@ function exploreScreen() {
       `}
       ${hasProfilePhoto ? `
         <section class="explore-actions" aria-label="Profile actions">
-          <button class="explore-action explore-dislike" type="button" onclick="explorePreviewNotice()" aria-label="Dislike"><span>👎</span><small>Dislike</small></button>
           <button class="explore-action explore-like" type="button" onclick="explorePreviewNotice()" aria-label="Like"><span>♥</span><small>Like</small></button>
+          <button class="explore-action explore-dislike" type="button" onclick="explorePreviewNotice()" aria-label="Dislike"><span>👎</span><small>Dislike</small></button>
+          <button class="explore-action explore-message" type="button" onclick="explorePreviewNotice()" aria-label="Message"><span>💌</span><small>Message</small></button>
           <button class="explore-action explore-skip" type="button" onclick="explorePreviewNotice()" aria-label="Skip"><span>⏩</span><small>Skip</small></button>
         </section>
         <p class="explore-action-caption">Be kind. Every connection starts with a positive gesture.</p>
