@@ -664,3 +664,48 @@
 #app .explore-picker-footer p{text-align:center;color:#8793B1;font-size:10px;margin:0 0 9px}
 #app .explore-send-selected{width:100%;min-height:46px}
 #app .explore-send-selected:disabled{opacity:.42;cursor:not-allowed}
+
+
+/* Message picker: compact single-screen layout, no vertical scrolling */
+#app.explore-view .explore-message-picker{
+  flex:1 1 auto;min-height:0;height:auto;max-height:100%;
+  display:flex;flex-direction:column;overflow:hidden;
+  padding:0 1px 2px;box-sizing:border-box;gap:clamp(4px,0.8svh,7px);
+}
+#app.explore-view .explore-picker-heading{
+  flex:0 0 auto;padding:0 5px clamp(4px,0.8svh,7px);
+}
+#app.explore-view .explore-picker-icon{
+  width:clamp(32px,5svh,42px);height:clamp(32px,5svh,42px);
+  border-radius:12px;font-size:20px;margin-bottom:4px;
+}
+#app.explore-view .explore-picker-heading .explore-eyebrow{font-size:8px;margin-bottom:2px}
+#app.explore-view .explore-picker-heading h1{font-size:clamp(18px,2.8svh,22px);line-height:1.15}
+#app.explore-view .explore-picker-heading p:last-child{
+  margin-top:3px;font-size:clamp(9px,1.35svh,11px);line-height:1.25;
+}
+#app.explore-view .explore-quick-message-list{
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+  justify-content:space-between;gap:clamp(3px,0.55svh,5px);overflow:hidden;
+}
+#app.explore-view .explore-quick-message{
+  flex:1 1 0;min-height:0;max-height:48px;
+  grid-template-columns:23px minmax(0,1fr) 16px;
+  gap:7px;padding:4px 9px;border-radius:10px;
+}
+#app.explore-view .explore-quick-message-number{font-size:9px}
+#app.explore-view .explore-quick-message-text{font-size:clamp(9px,1.35svh,11px);line-height:1.2}
+#app.explore-view .explore-quick-message-check{font-size:14px}
+#app.explore-view .explore-picker-footer{
+  position:static;flex:0 0 auto;padding:clamp(4px,0.7svh,6px) 0 0;
+  background:none;
+}
+#app.explore-view .explore-picker-footer p{font-size:9px;margin:0 0 5px}
+#app.explore-view .explore-send-selected{min-height:clamp(38px,5.5svh,44px);font-size:12px}
+@media(max-height:680px){
+  #app.explore-view .explore-picker-heading{padding-bottom:3px}
+  #app.explore-view .explore-picker-icon{display:none}
+  #app.explore-view .explore-quick-message{max-height:40px;padding:3px 8px}
+  #app.explore-view .explore-picker-footer{padding-top:3px}
+  #app.explore-view .explore-picker-footer p{margin-bottom:3px}
+}
