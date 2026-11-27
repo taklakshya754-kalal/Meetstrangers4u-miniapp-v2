@@ -6,6 +6,7 @@ const fs = require("fs");
 const { URL } = require("url");
 const { Pool } = require("pg");
 const WebSocket = require("ws");
+const { handleExploreRequest } = require("./explore");
 
 const PORT = Number(process.env.PORT || 3001);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -54,6 +55,14 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
     res.end(JSON.stringify({ ok: true, service: "meetstrangers-call", time: new Date().toISOString() }));
     return;
+  }
+
+  if (url.pathname.startsWith("/api/explore/")) {
+    const handled = await handleExploreRequest({
+      req, res, url, pool, validateTelegramInitData, sendJson, readJsonBody,
+      botToken: BOT_TOKEN, miniAppUrl: MINI_APP_URL
+    });
+    if (handled) return;
   }
 
   if (req.method === "GET" && url.pathname === "/api/turn-credentials") {
