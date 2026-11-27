@@ -21,6 +21,10 @@ const state = {
   partnerInvite: null,
   exploreMessages: [],
   selectedExploreMessage: null,
+  exploreProfiles: [],
+  exploreIndex: 0,
+  exploreSummary: { likes: 0, unreadMessages: 0, hasProfilePhoto: false },
+  exploreLoading: false,
   call: { type: partnerLaunch ? launchCallType : null, mode: null, status: "idle", sessionId: null, startedAt: null, message: "" }
 };
 
@@ -466,77 +470,163 @@ function callFlowScreen() {
 
 // EXPLORE SCREEN
 
-function exploreScreen() {
-  const account = state.account || {};
-  const profilePhoto = state.user?.photo_url || account.profile_photo_url || account.photo_url || account.telegram_photo_url || "";
-  const hasProfilePhoto = Boolean(String(profilePhoto).trim());
+async function exploreApi(path, options = {}) {
+  if (!tg?.initData) throw new Error("Please open MeetStrangers4u from Telegram.");
+  const response = await fetch(CALL_API + path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": tg.initData,
+      ...(options.headers || {})
+    },
+    cache: "no-store"
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || "Explore is temporarily unavailable.");
+  return data;
+}
+
+async function loadExplore() {
+  if (state.exploreLoading) return;
+  state.exploreLoading = true;
+  try {
+    const [summary, feed] = await Promise.all([
+      exploreApi("/api/explore/summary"),
+      exploreApi("/api/explore/profiles")
+    ]);
+    state.exploreSummary = summary;
+    state.coins = Number(summary.coins || state.coins);
+    state.exploreProfiles = feed.profiles || [];
+    state.exploreIndex = 0;
+  } catch (err) {
+    console.warn("Explore load:", err.message);
+    state.exploreProfiles = [];
+    state.exploreLoadError = err.message;
+  } finally {
+    state.exploreLoading = false;
+    if (state.screen === "explore") {
+      render();
+      if (state.exploreProfiles.length) loadExploreCardPhoto();
+    }
+  }
+}
+
+async function loadExploreCardPhoto() {
+  const profile = state.exploreProfiles[state.exploreIndex];
+  const image = document.getElementById("explore-profile-photo");
+  if (!profile || !image) return;
+  try {
+    const response = await fetch(CALL_API + profile.photoUrl, {
+      headers: { "X-Telegram-Init-Data": tg?.initData || "" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("Photo unavailable");
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const current = document.getElementById("explore-profile-photo");
+    if (current && state.exploreProfiles[state.exploreIndex]?.user_id === profile.user_id) {
+      if (current.dataset.objectUrl) URL.revokeObjectURL(current.dataset.objectUrl);
+      current.src = objectUrl;
+      current.dataset.objectUrl = objectUrl;
+    } else URL.revokeObjectURL(objectUrl);
+  } catch (err) {
+    console.warn("Explore profile photo:", err.message);
+  }
+}
+
+async function reactToExploreProfile(reaction) {
+  const profile = state.exploreProfiles[state.exploreIndex];
+  if (!profile) return;
+  try {
+    await exploreApi("/api/explore/reactions", {
+      method: "POST",
+      body: JSON.stringify({ targetId: profile.user_id, reaction })
+    });
+    if (reaction === "like") state.exploreSummary.likes = Number(state.exploreSummary.likes || 0);
+    state.exploreIndex++;
+    if (state.exploreIndex >= state.exploreProfiles.length) {
+      state.exploreProfiles = [];
+      await loadExplore();
+    } else {
+      render();
+      loadExploreCardPhoto();
+    }
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function openExploreInbox() {
+  try {
+    const data = await exploreApi("/api/explore/inbox");
+    state.exploreMessages = data.messages || [];
+    state.history.push(state.screen);
+    state.screen = "explore-inbox";
+    render();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function exploreInboxScreen() {
+  const messages = state.exploreMessages || [];
   return `
     ${header()}
-    <main class="explore-page">
-      <div class="explore-starfield" aria-hidden="true">
-        <span class="star s1">✦</span><span class="star s2">✧</span>
-        <span class="star s3">✧</span><span class="star s4">✦</span>
-        <span class="star s5">✧</span><span class="star s6">✦</span>
-        <span class="star s7">✦</span><span class="star s8">✧</span>
-        <span class="star s9">✦</span><span class="star s10">✧</span>
-        <span class="star s11">✧</span><span class="star s12">✦</span>
-        <span class="star s13">✦</span><span class="star s14">✧</span>
-        <span class="star s15">✧</span><span class="star s16">✦</span>
-        <span class="star s17">✦</span><span class="star s18">✧</span>
-        <span class="star s19">✧</span><span class="star s20">✦</span>
-        <span class="star s21">✦</span><span class="star s22">✧</span>
-        <span class="star s23">✧</span><span class="star s24">✦</span>
-      </div>
-      <section class="explore-heading">
-        <div class="explore-heading-copy"><p class="explore-eyebrow">MEET NEW PEOPLE</p><h1 class="explore-title">Explore</h1><p class="explore-subtitle">Discover interesting people and make new connections.</p></div>
-        <div class="explore-heading-stats"><div class="explore-heading-likes" aria-label="0 likes received"><span>♡</span><strong>0</strong><small>LIKES</small></div><button class="explore-heading-messages" type="button" onclick="openExploreInbox()" aria-label="Open messages, 0 received"><span>✉</span><strong>0</strong><small>MESSAGES</small></button></div>
-      </section>
-      ${hasProfilePhoto ? `
-        <section class="explore-discovery-card">
-          <div class="explore-card-topline"><span><i></i> DISCOVER</span><span class="explore-card-counter">GETTING READY</span></div>
-          <div class="explore-profile-art" aria-hidden="true"><div class="explore-art-glow"></div><div class="explore-art-ring explore-art-ring-one"></div><div class="explore-art-ring explore-art-ring-two"></div><div class="explore-art-avatar"><span>✦</span></div><span class="explore-art-spark explore-spark-one">✧</span><span class="explore-art-spark explore-spark-two">✦</span><span class="explore-art-spark explore-spark-three">·</span></div>
-          <div class="explore-discovery-copy"><span class="explore-discovery-kicker">YOUR NEXT CONNECTION</span><h2>Someone interesting is out there.</h2><p>We’re getting your discovery experience ready. New profiles will appear here.</p></div>
-          <div class="explore-card-bottom"><span>✦</span> Discover people beyond boundaries</div>
-        </section>
-      ` : `
-        <section class="explore-photo-required">
-          <div class="explore-photo-art" aria-hidden="true"><div class="explore-photo-halo"></div><div class="explore-photo-frame"><span class="explore-photo-head"></span><span class="explore-photo-body"></span><span class="explore-photo-plus">＋</span></div><span class="explore-photo-spark spark-a">✦</span><span class="explore-photo-spark spark-b">✧</span></div>
-          <span class="explore-required-tag"><i></i> ONE QUICK STEP</span>
-          <h2>Let people see you.</h2>
-          <p>Set a profile photo through our Telegram bot to start exploring other members.</p>
-          <div class="explore-photo-note"><span>ⓘ</span><span>A profile photo is required to use Explore.</span></div>
-        </section>
-      `}
-      ${hasProfilePhoto ? `
-        <section class="explore-actions" aria-label="Profile actions">
-          <button class="explore-action explore-like" type="button" onclick="explorePreviewNotice()" aria-label="Like"><span>❤️</span><small>Like</small></button>
-          <button class="explore-action explore-dislike" type="button" onclick="explorePreviewNotice()" aria-label="Dislike"><span>👎</span><small>Dislike</small></button>
-          <button class="explore-action explore-message" type="button" onclick="openExploreMessagePicker()" aria-label="Choose a message"><span>💌</span><small>Message</small></button>
-          <button class="explore-action explore-skip" type="button" onclick="explorePreviewNotice()" aria-label="Skip"><span>⏩</span><small>Skip</small></button>
-        </section>
-        <p class="explore-action-caption">Be kind. Every connection starts with a positive gesture.</p>
-      ` : ""}
+    <main class="explore-message-picker">
+      <div class="explore-picker-heading"><span class="explore-picker-icon">✉</span><p class="explore-eyebrow">YOUR CONNECTIONS</p><h1>Messages</h1><p>Messages sent to you by MeetStrangers4u members.</p></div>
+      ${messages.length ? messages.map(item => `<article class="panel"><p>${escapeHTML(item.message_text)}</p><small>${new Date(item.created_at).toLocaleString()}</small></article>`).join("") : '<div class="panel"><p>No messages yet. Your new messages will appear here.</p></div>'}
     </main>
     ${bottomNav()}
   `;
 }
-function explorePreviewNotice() {
-  alert("Profile discovery and reactions will be enabled after the Telegram bot integration.");
+
+function exploreScreen() {
+  const summary = state.exploreSummary || { likes: 0, unreadMessages: 0, hasProfilePhoto: false };
+  const profile = state.exploreProfiles[state.exploreIndex] || null;
+  const photoRequired = !summary.hasProfilePhoto;
+  return `
+    ${header()}
+    <main class="explore-page">
+      <div class="explore-starfield" aria-hidden="true">
+        <span class="star s1">✦</span><span class="star s2">✧</span><span class="star s3">✧</span><span class="star s4">✦</span>
+        <span class="star s5">✧</span><span class="star s6">✦</span><span class="star s7">✦</span><span class="star s8">✧</span>
+      </div>
+      <section class="explore-heading">
+        <div class="explore-heading-copy"><p class="explore-eyebrow">MEET NEW PEOPLE</p><h1 class="explore-title">Explore</h1><p class="explore-subtitle">Discover interesting people and make new connections.</p></div>
+        <div class="explore-heading-stats">
+          <div class="explore-heading-likes" aria-label="${Number(summary.likes || 0)} likes received"><span>♡</span><strong>${Number(summary.likes || 0)}</strong><small>LIKES</small></div>
+          <button class="explore-heading-messages" type="button" onclick="openExploreInbox()" aria-label="Open messages"><span>✉</span><strong>${Number(summary.unreadMessages || 0)}</strong><small>MESSAGES</small></button>
+        </div>
+      </section>
+      ${photoRequired ? `
+        <section class="explore-photo-required">
+          <div class="explore-photo-art" aria-hidden="true"><div class="explore-photo-halo"></div><div class="explore-photo-frame"><span class="explore-photo-head"></span><span class="explore-photo-body"></span><span class="explore-photo-plus">＋</span></div></div>
+          <span class="explore-required-tag"><i></i> ONE QUICK STEP</span><h2>Set your profile picture</h2>
+          <p>You can explore other members only after your profile picture has been approved by our team.</p>
+          <div class="explore-photo-note"><span>ⓘ</span><span>Open our Telegram bot and use /setprofilepic.</span></div>
+        </section>
+      ` : state.exploreLoading ? '<section class="explore-discovery-card"><p>Loading profiles…</p></section>' : profile ? `
+        <section class="explore-discovery-card">
+          <div class="explore-card-topline"><span><i></i> DISCOVER</span><span class="explore-card-counter">${state.exploreIndex + 1} / ${state.exploreProfiles.length}</span></div>
+          <div class="explore-live-photo-wrap"><img id="explore-profile-photo" class="explore-live-photo" alt="Member profile photo"><span class="explore-photo-loading">Loading photo…</span></div>
+          <div class="explore-discovery-copy"><span class="explore-discovery-kicker">YOUR NEXT CONNECTION</span><h2>${escapeHTML(profile.display_name || "MeetStrangers4u Member")}</h2><p>${[profile.age ? escapeHTML(profile.age) : "", profile.gender ? escapeHTML(profile.gender) : "", profile.country ? escapeHTML(profile.country) : ""].filter(Boolean).join(" · ")}</p></div>
+          <div class="explore-card-bottom"><span>✦</span> Discover people beyond boundaries</div>
+        </section>
+        <section class="explore-actions" aria-label="Profile actions">
+          <button class="explore-action explore-like" type="button" onclick="reactToExploreProfile('like')" aria-label="Like"><span>❤️</span><small>Like</small></button>
+          <button class="explore-action explore-dislike" type="button" onclick="reactToExploreProfile('dislike')" aria-label="Dislike"><span>👎</span><small>Dislike</small></button>
+          <button class="explore-action explore-message" type="button" onclick="openExploreMessagePicker()" aria-label="Choose a message"><span>💌</span><small>Message</small></button>
+          <button class="explore-action explore-skip" type="button" onclick="reactToExploreProfile('skip')" aria-label="Skip"><span>⏩</span><small>Skip</small></button>
+        </section>
+        <p class="explore-action-caption">Be kind. Every connection starts with a positive gesture.</p>
+      ` : `
+        <section class="explore-discovery-card"><div class="explore-discovery-copy"><span class="explore-discovery-kicker">YOU’RE ALL CAUGHT UP</span><h2>No more profiles right now.</h2><p>New approved members will appear here as they join Explore.</p></div><button class="primary-button" type="button" onclick="loadExplore()">Refresh profiles</button></section>
+      `}
+      ${state.exploreLoadError ? '<p class="explore-action-caption">' + escapeHTML(state.exploreLoadError) + '</p>' : ""}
+    </main>
+    ${bottomNav()}
+  `;
 }
-
-
-const EXPLORE_QUICK_MESSAGES = [
-  "Hey! I'd love to get to know you. 👋",
-  "Hi! How's your day going?",
-  "You seem interesting. Want to connect?",
-  "What's something that always makes you smile? 😊",
-  "I'd love to learn about your culture.",
-  "Hey! What do you enjoy doing in your free time?",
-  "Hi! Always happy to make new friends.",
-  "Your profile caught my attention. 😊",
-  "Would you like to have a friendly chat?",
-  "Hello! Sending positive vibes your way. ✨"
-];
 
 function openExploreMessagePicker() {
   state.selectedExploreMessage = null;
@@ -549,9 +639,21 @@ function chooseExploreQuickMessage(index) {
   render();
 }
 
-function confirmExploreQuickMessage() {
+async function confirmExploreQuickMessage() {
   if (state.selectedExploreMessage === null) return;
-  alert("Messaging will be activated after the Explore backend and Telegram bot integration are connected. No message has been sent.");
+  const profile = state.exploreProfiles[state.exploreIndex];
+  if (!profile) return;
+  try {
+    await exploreApi("/api/explore/messages", {
+      method: "POST",
+      body: JSON.stringify({ targetId: profile.user_id, messageKey: state.selectedExploreMessage })
+    });
+    alert("Your message has been sent.");
+    state.screen = "explore";
+    render();
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 function exploreMessagePickerScreen() {
@@ -559,25 +661,11 @@ function exploreMessagePickerScreen() {
   return `
     ${header()}
     <main class="explore-message-picker">
-      <div class="explore-picker-heading">
-        <span class="explore-picker-icon">💌</span>
-        <p class="explore-eyebrow">START A CONVERSATION</p>
-        <h1>Choose a message</h1>
-        <p>Select one of our friendly messages to send. Custom text isn't available.</p>
-      </div>
+      <div class="explore-picker-heading"><span class="explore-picker-icon">💌</span><p class="explore-eyebrow">START A CONVERSATION</p><h1>Choose a message</h1><p>Select one of our friendly messages to send. Custom text isn't available.</p></div>
       <section class="explore-quick-message-list" aria-label="Predefined messages">
-        ${EXPLORE_QUICK_MESSAGES.map((message, index) => `
-          <button type="button" class="explore-quick-message ${selected === index ? "selected" : ""}" onclick="chooseExploreQuickMessage(${index})">
-            <span class="explore-quick-message-number">${String(index + 1).padStart(2, "0")}</span>
-            <span class="explore-quick-message-text">${message}</span>
-            <span class="explore-quick-message-check">${selected === index ? "✓" : "○"}</span>
-          </button>
-        `).join("")}
+        ${EXPLORE_QUICK_MESSAGES.map((message, index) => `<button type="button" class="explore-quick-message ${selected === index ? "selected" : ""}" onclick="chooseExploreQuickMessage(${index})"><span class="explore-quick-message-number">${String(index + 1).padStart(2, "0")}</span><span class="explore-quick-message-text">${message}</span><span class="explore-quick-message-check">${selected === index ? "✓" : "○"}</span></button>`).join("")}
       </section>
-      <div class="explore-picker-footer">
-        <p>Choose one message only. Keep it kind and respectful. ❤️</p>
-        <button class="primary-button explore-send-selected" type="button" onclick="confirmExploreQuickMessage()" ${selected === null ? "disabled" : ""}>Send selected message</button>
-      </div>
+      <div class="explore-picker-footer"><p>Choose one message only. Keep it kind and respectful. ❤️</p><button class="primary-button explore-send-selected" type="button" onclick="confirmExploreQuickMessage()" ${selected === null ? "disabled" : ""}>Send selected message</button></div>
     </main>
     ${bottomNav()}
   `;
@@ -847,6 +935,7 @@ function navigate(screen) {
   if (!searchWasCancelled) state.history.push(state.screen);
   state.screen = screen;
   render();
+  if (screen === "explore") loadExplore();
   if (searchWasCancelled) {
     showSearchCancelledToast("Search cancelled. To keep searching, please stay on this page without going back or navigating to another section.");
   }
@@ -1690,6 +1779,7 @@ function render() {
     call: callFlowScreen,
     explore: exploreScreen,
     "explore-message-picker": exploreMessagePickerScreen,
+    "explore-inbox": exploreInboxScreen,
     random: randomScreen,
     matchmaking: matchmakingScreen,
     partner: partnerScreen,
@@ -1848,6 +1938,7 @@ async function joinPendingPartnerCall() {
 
 loadAccount().then(() => {
   const params = new URLSearchParams(window.location.search);
+  if (params.get("screen") === "explore") { state.screen = "explore"; render(); loadExplore(); }
 
   if (params.get("botcall") === "1" && params.get("code")) {
     showPartnerCallJoinNotice({
