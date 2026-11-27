@@ -14,28 +14,31 @@ const QUICK_MESSAGES = [
 ];
 
 const USER_ID_RE = /^\d{1,20}$/;
-const REQUEST_TTL_MINUTES = 10;
 
 function apiError(res, status, error, message) {
   res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
   res.end(JSON.stringify({ error, message }));
 }
 
+function sendJson(res, status, body) {
+  res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+  res.end(JSON.stringify(body));
+}
+
 async function telegramNotify(botToken, userId, text, requestId, miniAppUrl) {
   const url = new URL(miniAppUrl);
-  url.searchParams.set("explore_request", String(requestId));
+  if (requestId) url.searchParams.set("explore_request", String(requestId));
+  url.searchParams.set("screen", "explore");
   const response = await fetch("https://api.telegram.org/bot" + botToken + "/sendMessage", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: userId,
       text,
-      reply_markup: {
-        inline_keyboard: [[{
-          text: "Open MeetStrangers4u",
-          web_app: { url: url.toString() }
-        }]]
-      }
+      reply_markup: { inline_keyboard: [[{
+        text: "Open MeetStrangers4u",
+        web_app: { url: url.toString() }
+      }]] }
     }),
     signal: AbortSignal.timeout(10000)
   });
@@ -47,8 +50,38 @@ async function telegramNotify(botToken, userId, text, requestId, miniAppUrl) {
   }
 }
 
+async function serveApprovedPhoto(res, pool, botToken, userId) {
+  const photo = await pool.query(
+    "SELECT approved_file_id FROM public.explore_profile_photos WHERE user_id=$1 AND approved_file_id IS NOT NULL",
+    [userId]
+  );
+  if (!photo.rowCount) return apiError(res, 404, "PHOTO_NOT_FOUND", "Approved profile photo not found.");
+
+  const fileInfoResponse = await fetch("https://api.telegram.org/bot" + botToken + "/getFile?file_id=" +
+    encodeURIComponent(photo.rows[0].approved_file_id), { signal: AbortSignal.timeout(10000) });
+  const fileInfo = await fileInfoResponse.json().catch(() => ({}));
+  if (!fileInfoResponse.ok || !fileInfo.ok || !fileInfo.result?.file_path) {
+    return apiError(res, 502, "PHOTO_UNAVAILABLE", "Profile photo is temporarily unavailable.");
+  }
+
+  const imageResponse = await fetch("https://api.telegram.org/file/bot" + botToken + "/" + fileInfo.result.file_path, {
+    signal: AbortSignal.timeout(15000)
+  });
+  if (!imageResponse.ok) return apiError(res, 502, "PHOTO_UNAVAILABLE", "Profile photo is temporarily unavailable.");
+  const bytes = Buffer.from(await imageResponse.arrayBuffer());
+  const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
+  if (!contentType.startsWith("image/")) return apiError(res, 415, "INVALID_PHOTO", "Invalid profile image.");
+  res.writeHead(200, {
+    "Content-Type": contentType,
+    "Content-Length": String(bytes.length),
+    "Cache-Control": "private, max-age=300",
+    "X-Content-Type-Options": "nosniff"
+  });
+  res.end(bytes);
+}
+
 async function handleExploreRequest(ctx) {
-  const { req, res, url, pool, validateTelegramInitData, sendJson, readJsonBody, botToken, miniAppUrl } = ctx;
+  const { req, res, url, pool, validateTelegramInitData, readJsonBody, botToken, miniAppUrl } = ctx;
   if (!url.pathname.startsWith("/api/explore/")) return false;
 
   let user;
@@ -66,27 +99,65 @@ async function handleExploreRequest(ctx) {
   }
 
   try {
+    const photoMatch = url.pathname.match(/^\/api\/explore\/photo\/(\d{1,20})$/);
+    if (req.method === "GET" && photoMatch) {
+      await serveApprovedPhoto(res, pool, botToken, photoMatch[1]);
+      return true;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/explore/profiles") {
+      const result = await pool.query(
+        `SELECT u.user_id::text AS user_id,
+                COALESCE(NULLIF(u.custom_name,''), NULLIF(u.username,''), 'MeetStrangers4u Member') AS display_name,
+                u.gender, u.age, u.country,
+                (SELECT COUNT(*)::int FROM public.explore_reactions r
+                  WHERE r.target_id=u.user_id AND r.reaction='like') AS likes_received
+           FROM public.users u
+           JOIN public.explore_profile_photos p ON p.user_id=u.user_id AND p.approved_file_id IS NOT NULL
+          WHERE u.user_id <> $1
+            AND NOT EXISTS (SELECT 1 FROM public.explore_reactions seen
+                             WHERE seen.actor_id=$1 AND seen.target_id=u.user_id)
+          ORDER BY p.updated_at DESC, u.user_id
+          LIMIT 30`,
+        [actorId]
+      );
+      sendJson(res, 200, {
+        profiles: result.rows.map(row => ({
+          ...row,
+          photoUrl: "/api/explore/photo/" + row.user_id
+        }))
+      });
+      return true;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/explore/summary") {
-      const [likes, messages, balance] = await Promise.all([
+      const [likes, messages, balance, ownPhoto] = await Promise.all([
         pool.query("SELECT COUNT(*)::int AS count FROM public.explore_reactions WHERE target_id=$1 AND reaction='like'", [actorId]),
         pool.query("SELECT COUNT(*)::int AS count FROM public.explore_messages WHERE recipient_id=$1 AND read_at IS NULL", [actorId]),
-        pool.query("SELECT coins FROM public.users WHERE user_id=$1 LIMIT 1", [actorId])
+        pool.query("SELECT coins FROM public.users WHERE user_id=$1 LIMIT 1", [actorId]),
+        pool.query("SELECT 1 FROM public.explore_profile_photos WHERE user_id=$1 AND approved_file_id IS NOT NULL", [actorId])
       ]);
       if (!balance.rowCount) return apiError(res, 404, "USER_NOT_FOUND", "Open the Telegram bot first.");
       sendJson(res, 200, {
         likes: likes.rows[0].count,
         unreadMessages: messages.rows[0].count,
-        coins: Number(balance.rows[0].coins || 0)
+        coins: Number(balance.rows[0].coins || 0),
+        hasProfilePhoto: Boolean(ownPhoto.rowCount)
       });
       return true;
     }
 
     if (req.method === "GET" && url.pathname === "/api/explore/inbox") {
       const result = await pool.query(
-        "SELECT id, sender_id, message_text, created_at, read_at FROM public.explore_messages WHERE recipient_id=$1 ORDER BY created_at DESC LIMIT 100",
+        "UPDATE public.explore_messages SET read_at=NOW() WHERE recipient_id=$1 AND read_at IS NULL RETURNING id,sender_id,message_text,created_at,read_at",
         [actorId]
       );
-      sendJson(res, 200, { messages: result.rows });
+      const older = await pool.query(
+        "SELECT id,sender_id,message_text,created_at,read_at FROM public.explore_messages WHERE recipient_id=$1 ORDER BY created_at DESC LIMIT 100",
+        [actorId]
+      );
+      const merged = new Map([...older.rows, ...result.rows].map(row => [row.id, row]));
+      sendJson(res, 200, { messages: [...merged.values()].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)) });
       return true;
     }
 
@@ -97,14 +168,17 @@ async function handleExploreRequest(ctx) {
       if (!USER_ID_RE.test(targetId) || targetId === actorId || !["like", "dislike", "skip"].includes(reaction)) {
         return apiError(res, 400, "INVALID_REACTION", "Choose a valid profile and action.");
       }
-      const target = await pool.query("SELECT 1 FROM public.users WHERE user_id=$1 LIMIT 1", [targetId]);
+      const target = await pool.query(
+        "SELECT 1 FROM public.users u JOIN public.explore_profile_photos p ON p.user_id=u.user_id AND p.approved_file_id IS NOT NULL WHERE u.user_id=$1",
+        [targetId]
+      );
       if (!target.rowCount) return apiError(res, 404, "USER_UNAVAILABLE", "This profile is no longer available.");
       await pool.query(
         "INSERT INTO public.explore_reactions (actor_id,target_id,reaction) VALUES ($1,$2,$3) ON CONFLICT (actor_id,target_id) DO UPDATE SET reaction=EXCLUDED.reaction, updated_at=NOW()",
         [actorId, targetId, reaction]
       );
       if (reaction === "like") {
-        telegramNotify(botToken, targetId, "❤️ Someone liked your profile on MeetStrangers4u!", 0, miniAppUrl)
+        telegramNotify(botToken, targetId, "❤️ Someone liked your profile on MeetStrangers4u!", null, miniAppUrl)
           .catch(err => console.error("Explore like notification:", err.message));
       }
       sendJson(res, 200, { ok: true });
@@ -119,7 +193,10 @@ async function handleExploreRequest(ctx) {
           !Number.isInteger(messageKey) || messageKey < 0 || messageKey >= QUICK_MESSAGES.length) {
         return apiError(res, 400, "INVALID_MESSAGE", "Choose one of the available messages.");
       }
-      const target = await pool.query("SELECT 1 FROM public.users WHERE user_id=$1 LIMIT 1", [targetId]);
+      const target = await pool.query(
+        "SELECT 1 FROM public.users u JOIN public.explore_profile_photos p ON p.user_id=u.user_id AND p.approved_file_id IS NOT NULL WHERE u.user_id=$1",
+        [targetId]
+      );
       if (!target.rowCount) return apiError(res, 404, "USER_UNAVAILABLE", "This profile is no longer available.");
       const messageText = QUICK_MESSAGES[messageKey];
       const inserted = await pool.query(
@@ -142,7 +219,10 @@ async function handleExploreRequest(ctx) {
       let request;
       try {
         await db.query("BEGIN");
-        const target = await db.query("SELECT 1 FROM public.users WHERE user_id=$1 LIMIT 1 FOR SHARE", [targetId]);
+        const target = await db.query(
+          "SELECT 1 FROM public.users u JOIN public.explore_profile_photos p ON p.user_id=u.user_id AND p.approved_file_id IS NOT NULL WHERE u.user_id=$1 FOR SHARE",
+          [targetId]
+        );
         if (!target.rowCount) {
           await db.query("ROLLBACK");
           return apiError(res, 404, "USER_UNAVAILABLE", "This profile is no longer available.");
