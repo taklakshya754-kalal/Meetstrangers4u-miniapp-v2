@@ -110,8 +110,6 @@ async function handleExploreRequest(ctx) {
         `SELECT u.user_id::text AS user_id,
                 COALESCE(NULLIF(u.custom_name,''), NULLIF(u.username,''), 'MeetStrangers4u Member') AS display_name,
                 u.gender, u.age, u.country,
-                (SELECT COUNT(*)::int FROM public.explore_reactions r
-                  WHERE r.target_id=u.user_id AND r.reaction='like') AS likes_received
            FROM public.users u
            JOIN public.explore_profile_photos p ON p.user_id=u.user_id AND p.approved_file_id IS NOT NULL
           WHERE u.user_id <> $1
