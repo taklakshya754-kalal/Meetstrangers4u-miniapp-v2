@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS explore_chat_requests_recipient_idx
 -- Bot process uses stranger_bot; Mini App calling backend uses restricted m4_call_api.
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.explore_profile_photos,
   public.explore_reactions, public.explore_messages, public.explore_chat_requests TO stranger_bot;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO stranger_bot;
+GRANT USAGE, SELECT ON SEQUENCE public.explore_messages_id_seq, public.explore_chat_requests_id_seq TO stranger_bot;
 
 GRANT SELECT (username, gender, age) ON public.users TO m4_call_api;
 GRANT SELECT ON public.explore_profile_photos TO m4_call_api;
