@@ -2,7 +2,7 @@
 -- Run once as a PostgreSQL administrator against stranger_bot.
 
 CREATE TABLE IF NOT EXISTS public.explore_profile_photos (
-  user_id BIGINT PRIMARY KEY REFERENCES public.users(user_id) ON DELETE CASCADE,
+  user_id TEXT PRIMARY KEY REFERENCES public.users(user_id) ON DELETE CASCADE,
   approved_file_id TEXT,
   pending_file_id TEXT,
   pending_at TIMESTAMPTZ,
@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS public.explore_profile_photos (
 );
 
 CREATE TABLE IF NOT EXISTS public.explore_reactions (
-  actor_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
-  target_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  actor_id TEXT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  target_id TEXT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
   reaction TEXT NOT NULL CHECK (reaction IN ('like','dislike','skip')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -23,8 +23,8 @@ CREATE INDEX IF NOT EXISTS explore_reactions_target_like_idx
 
 CREATE TABLE IF NOT EXISTS public.explore_messages (
   id BIGSERIAL PRIMARY KEY,
-  sender_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
-  recipient_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  sender_id TEXT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  recipient_id TEXT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
   message_key SMALLINT NOT NULL CHECK (message_key BETWEEN 0 AND 9),
   message_text TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -36,8 +36,8 @@ CREATE INDEX IF NOT EXISTS explore_messages_recipient_created_idx
 
 CREATE TABLE IF NOT EXISTS public.explore_chat_requests (
   id BIGSERIAL PRIMARY KEY,
-  sender_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
-  recipient_id BIGINT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  sender_id TEXT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
+  recipient_id TEXT NOT NULL REFERENCES public.users(user_id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined','expired')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '10 minutes'),
